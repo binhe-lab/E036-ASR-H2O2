@@ -18,6 +18,7 @@ library(viridis)
 asr_raw <- read.csv("../input/MOPO_Sc_Cg_ASR_scatter_plot.csv")
 
 # scatterplot of MO/MM vs PO/PM
+png("../output/MO_vs_PO.png", width = 4, height = 4, units = 'in',res = 300) # png for slides
 asr_raw  %>% subset(., MO.MM != 1 & PO.PM != 1) %>%
   ggplot(aes(x = MO.MM, y = PO.PM)) + 
   geom_point(aes(color = Strain),size = 2) + 
@@ -37,6 +38,7 @@ asr_raw  %>% subset(., MO.MM != 1 & PO.PM != 1) %>%
   ylab("PO/PM") +
   xlab("MO/MM") +
   ggtitle("PO/PM vs MO/MM")
+dev.off()
 
 ```
 
