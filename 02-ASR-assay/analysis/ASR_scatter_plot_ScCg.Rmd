@@ -1,0 +1,115 @@
+---
+title: "Bin_code_adpt"
+author: "Jinye Liang"
+date: "August 12, 2022"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mgcv)
+library(broom)
+library(viridis)
+```
+
+```{r}
+asr_raw <- read.csv("../input/MOPO_Sc_Cg_ASR_scatter_plot.csv")
+
+# scatterplot of MO/MM vs PO/PM
+#png("../output/MO_vs_PO.png", width = 4, height = 4, units = 'in',res = 300) # png for slides
+asr_raw  %>% subset(., MO.MM != 1 & PO.PM != 1) %>%
+  ggplot(aes(x = MO.MM, y = PO.PM)) + 
+  geom_point(aes(color = Strain),size = 2) + 
+  geom_smooth(aes(color = Strain)) +  # fit to a loess model with 95% CI 
+  #geom_smooth(aes(color = Strain, fill = Strain), method = "lm") +
+  #scale_color_viridis(discrete = TRUE, option = "D") +
+  #scale_fill_viridis(discrete = TRUE) + 
+
+  # change decimal scale to pct
+  scale_y_continuous(labels = scales::percent, breaks = seq(0, 0.4, 0.1)) +
+  scale_x_continuous(labels = scales::percent, breaks = seq(0, 0.4, 0.1)) +
+  scale_color_manual(values = c("grey", "deeppink3", "hotpink", "darkorchid2", "deepskyblue", "dodgerblue3", "grey20", "seagreen1"))  +
+  # change the scale of x and y axis
+  coord_fixed(ratio = 1, xlim = c(0,0.4), ylim = c(0,0.4), expand = TRUE, clip = "on") +
+  geom_abline(slope = 1, intercept = 0, color="wheat2", linetype="dashed", size=1) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("PO/PM") +
+  xlab("MO/MM") +
+  ggtitle("PO/PM vs MO/MM")
+#dev.off()
+
+
+# scatterplot of MO/MM vs PO/PM
+asr_raw  %>% subset(., MO.MM != 1 & PO.PM != 1) %>%
+  ggplot(aes(x = MO.MM, y = PO.PM)) + 
+  geom_point(aes(color = Strain),size = 2) + 
+  #geom_smooth(aes(color = Strain)) +  # fit to a loess model with 95% CI 
+  #geom_smooth(aes(color = Strain, fill = Strain), method = "lm") +
+  #scale_color_viridis(discrete = TRUE, option = "D") +
+  #scale_fill_viridis(discrete = TRUE) + 
+
+  # change decimal scale to pct
+  scale_y_continuous(labels = scales::percent, breaks = seq(0, 0.4, 0.1)) +
+  scale_x_continuous(labels = scales::percent, breaks = seq(0, 0.4, 0.1)) +
+  scale_color_manual(values = c("grey", "deeppink3", "hotpink", "darkorchid2", "deepskyblue", "dodgerblue3", "grey20", "seagreen1"))  +
+  # change the scale of x and y axis
+  coord_fixed(ratio = 1, xlim = c(0,0.4), ylim = c(0,0.4), expand = TRUE, clip = "on") +
+  geom_abline(slope = 1, intercept = 0, color="wheat2", linetype="dashed", size=1) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("PO/PM") +
+  xlab("MO/MM") +
+  ggtitle("PO/PM vs MO/MM")
+  ggsave("../output/MO_vs_PO.png", width = 4, height = 4, units = 'in',dpi = 300)
+
+```
+
+```{r}
+# MO/MM vs ASR Score
+asr_raw %>% mutate(.,ASR_Score = PO.PM/MO.MM, .keep = "all") %>% subset(., MO.MM != 1 & ASR_Score != 1) %>%
+  ggplot(aes(x = MO.MM, y = ASR_Score)) + 
+  geom_point(aes(color = Strain),size = 2) + 
+  #scale_color_viridis(discrete = TRUE, option = "D") +
+  #scale_fill_viridis(discrete = TRUE) + 
+
+  # change decimal scale to pct
+  scale_x_continuous(labels = scales::percent, breaks = seq(0, 0.4, 0.1)) +
+  scale_color_manual(values = c("grey", "deeppink3", "hotpink", "darkorchid2", "deepskyblue", "dodgerblue3", "grey20", "seagreen1"))  +
+  # change the scale of x and y axis
+  coord_fixed(ratio = 0.01, xlim = c(0,0.4), ylim = c(0,40), expand = TRUE, clip = "on") +
+  geom_abline(slope = 0, intercept = 0, color="wheat2", linetype="dashed", size=1) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("ASR_Score") +
+  xlab("MO/MM") +
+  ggtitle("ASR effect vs MO/MM")
+  ggsave("../output/ASR_vs_MOvsMM.png", width = 4, height = 4, units = 'in',dpi = 300)
+
+# MO/MM vs ASR Score with loess fit
+asr_raw %>% mutate(.,ASR_Score = PO.PM/MO.MM, .keep = "all") %>% subset(., MO.MM != 1 & ASR_Score != 1) %>%
+  ggplot(aes(x = MO.MM, y = ASR_Score)) + 
+  geom_point(aes(color = Strain),size = 2) + 
+  geom_smooth(aes(color = Strain),span = 1) + # fit to a loess model with 95% CI 
+  #geom_smooth(aes(color = Strain, fill = Strain), method = "lm") +
+  #scale_color_viridis(discrete = TRUE, option = "D") +
+  #scale_fill_viridis(discrete = TRUE) + 
+
+  # change decimal scale to pct
+  scale_y_continuous(trans = "log10")+
+  scale_x_continuous(labels = scales::percent, breaks = seq(0, 0.4, 0.1)) +
+  scale_color_manual(values = c("grey", "deeppink3", "hotpink", "darkorchid2", "deepskyblue", "dodgerblue3", "grey20", "seagreen1"))  +
+  # change the scale of x and y axis
+  #coord_fixed(ratio = 0.01, xlim = c(0,0.4), ylim = c(0,40), expand = TRUE, clip = "on") +
+  coord_fixed(ratio = 0.1,xlim = c(0,0.3),ylim = c(0.3,30)) +
+  geom_abline(slope = 0, intercept = 0, color="wheat2", linetype="dashed", size=1) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("ASR_Score") +
+  xlab("MO/MM") +
+  ggtitle("ASR effect vs MO/MM")
+
+
+```
