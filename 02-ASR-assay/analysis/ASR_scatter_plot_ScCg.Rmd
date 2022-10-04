@@ -15,7 +15,7 @@ library(viridis)
 ```
 
 ```{r}
-asr_raw <- read.csv("../input/MOPO_Sc_Cg_ASR_scatter_plot _d092422.csv")
+asr_raw <- read.csv("../input/MOPO_Sc_Cg_ASR_scatter_plot _d100322.csv")
 
 # scatterplot of MO/MM vs PO/PM
 #png("../output/MO_vs_PO.png", width = 4, height = 4, units = 'in',res = 300) # png for slides
@@ -39,7 +39,6 @@ asr_raw  %>% subset(., MO.MM != 1 & PO.PM != 1) %>%
   ylab("PO/PM") +
   xlab("MO/MM") +
   ggtitle("PO/PM vs MO/MM")
-#dev.off()
 
 
 # scatterplot of MO/MM vs PO/PM
@@ -109,7 +108,7 @@ asr_raw  %>% subset(., Strain != "Kl" & Experimenter == "JL" & MO.MM != 1 & PO.P
   ylab("PO/PM") +
   xlab("MO/MM") +
   ggtitle("PO/PM vs MO/MM")
-  ggsave("../output/MO_vs_PO.png", width = 4, height = 4, units = 'in',dpi = 300)
+  ggsave("../output/d100322_MO_vs_PO.png", width = 4, height = 4, units = 'in',dpi = 300)
 
 ```
 
@@ -232,7 +231,7 @@ asr_raw %>% mutate(.,ASR_Score = PO.PM/MO.MM, .keep = "all") %>% subset(., Exper
   ylab("ASR_Score") +
   xlab("MO/MM") +
   ggtitle("ASR effect vs MO/MM")
-  ggsave("../output/ASR_vs_MOvsMM_rev_x_logy_JL.png", width = 4, height = 4, units = 'in',dpi = 300)
+  ggsave("../output/d100322_ASR_vs_MOvsMM_rev_x_logy_JL.png", width = 4, height = 4, units = 'in',dpi = 300)
 
 
 # MO/MM vs ASR Score for Cg
