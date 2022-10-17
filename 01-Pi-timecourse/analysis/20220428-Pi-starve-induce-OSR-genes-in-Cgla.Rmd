@@ -69,7 +69,7 @@ _Data source_
 The analysis below is inspired by a GEOquery workshop offered by Jason Ratcliff at the Iowa Institute of Human Genetics. `getGEO()` will return an ExpressionSet object, which is then converted into a "SummarizedExperiment" object, which is a more modern data structure that is easier to deal with.
 ```{r}
 #Sys.setenv("VROOM_CONNECTION_SIZE" = 131072*10) # increase the local cache size
-gse <- GEOquery::getGEO(filename = "../input/Scer-Pi-Zhou2011/GSE23580_series_matrix.txt.gz") %>% 
+gse <- GEOquery::getGEO(filename = "../input/Scer-Pi-Zhou2011/Zhou2011/GSE23580_series_matrix.txt.gz") %>% 
   as("SummarizedExperiment")
 ```
 
