@@ -19,14 +19,19 @@ library(broom)
 files <- dir("input/msn24_gz_merge", pattern = "merge-*") # get the file names of the merged
 files <- file.path("input/msn24_gz_merge", files)         # this appends the directory to the file names
 files.s7y1 <- dir("input/s7y1_gz_merge", pattern = "merge-*") 
-files.s7y1 <- file.path("input/s7y1_gz_merge", files)  
+files.s7y1 <- file.path("input/s7y1_gz_merge", files.s7y1)  
+files.m4s7 <- dir("input/m4s7_gz_merge", pattern = "merge-*") 
+files.m4s7 <- file.path("input/m4s7_gz_merge", files.m4s7)
 
 
 names(files) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Rep1-H2O2", "Rep3-0Pi-Rep2-H2O2", "Rep3-H2O2-Ctrl","Rep4-H2O2-Ctrl")
 names(files.s7y1) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl","Rep1-H2O2-Rep3-0Pi", "Rep2-H2O2-Rep4-0Pi", "Rep3-H2O2-Ctrl")
-
+names(files.m4s7) <- c("Rep1-0Pi-Ctrl","Rep1-H2O2-Rep2-0Pi", "Rep2-H2O2-Rep3-0Pi", "Rep3-H2O2-Ctrl")
 
 tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
+
+
+      
 
 # import and process the data to the format we want
 dat.ord <- files %>% 
@@ -38,8 +43,9 @@ dat.ord <- files %>%
   mutate(Group = ordered(Group, levels = tp)) %>% 
   arrange(Group)
 
+
 # import and process the data to the format we want
-dat.ord.s7y1 <- files %>% 
+dat.ord.s7y1 <- files.s7y1 %>% 
   map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
   bind_rows(.id = "Replicate") %>% 
   filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
@@ -48,11 +54,17 @@ dat.ord.s7y1 <- files %>%
   mutate(Group = ordered(Group, levels = tp)) %>% 
   arrange(Group)
 
-dat.ord <- add_row(dat.ord,dat.ord.s7y1)
 
-write_csv(dat.ord, file = "input/s7y1_gz_merge/20210708-0722-msn24skn7yap1-KO-flow-data.csv")
+# import and process the data to the format we want
+dat.ord.m4s7 <- files.m4s7 %>% 
+  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group)
 
-#write_csv(dat.ord, file = "input/msn24_gz_merge/20210605-0627-Msn2Msn4-KO-flow-data.csv")
 ```
 
 
@@ -65,6 +77,10 @@ names(tr_files) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Rep1-H2O2", "Rep3-0Pi-Rep2-H2O2",
 tr_files.s7y1 <- dir("input/s7y1_treatment", pattern = "d0*")
 tr_files.s7y1 <- file.path("input/s7y1_treatment", tr_files.s7y1)
 names(tr_files.s7y1) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl","Rep1-H2O2-Rep3-0Pi", "Rep2-H2O2-Rep4-0Pi", "Rep3-H2O2-Ctrl")
+
+tr_files.m4s7 <- dir("input/m4s7_treatment", pattern = "d0*")
+tr_files.m4s7 <- file.path("input/m4s7_treatment", tr_files.m4s7)
+names(tr_files.m4s7) <- c("Rep1-0Pi-Ctrl","Rep1-H2O2-Rep2-0Pi", "Rep2-H2O2-Rep3-0Pi", "Rep3-H2O2-Ctrl")
 
 
 treat.fil <- tr_files %>% 
@@ -80,32 +96,37 @@ treat.fil.s7y1 <- tr_files.s7y1 %>%
   filter(!is.na(`group_name`)) %>% 
   select(Replicate, genotype = `group_name`, Sample, treat)
 
-treat.fil <- add_row(treat.fil,treat.fil.s7y1)
+
+treat.fil.m4s7 <- tr_files.m4s7 %>% 
+  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(!is.na(`group_name`)) %>% 
+  select(Replicate, genotype = `group_name`, Sample, treat)
+
 
 # combine genotype and treat variables into the flow data
 data <- left_join(dat.ord, treat.fil, by = c("Replicate", "Sample"))
+data.s7y1 <- left_join(dat.ord.s7y1, treat.fil.s7y1, by = c("Replicate", "Sample"))
+data.m4s7 <- left_join(dat.ord.m4s7, treat.fil.m4s7, by = c("Replicate", "Sample"))
 
 
-# combine genotype and treat variables into the flow data
-data.s7y1 <- left_join(dat.ord.s7y1, treat.fil, by = c("Replicate", "Sample"))
-
-
-data <- add_row(data,data.s7y1)
+data.tmp <- add_row(data,data.s7y1)
+data.cb <- add_row(data.tmp, data.m4s7)
 
 # select out 0Pi data
-pi.dat <- data %>% 
+pi.dat <- data.cb %>% 
   filter(treat == "0Pi") %>% 
   select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>% 
   arrange(time, genotype, replicate)
 ```
 
 
-CTA1 induction during - Pi in skn7/yap1/msn2/msn4 and wt strains
+CTA1 induction during - Pi in wt/skn7/yap1/msn2/msn4/msn4skn7 strains
 # need to check the skn7 and yap1 data, I got them switched somehow
 ```{r, visualize the data}
-genotype_color <- c("#F8766D", "#00BF7D", "#00B0F6", "#E76BF3", "#A3A500") 
-# map the color to the genotype variable within pi.dat in its order
-my_genotype <- c("wt", "msn2_ko", "msn4_ko","skn7_ko", "yap1_ko")
+genotype_color <- c("#F8766D", "#00BFC4", "#00BA38", "#619CFF", "#E76BF3", "#B79F00") 
+# map the color to the genotype variable within pi.dat in its order m2-m4-m4s7-s7-wt-y1
+my_genotype <- c("wt", "msn2_ko", "msn4_ko","skn7_ko", "yap1_ko", "msn4skn7_ko")
 
 pi.dat %>% subset(., !is.na(median) & genotype == my_genotype) %>% 
   ggplot(aes(x = time, y = median, color = genotype)) + geom_point(size = 0.2) + 
@@ -116,10 +137,13 @@ pi.dat %>% subset(., !is.na(median) & genotype == my_genotype) %>%
         axis.title = element_text(size = 12), 
         axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
         plot.title = element_text(size = 14, hjust = 0)) + 
-  labs(y = "CTA1-GFP expression (MFI)", title = "B") + 
-  scale_color_manual(values=c("#F8766D", "#00BF7D", "#00B0F6", "#E76BF3", "#A3A500"))
+  labs(y = "Cta1-gfp protein expression MFI (a.u.)") + 
+  scale_color_manual(values= genotype_color)
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-trans-TFs-kos.png"),
+         width = 6, height = 4,units = 'in', dpi = 300)
 
 
 #library(scales)
-show_col(hue_pal()(5))
+#show_col(hue_pal()(5))
+#show_col(hue_pal()(6))
 ```

@@ -1,0 +1,12 @@
+HB_strain,genotype,Group_name
+yH298,CTA1-GFP,wt
+yH299,CTA1-GFP,wt
+yH429,msn4::Nat; cta1::CTA1-GFP,msn4_ko
+yH430,msn4::Nat; cta1::CTA1-GFP,msn4_ko
+yH431,msn4::Nat; cta1::CTA1-GFP,msn4_ko
+yH440,skn7::ScHis3; cta1::CTA1-GFP,skn7_ko
+yH441,skn7::ScHis3; cta1::CTA1-GFP,skn7_ko
+yH442,skn7::ScHis3; cta1::CTA1-GFP,skn7_ko
+yH454,msn4::Nat; skn7::HIS3; cta1::CTA1-GFP,msn4skn7_ko
+yH455,msn4::Nat; skn7::HIS3; cta1::CTA1-GFP,msn4skn7_ko
+yH456,msn4::Nat; skn7::HIS3; cta1::CTA1-GFP,msn4skn7_ko

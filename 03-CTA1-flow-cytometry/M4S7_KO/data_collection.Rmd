@@ -1,0 +1,173 @@
+---
+title: "data_collection"
+author: "Jinye Liang"
+date: "August 6, 2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+```
+
+
+
+
+
+
+
+```{r}
+#d072421_0Pi&Ctrl: Replicate 1 
+# get genotype info
+genotype <- read.csv("../Genotype.csv")
+
+# get time&treatment info
+d072421 <- read.csv("../d072421_tr_time.csv")
+
+
+min_0 <- read.csv("../d072421-statistics/0min_M4S7_0Pi_R1.csv")
+min_30 <-read.csv("../d072421-statistics/30min_M4S7_0Pi_R1.csv")
+min_60 <-read.csv("../d072421-statistics/60min_M4S7_0Pi_R1.csv")
+min_90 <-read.csv("../d072421-statistics/90min_M4S7_0Pi_R1.csv")
+min_120 <-read.csv("../d072421-statistics/120min_M4S7_0Pi_R1.csv")
+min_150 <-read.csv("../d072421-statistics/150min_M4S7_0Pi_R1.csv")
+min_180 <-read.csv("../d072421-statistics/180min_M4S7_0Pi_R1.csv")
+min_210 <-read.csv("../d072421-statistics/210min_M4S7_0Pi_R1.csv")
+min_240 <-read.csv("../d072421-statistics/240min_M4S7_0Pi_R1.csv")
+
+
+pro_0min <- min_0 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_30min <- min_30 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_60min <- min_60 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_90min <- min_90 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_120min <- min_120 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_150min <- min_150 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_180min <- min_180 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_210min <- min_210 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_240min <- min_240 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+
+R1_alltime <- rbind(pro_0min, pro_30min, pro_60min, pro_90min, pro_120min, pro_150min, pro_180min, pro_210min, pro_240min)
+R1_alltime$Rep="R1"
+R1_alltime %>% write.csv(file = "../Output/R1_M4s7_KO_0Pi.csv", row.names = F)
+
+# add treatment variable to R1_alltime
+R1 <- left_join(R1_alltime, d072421, by='Sample')
+## get rid of unwanted variables
+drops <- c("time_1_min","time_2_min","time_3_min")
+R1 <- R1[, !(names(R1) %in% drops)]
+
+# Visualize the data
+R1_0Pi <- subset(R1, treat == "0Pi")
+#?subset()
+
+R1_0Pi %>%
+  ggplot(aes(x = Group, y = X.Median)) + geom_point(size = 0.2) + 
+  facet_wrap(~group_name) + stat_summary(fun = "median", geom = "point", size = 2) + 
+  stat_smooth(aes(x = as.numeric(Group)), se = FALSE) + 
+  theme_bw()
+
+#?ggplot()
+
+
+```
+
+
+"""
+pi.dat %>% 
+  ggplot(aes(x = time, y = median, color = replicate)) + geom_point(size = 0.2) + 
+  facet_wrap(~genotype) + stat_summary(fun = "median", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw()
+"""
+
+```{r}
+#msn2&4KO 0Pi: Replicate 2
+min_0 <- read.csv("d060621-statistics/0min-0Pi-R2-H2O2-R1-Msn24TFKO.csv")
+min_30 <-read.csv("d060621-statistics/30min-0Pi-R2-H2O2-R1-Msn24TFKO.csv")
+min_60 <-read.csv("d060621-statistics/60min-0Pi-R2-H2O2-R1-Msn24TFKO.csv")
+min_90 <-read.csv("d060621-statistics/90min-0Pi-R2-H2O2-R1-Msn24TFKO.csv")
+min_120 <-read.csv("d060621-statistics/120min-0Pi-R2-H2O2-R1-Msn24TFKO.csv")
+min_150 <-read.csv("d060621-statistics/150min-0Pi-R2-H2O2-R1-Msn24TFKO.csv")
+min_180 <-read.csv("d060621-statistics/180min-0Pi-R2-H2O2-R1-Msn24TFKO.csv")
+min_210 <-read.csv("d060621-statistics/210min-0Pi-R2-H2O2-R1-Msn24TFKO.csv")
+min_240 <-read.csv("d060621-statistics/240min-0Pi-R2-H2O2-R1-Msn24TFKO.csv")
+
+
+pro_0min <- min_0 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_30min <- min_30 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_60min <- min_60 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_90min <- min_90 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_120min <- min_120 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_150min <- min_150 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_180min <- min_180 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_210min <- min_210 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_240min <- min_240 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+
+R2_alltime <- rbind(pro_0min, pro_30min, pro_60min, pro_90min, pro_120min, pro_150min, pro_180min, pro_210min, pro_240min)
+R2_alltime$Rep="R2"
+R2_alltime %>% write.csv(file = "R2_M2&4KO_0Pi.csv", row.names = F)
+```
+
+
+
+```{r}
+#6-8Imp 0Pi: Replicate 2
+min_0 <- read.csv("Raw_data/d051121_statistics_0Pi-R2_6-8Imp/0min_0Pi_R2.csv")
+min_30 <- read.csv("Raw_data/d051121_statistics_0Pi-R2_6-8Imp/30min_0Pi_R2.csv")
+min_60 <- read.csv("Raw_data/d051121_statistics_0Pi-R2_6-8Imp/60min_0Pi_R2.csv")
+min_90 <- read.csv("Raw_data/d051121_statistics_0Pi-R2_6-8Imp/90min_0Pi_R2.csv")
+min_120 <- read.csv("Raw_data/d051121_statistics_0Pi-R2_6-8Imp/120min_0Pi_R2.csv")
+min_150 <- read.csv("Raw_data/d051121_statistics_0Pi-R2_6-8Imp/150min_0Pi_R2.csv")
+min_180 <- read.csv("Raw_data/d051121_statistics_0Pi-R2_6-8Imp/180min_0Pi_R2.csv")
+min_210 <- read.csv("Raw_data/d051121_statistics_0Pi-R2_6-8Imp/210min_0Pi_R2.csv")
+min_240 <- read.csv("Raw_data/d051121_statistics_0Pi-R2_6-8Imp/240min_0Pi_R2.csv")
+
+
+pro_0min <- min_0 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_30min <- min_30 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_60min <- min_60 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_90min <- min_90 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_120min <- min_120 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_150min <- min_150 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_180min <- min_180 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_210min <- min_210 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_240min <- min_240 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+
+R2_alltime <- rbind(pro_0min, pro_30min, pro_60min, pro_90min, pro_120min, pro_150min, pro_180min, pro_210min, pro_240min)
+R2_alltime$Rep="R2"
+
+```
+
+```{r}
+#6-8Imp 0Pi: Replicate 3
+min_0 <- read.csv("Raw_data/d051221_statistics_0Pi-R3_6-8Imp/0min_0Pi_R3.csv")
+min_30 <- read.csv("Raw_data/d051221_statistics_0Pi-R3_6-8Imp/30min_0Pi_R3.csv")
+min_60 <- read.csv("Raw_data/d051221_statistics_0Pi-R3_6-8Imp/60min_0Pi_R3.csv")
+min_90 <- read.csv("Raw_data/d051221_statistics_0Pi-R3_6-8Imp/90min_0Pi_R3.csv")
+min_120 <- read.csv("Raw_data/d051221_statistics_0Pi-R3_6-8Imp/120min_0Pi_R3.csv")
+min_150 <- read.csv("Raw_data/d051221_statistics_0Pi-R3_6-8Imp/150min_0Pi_R3.csv")
+min_180 <- read.csv("Raw_data/d051221_statistics_0Pi-R3_6-8Imp/180min_0Pi_R3.csv")
+min_210 <- read.csv("Raw_data/d051221_statistics_0Pi-R3_6-8Imp/210min_0Pi_R3.csv")
+min_240 <- read.csv("Raw_data/d051221_statistics_0Pi-R3_6-8Imp/240min_0Pi_R3.csv")
+
+
+pro_0min <- min_0 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_30min <- min_30 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_60min <- min_60 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_90min <- min_90 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_120min <- min_120 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_150min <- min_150 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_180min <- min_180 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_210min <- min_210 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+pro_240min <- min_240 %>% filter(X.Parameter == "BL1-H") %>% select(Group, Sample, Count, X.Median, X.Peak, X.SD, X..CV, X.rSD, X..rCV)
+
+R3_alltime <- rbind(pro_0min, pro_30min, pro_60min, pro_90min, pro_120min, pro_150min, pro_180min, pro_210min, pro_240min)
+R3_alltime$Rep="R3"
+
+```
+
+```{r}
+# Combine H2O2 Rep R1 tO R3: 6-8Imp
+rbind(R1_alltime,R2_alltime,R3_alltime) %>% write.csv(file = "Output/6-8Imp_d050521_d051421_H2O2.csv", row.names = F)
+```
