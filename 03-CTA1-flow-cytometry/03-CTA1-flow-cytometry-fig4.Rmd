@@ -117,7 +117,9 @@ data.cb <- add_row(data.tmp, data.m4s7)
 pi.dat <- data.cb %>% 
   filter(treat == "0Pi") %>% 
   select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>% 
-  arrange(time, genotype, replicate)
+  mutate(.,new_median =median/1000) %>% 
+  mutate(.,new_time = as.numeric(gsub("min","",time))) %>% 
+  arrange(new_time, genotype, replicate)
 ```
 
 
@@ -128,20 +130,25 @@ genotype_color <- c("#F8766D", "#00BFC4", "#00BA38", "#619CFF", "#E76BF3", "#B79
 # map the color to the genotype variable within pi.dat in its order m2-m4-m4s7-s7-wt-y1
 my_genotype <- c("wt", "msn2_ko", "msn4_ko","skn7_ko", "yap1_ko", "msn4skn7_ko")
 
-pi.dat %>% subset(., !is.na(median) & genotype == my_genotype) %>% 
-  ggplot(aes(x = time, y = median, color = genotype)) + geom_point(size = 0.2) + 
+pi.dat %>% subset(., !is.na(new_median) & genotype == my_genotype) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = genotype)) + geom_point(size = 0.2) + 
   stat_summary(fun = "mean", geom = "point", size = 2) +
-  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  stat_smooth(aes(x = new_time), se = FALSE) +
+  scale_x_continuous(breaks = seq(0,240,30), minor_breaks = seq(0,240,30))+
   theme_bw() +
-  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
-        axis.title = element_text(size = 12), 
-        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
-        plot.title = element_text(size = 14, hjust = 0)) + 
-  labs(y = "Cta1-gfp protein expression MFI (a.u.)") + 
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 18), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle=0,hjust=0.5), axis.text = element_text(size = 18), 
+        plot.title = element_text(size = 18, hjust = 0)) + 
+  labs(y = "Cta1-gfp protein level MFI (a.u.)") + 
   scale_color_manual(values= genotype_color)
   ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-trans-TFs-kos.png"),
-         width = 6, height = 4,units = 'in', dpi = 300)
+         width = 7, height = 4,units = 'in', dpi = 300)
 
+
+#scale_x_continuous(breaks = c(0,30,60,90,120,150,180,210,240))+
 
 #library(scales)
 #show_col(hue_pal()(5))
