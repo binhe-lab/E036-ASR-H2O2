@@ -1,0 +1,85 @@
+﻿strain_name,Sample,genotype,YPG
+yH298,A1,wt,Yes
+yH299,B1,wt,Yes
+yH363,C1,MutS7Y1 #1,Yes
+yH364,D1,MutS7Y1 #1,Yes
+yH365,E1,MutS7Y1 #1,Yes
+yH366,F1,MutS7Y1 #1,NA
+yH367,G1,MutS7Y1 #2,Yes
+yH368,H1,MutS7Y1 #2,Yes
+yH369,A2,MutScYap1,Yes
+yH370,B2,MutScYap1,Yes
+yH371,C2,MutScYap1,Yes
+yH398,D2,DelYap1 (6-8I),Yes
+yH399,E2,DelYap1 (6-8I),Yes
+yH400,F2,DelYap1 (6-8I),Yes
+yH401,G2,DelY1S7 (6-8I),Yes
+yH402,H2,DelY1S7 (6-8I),Yes
+yH403,A3,MutS7#1,Yes
+yH404,B3,MutS7#1,Yes
+yH405,C3,MutS7#2,Yes
+yH406,D3,MutS7#2,Yes
+yH407,E3,MutS7#2,Yes
+yH408,F3,MutY1#1,Yes
+yH409,G3,MutY1#1,Yes
+yH410,H3,MutY1#1,Yes
+yH411,A4,MutY1#2,Yes
+yH412,B4,MutY1#2,Yes
+DelSkn7-1,C4,DelSkn7,Yes
+DelSkn7-2,D4,DelSkn7,Yes
+yH298,A5,wt,Yes
+yH299,B5,wt,Yes
+yH363,C5,MutS7Y1 #1,Yes
+yH364,D5,MutS7Y1 #1,Yes
+yH365,E5,MutS7Y1 #1,Yes
+yH366,F5,MutS7Y1 #1,NA
+yH367,G5,MutS7Y1 #2,Yes
+yH368,H5,MutS7Y1 #2,Yes
+yH369,A6,MutScYap1,Yes
+yH370,B6,MutScYap1,Yes
+yH371,C6,MutScYap1,Yes
+yH398,D6,DelYap1 (6-8I),Yes
+yH399,E6,DelYap1 (6-8I),Yes
+yH400,F6,DelYap1 (6-8I),Yes
+yH401,G6,DelY1S7 (6-8I),Yes
+yH402,H6,DelY1S7 (6-8I),Yes
+yH403,A7,MutS7#1,Yes
+yH404,B7,MutS7#1,Yes
+yH405,C7,MutS7#2,Yes
+yH406,D7,MutS7#2,Yes
+yH407,E7,MutS7#2,Yes
+yH408,F7,MutY1#1,Yes
+yH409,G7,MutY1#1,Yes
+yH410,H7,MutY1#1,Yes
+yH411,A8,MutY1#2,Yes
+yH412,B8,MutY1#2,Yes
+DelSkn7-1,C8,DelSkn7,Yes
+DelSkn7-2,D8,DelSkn7,Yes
+yH298,A9,wt,Yes
+yH299,B9,wt,Yes
+yH363,C9,MutS7Y1 #1,Yes
+yH364,D9,MutS7Y1 #1,Yes
+yH365,E9,MutS7Y1 #1,Yes
+yH366,F9,MutS7Y1 #1,NA
+yH367,G9,MutS7Y1 #2,Yes
+yH368,H9,MutS7Y1 #2,Yes
+yH369,A10,MutScYap1,Yes
+yH370,B10,MutScYap1,Yes
+yH371,C10,MutScYap1,Yes
+yH398,D10,DelYap1 (6-8I),Yes
+yH399,E10,DelYap1 (6-8I),Yes
+yH400,F10,DelYap1 (6-8I),Yes
+yH401,G10,DelY1S7 (6-8I),Yes
+yH402,H10,DelY1S7 (6-8I),Yes
+yH403,A11,MutS7#1,Yes
+yH404,B11,MutS7#1,Yes
+yH405,C11,MutS7#2,Yes
+yH406,D11,MutS7#2,Yes
+yH407,E11,MutS7#2,Yes
+yH408,F11,MutY1#1,Yes
+yH409,G11,MutY1#1,Yes
+yH410,H11,MutY1#1,Yes
+yH411,A12,MutY1#2,Yes
+yH412,B12,MutY1#2,Yes
+DelSkn7-1,C12,DelSkn7,Yes
+DelSkn7-2,D12,DelSkn7,Yes

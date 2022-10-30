@@ -177,9 +177,240 @@ pi.tp %>%
   labs(y = "Cta1-gfp protein level MFI (a.u.)") + 
   scale_fill_manual(values=c("#999999", "#FF00FF"))
   ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-TFs-kos-tp.png"),
+         width = 10, height = 5,units = 'in', dpi = 300)
+  
+           
+```
+#MutMsn4 #1 & #2
+```{r, Import the Data into R}
+files.mutM4 <- dir("input/2_4Imp_gz_merge", pattern = "merge-*") # get the file names of the merged
+files.mutM4 <- file.path("input/2_4Imp_gz_merge", files.mutM4)         # this appends the directory to the file names
+
+names(files.mutM4) <- c("Rep1-H2O2", "Rep1-0Pi","Rep2-0Pi", "Rep3-0Pi" ,"Rep2-H2O2", "Rep3-H2O2")
+
+tp <- c("0min", "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
+
+# import and process the data to the format we want
+## remove characters (0Pi-0min; 240mmin) from group variable 
+dat.ord.mutM4 <- files.mutM4 %>% 
+  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate_at("Group", str_replace, "0Pi-", "") %>% 
+  mutate_at("Group", str_replace, "240m", "240") %>%
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group)   
+```
+
+
+```{r, Subset the dataset and merge with the genotype information:}
+# get genotype info and petites info
+geno <- read.csv("input/Genotype_2_4Imp.csv")
+names(geno) <- c("HB_strain", names(geno)[-1])
+
+
+# get treatment info
+tr_files.mutM4 <- dir("input/2_4Imp_treatment", pattern = "d0*")
+tr_files.mutM4 <- file.path("input/2_4Imp_treatment", tr_files.mutM4)
+names(tr_files.mutM4) <-  c("Rep1-H2O2", "Rep1-0Pi","Rep2-0Pi", "Rep3-0Pi" ,"Rep2-H2O2", "Rep3-H2O2")
+
+#sum(treat.fil$treat == "0Pi")
+#sum(treat.fil$treat == "H2O2")
+
+# combine HB_strain info to rule out petites
+treat.fil.mutM4 <- tr_files.mutM4 %>% 
+  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(!is.na(`group_name`)) %>% 
+  select(Replicate, genotype = `group_name`, Sample, treat) %>% 
+  left_join(., geno, by = c("genotype", "Sample")) # %>% 
+  #subset(!is.na(YPG))
+
+
+# combine genotype and treat variables into the flow data
+data.mutM4 <- left_join(dat.ord.mutM4, treat.fil.mutM4, by = c("Replicate", "Sample"))
+
+
+
+# select out 0Pi data
+pi.dat.mutM4 <- data.mutM4 %>% 
+  filter(treat == "0Pi" & !is.na(YPG) & genotype %in% c("wt","MutMsn4 #1","MutMsn4 #2")) %>%  
+  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
+  mutate(.,new_median =median/1000) %>% 
+  mutate(.,new_time = as.numeric(gsub("min","",time)))%>% 
+  arrange(new_time, genotype, replicate)
+
+pi.dat.mutM4_OL <- add_row(pi.dat,pi.dat.mutM4) %>% 
+  filter(genotype %in% c("wt","MutMsn4 #1","MutMsn4 #2", "msn4_ko")) %>% 
+  arrange(new_time, genotype, replicate)
+```
+
+```{r}
+MutM4_color <- c("#00BFC4", "#F8766D", "#B79F00", "#E76BF3")
+
+pi.dat.mutM4_OL %>% 
+  subset(., !is.na(new_median)) %>%  
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = new_time), se = FALSE) +
+  scale_x_continuous(breaks = seq(0,240,30), minor_breaks = seq(0,240,30))+
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 18), 
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle=0,hjust=0.5), axis.text = element_text(size = 18), 
+        plot.title = element_text(size = 18, hjust = 0)) + 
+  labs(y = "Cta1-gfp protein level MFI (a.u.)") +
+  scale_color_manual(values= MutM4_color)
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-Msn4BS.png"),
+         width = 7, height = 4,units = 'in', dpi = 300)
+  
+#library(scales)
+#show_col(hue_pal()(5))
+show_col(hue_pal()(6))
+```
+
+box plot + dot plot for trans TF kos CTA1-GFP
+```{r}
+pi.MutM4_OL.tp <- pi.dat.mutM4_OL %>% 
+  filter(time %in% c("0min", "240min" ) & !is.na(median))
+
+
+pi.MutM4_OL.tp %>% 
+  ggplot(aes(x=Genotype,y=new_median,fill = time)) +
+  geom_dotplot(binaxis='y', stackdir='center', binwidth = 1.2,
+               position=position_dodge(1),dotsize = 0.8, stackratio = 0.5, alpha = 0.5) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 18), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle=30,hjust = 1), axis.text = element_text(size = 18), 
+        plot.title = element_text(size = 18, hjust = 0)) + 
+  labs(y = "Cta1-gfp protein level MFI (a.u.)") + 
+  scale_fill_manual(values=c("#999999", "#FF00FF"))
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-2-4Imp-tp.png"),
          width = 7, height = 5,units = 'in', dpi = 300)
   
-
            
+```
 
+#MutSkn7 #1 & #2
+```{r, Import the Data into R}
+files.mutS7 <- dir("input/6_8Imp_gz_merge", pattern = "merge-*") # get the file names of the merged
+files.mutS7 <- file.path("input/6_8Imp_gz_merge", files.mutS7)         # this appends the directory to the file names
+
+names(files.mutS7) <- c("Rep1-H2O2", "Rep1-0Pi","Rep2-0Pi", "Rep3-0Pi" ,"Rep2-H2O2", "Rep3-H2O2")
+
+tp <- c("0min", "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
+
+# import and process the data to the format we want
+## remove characters (0Pi-0min; 240mmin) from group variable 
+dat.ord.mutS7 <- files.mutS7 %>% 
+  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate_at("Group", str_replace, "-H2O2", "") %>% 
+  mutate_at("Group", str_replace, "MIN", "min") %>%
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group)   
+```
+
+
+```{r, Subset the dataset and merge with the genotype information:}
+# get genotype info and petites info
+geno.mutS7 <- read.csv("input/Genotype_6_8Imp.csv")
+names(geno.mutS7) <- c("HB_strain", names(geno)[-1])
+
+# get treatment info
+tr_files.mutS7 <- dir("input/6_8Imp_treatment", pattern = "d0*")
+tr_files.mutS7 <- file.path("input/6_8Imp_treatment", tr_files.mutS7)
+names(tr_files.mutS7) <-  c("Rep1-H2O2", "Rep1-0Pi","Rep2-0Pi", "Rep3-0Pi" ,"Rep2-H2O2", "Rep3-H2O2")
+
+
+# combine HB_strain info to rule out petites
+treat.fil.mutS7 <- tr_files.mutS7 %>% 
+  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(!is.na(`group_name`)) %>% 
+  select(Replicate, genotype = `group_name`, Sample, treat) %>% 
+  left_join(., geno.mutS7, by = c("genotype", "Sample")) # %>% 
+  #subset(!is.na(YPG))
+
+
+# combine genotype and treat variables into the flow data
+data.mutS7 <- left_join(dat.ord.mutS7, treat.fil.mutS7, by = c("Replicate", "Sample"))
+
+
+
+# select out 0Pi data
+pi.dat.mutS7 <- data.mutS7 %>% 
+  filter(treat == "0Pi" & !is.na(YPG) & genotype %in% c("wt","MutS7#1","MutS7#2")) %>%  
+  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
+  mutate(.,new_median =median/1000) %>% 
+  mutate(.,new_time = as.numeric(gsub("min","",time)))%>% 
+  arrange(new_time, genotype, replicate)
+
+pi.dat.mutS7_OL <- add_row(pi.dat,pi.dat.mutS7) %>% 
+  filter(genotype %in% c("wt","MutS7#1","MutS7#2", "skn7_ko")) %>% 
+  arrange(new_time, genotype, replicate)
+```
+
+```{r}
+MutS7_color <- c("#B79F00", "#F8766D", "#619CFF", "#E76BF3")
+
+pi.dat.mutS7_OL %>% 
+  subset(., !is.na(new_median)) %>%  
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = new_time), se = FALSE) +
+  scale_x_continuous(breaks = seq(0,240,30), minor_breaks = seq(0,240,30))+
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 18), 
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle=0,hjust=0.5), axis.text = element_text(size = 18), 
+        plot.title = element_text(size = 18, hjust = 0)) + 
+  labs(y = "Cta1-gfp protein level MFI (a.u.)") +
+  scale_color_manual(values= MutS7_color)
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-Skn7BS.png"),
+         width = 7, height = 4,units = 'in', dpi = 300)
+  
+#library(scales)
+#show_col(hue_pal()(5))
+show_col(hue_pal()(6))
+```
+
+```{r}
+pi.MutS7_OL.tp <- pi.dat.mutS7_OL %>% 
+  filter(time %in% c("0min", "240min" ) & !is.na(median))
+
+
+pi.MutS7_OL.tp %>% 
+  ggplot(aes(x=Genotype,y=new_median,fill = time)) +
+  geom_dotplot(binaxis='y', stackdir='center', binwidth = 1.2,
+               position=position_dodge(1),dotsize = 0.8, stackratio = 0.5, alpha = 0.5) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 18), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle=30,hjust = 1), axis.text = element_text(size = 18), 
+        plot.title = element_text(size = 18, hjust = 0)) + 
+  labs(y = "Cta1-gfp protein level MFI (a.u.)") + 
+  scale_fill_manual(values=c("#999999", "#FF00FF"))
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-6-8Imp-tp.png"),
+         width = 7, height = 5,units = 'in', dpi = 300)
+  
+           
 ```

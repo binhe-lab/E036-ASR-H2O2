@@ -1,0 +1,82 @@
+﻿strain_name,Sample,genotype,YPG
+yH298,A1,wt,Yes
+yH299,B1,wt,Yes
+yH353,C1,MutMsn4 #1,Yes
+yH354,D1,MutMsn4 #1,Yes
+yH355,E1,MutMsn4 #1,Yes
+yH360,F1,MutMsn4Yap1 Com,Yes
+yH361,G1,MutMsn4Yap1 Com,Yes
+yH362,H1,MutMsn4Yap1 Com,NA
+yH357,A2,MutMsn4Yap1 #2,Yes
+yH358,B2,MutMsn4Yap1 #2,Yes
+yH359,C2,MutMsn4Yap1 #2,Yes
+yH384,D2,MutMsn4 #2,Yes
+yH385,E2,MutMsn4 #2,Yes
+yH386,F2,MutMsn4 #2,Yes
+yH387,G2,MutYap1 #1 (2-4),Yes
+yH388,H2,MutYap1 #1 (2-4),Yes
+yH389,A3,MutYap1 #2 (2-4),Yes
+yH390,B3,MutYap1 #2 (2-4),Yes
+yH391,C3,MutYap1 #2 (2-4),NA
+yH374,D3,DelMsn4,Yes
+yH375,E3,DelMsn4,Yes
+yH376,F3,DelMsn4,Yes
+yH378,G3,DelMsn4Yap1,Yes
+yH379,H3,DelMsn4Yap1,Yes
+yH380,A4,DelMsn4Yap1,Yes
+yH382,B4,DelYap1 (2-4),Yes
+yH383,C4,DelYap1 (2-4),Yes
+yH298,A5,wt,Yes
+yH299,B5,wt,Yes
+yH353,C5,MutMsn4 #1,Yes
+yH354,D5,MutMsn4 #1,Yes
+yH355,E5,MutMsn4 #1,Yes
+yH360,F5,MutMsn4Yap1 Com,Yes
+yH361,G5,MutMsn4Yap1 Com,Yes
+yH362,H5,MutMsn4Yap1 Com,NA
+yH357,A6,MutMsn4Yap1 #2,Yes
+yH358,B6,MutMsn4Yap1 #2,Yes
+yH359,C6,MutMsn4Yap1 #2,Yes
+yH384,D6,MutMsn4 #2,Yes
+yH385,E6,MutMsn4 #2,Yes
+yH386,F6,MutMsn4 #2,Yes
+yH387,G6,MutYap1 #1 (2-4),Yes
+yH388,H6,MutYap1 #1 (2-4),Yes
+yH389,A7,MutYap1 #2 (2-4),Yes
+yH390,B7,MutYap1 #2 (2-4),Yes
+yH391,C7,MutYap1 #2 (2-4),NA
+yH374,D7,DelMsn4,Yes
+yH375,E7,DelMsn4,Yes
+yH376,F7,DelMsn4,Yes
+yH378,G7,DelMsn4Yap1,Yes
+yH379,H7,DelMsn4Yap1,Yes
+yH380,A8,DelMsn4Yap1,Yes
+yH382,B8,DelYap1 (2-4),Yes
+yH383,C8,DelYap1 (2-4),Yes
+yH298,A9,wt,Yes
+yH299,B9,wt,Yes
+yH353,C9,MutMsn4 #1,Yes
+yH354,D9,MutMsn4 #1,Yes
+yH355,E9,MutMsn4 #1,Yes
+yH360,F9,MutMsn4Yap1 Com,Yes
+yH361,G9,MutMsn4Yap1 Com,Yes
+yH362,H9,MutMsn4Yap1 Com,NA
+yH357,A10,MutMsn4Yap1 #2,Yes
+yH358,B10,MutMsn4Yap1 #2,Yes
+yH359,C10,MutMsn4Yap1 #2,Yes
+yH384,D10,MutMsn4 #2,Yes
+yH385,E10,MutMsn4 #2,Yes
+yH386,F10,MutMsn4 #2,Yes
+yH387,G10,MutYap1 #1 (2-4),Yes
+yH388,H10,MutYap1 #1 (2-4),Yes
+yH389,A11,MutYap1 #2 (2-4),Yes
+yH390,B11,MutYap1 #2 (2-4),Yes
+yH391,C11,MutYap1 #2 (2-4),NA
+yH374,D11,DelMsn4,Yes
+yH375,E11,DelMsn4,Yes
+yH376,F11,DelMsn4,Yes
+yH378,G11,DelMsn4Yap1,Yes
+yH379,H11,DelMsn4Yap1,Yes
+yH380,A12,DelMsn4Yap1,Yes
+yH382,B12,DelYap1 (2-4),Yes
+yH383,C12,DelYap1 (2-4),Yes
