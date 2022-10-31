@@ -437,7 +437,37 @@ pi.MutS7_OL.tp %>%
   scale_fill_manual(values=c("#999999", "#FF00FF"))
   ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-6-8Imp-tp.png"),
          width = 7, height = 5,units = 'in', dpi = 300)
-  
+
+# combine MutS7 & Mut Msn4 
+data.OL_cb <- add_row(data.OL_mutM4,data.mutS7)
+
+pi.dat.OL_cb <- data.OL_cb %>% 
+  filter(treat == "0Pi" & genotype %in% c("wt","MutS7#1","MutS7#2","8OL","skn7_ko","MutMsn4 #1","MutMsn4 #2","msn4_ko","4OL")) %>%  
+  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
+  mutate(.,new_median =median/1000) %>% 
+  mutate(.,new_time = as.numeric(gsub("min","",time)))%>% 
+  arrange(new_time, genotype, replicate)
+
+pi.OL.tp <- pi.dat.OL_cb %>% 
+  filter(time %in% c("0min", "240min" ) & !is.na(median))
+
+
+pi.OL.tp %>% 
+  ggplot(aes(x=Genotype,y=new_median,fill = time)) +
+  geom_dotplot(binaxis='y', stackdir='center', binwidth = 1.2,
+               position=position_dodge(1),dotsize = 0.8, stackratio = 0.5, alpha = 0.5) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 18), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle=30,hjust = 1), axis.text = element_text(size = 18), 
+        plot.title = element_text(size = 18, hjust = 0)) + 
+  labs(y = "Cta1-gfp protein level MFI (a.u.)") + 
+  scale_fill_manual(values=c("#999999", "#FF00FF"))
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-all-tp.png"),
+         width = 10, height = 5,units = 'in', dpi = 300)
            
 ```
 
