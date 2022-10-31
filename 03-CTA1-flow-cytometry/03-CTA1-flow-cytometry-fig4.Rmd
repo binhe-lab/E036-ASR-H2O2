@@ -181,6 +181,36 @@ pi.tp %>%
   
            
 ```
+#Internal removal/overlaping (OL) variants
+```{r, Import the Data into R}
+files.OL <- dir("input/OL_csv_merge", pattern = "d01*") # get the file names of the merged
+files.OL <- file.path("input/OL_csv_merge", files.OL)         # this appends the directory to the file names
+
+names(files.OL) <- c("Rep1-0Pi","Rep2-0Pi", "Rep3-0Pi")
+
+tp <- c("0min", "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
+
+# import and process the data to the format we want
+## remove characters (0Pi-0min; 240mmin) from group variable 
+dat.ord.OL <- files.OL %>% 
+  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate = `Experiment`, Group , Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate_at("Group", str_replace, "-0Pi", "") %>% 
+  mutate_at("Group", str_replace, "MIN", "min") %>%
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group) 
+
+treat.fil.OL <- read_csv("input/OL_treatment/OL_tr.csv", na = c("","NA","N/A"), col_types = cols()) %>% 
+  select(genotype = `group_name`, Sample, treat)
+
+data.OL.tmp <- left_join(dat.ord.OL, treat.fil.OL, by = c("Sample"))
+data.OL <- add_row(data.cb,data.OL.tmp)
+
+```
+
 #MutMsn4 #1 & #2
 ```{r, Import the Data into R}
 files.mutM4 <- dir("input/2_4Imp_gz_merge", pattern = "merge-*") # get the file names of the merged
@@ -230,28 +260,25 @@ treat.fil.mutM4 <- tr_files.mutM4 %>%
 
 
 # combine genotype and treat variables into the flow data
-data.mutM4 <- left_join(dat.ord.mutM4, treat.fil.mutM4, by = c("Replicate", "Sample"))
-
-
+data.mutM4 <- left_join(dat.ord.mutM4, treat.fil.mutM4, by = c("Replicate", "Sample")) %>% 
+  filter(!is.na(YPG)) %>% 
+  select(Replicate,Plate,Group,Sample,genotype,median,treat)
+data.OL_mutM4 <- add_row(data.OL,data.mutM4)
 
 # select out 0Pi data
-pi.dat.mutM4 <- data.mutM4 %>% 
-  filter(treat == "0Pi" & !is.na(YPG) & genotype %in% c("wt","MutMsn4 #1","MutMsn4 #2")) %>%  
+pi.dat.OL_mutM4 <- data.OL_mutM4 %>% 
+  filter(treat == "0Pi" & genotype %in% c("wt","MutMsn4 #1","MutMsn4 #2","msn4_ko","4OL")) %>%  
   select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
   mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
   mutate(.,new_median =median/1000) %>% 
   mutate(.,new_time = as.numeric(gsub("min","",time)))%>% 
   arrange(new_time, genotype, replicate)
-
-pi.dat.mutM4_OL <- add_row(pi.dat,pi.dat.mutM4) %>% 
-  filter(genotype %in% c("wt","MutMsn4 #1","MutMsn4 #2", "msn4_ko")) %>% 
-  arrange(new_time, genotype, replicate)
 ```
 
 ```{r}
-MutM4_color <- c("#00BFC4", "#F8766D", "#B79F00", "#E76BF3")
+MutM4_color <- c("#B79F00", "#00BFC4",  "#F8766D", "#00BA38", "#F564E3")
 
-pi.dat.mutM4_OL %>% 
+pi.dat.OL_mutM4 %>% 
   subset(., !is.na(new_median)) %>%  
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + geom_point(size = 0.2) + 
   stat_summary(fun = "mean", geom = "point", size = 2) +
@@ -277,7 +304,7 @@ show_col(hue_pal()(6))
 
 box plot + dot plot for trans TF kos CTA1-GFP
 ```{r}
-pi.MutM4_OL.tp <- pi.dat.mutM4_OL %>% 
+pi.MutM4_OL.tp <- pi.dat.OL_mutM4 %>% 
   filter(time %in% c("0min", "240min" ) & !is.na(median))
 
 
@@ -346,28 +373,27 @@ treat.fil.mutS7 <- tr_files.mutS7 %>%
 
 
 # combine genotype and treat variables into the flow data
-data.mutS7 <- left_join(dat.ord.mutS7, treat.fil.mutS7, by = c("Replicate", "Sample"))
+data.mutS7 <- left_join(dat.ord.mutS7, treat.fil.mutS7, by = c("Replicate", "Sample")) %>% 
+  filter(!is.na(YPG)) %>% 
+  select(Replicate,Plate,Group,Sample,genotype,median,treat)
 
+data.OL_mutS7 <- add_row(data.OL,data.mutS7)
 
 
 # select out 0Pi data
-pi.dat.mutS7 <- data.mutS7 %>% 
-  filter(treat == "0Pi" & !is.na(YPG) & genotype %in% c("wt","MutS7#1","MutS7#2")) %>%  
+pi.dat.OL_mutS7 <- data.OL_mutS7 %>% 
+  filter(treat == "0Pi" & genotype %in% c("wt","MutS7#1","MutS7#2","8OL","skn7_ko")) %>%  
   select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
   mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
   mutate(.,new_median =median/1000) %>% 
   mutate(.,new_time = as.numeric(gsub("min","",time)))%>% 
   arrange(new_time, genotype, replicate)
-
-pi.dat.mutS7_OL <- add_row(pi.dat,pi.dat.mutS7) %>% 
-  filter(genotype %in% c("wt","MutS7#1","MutS7#2", "skn7_ko")) %>% 
-  arrange(new_time, genotype, replicate)
 ```
 
 ```{r}
-MutS7_color <- c("#B79F00", "#F8766D", "#619CFF", "#E76BF3")
+MutS7_color <- c("#B79F00", "#00BFC4",  "#F8766D", "#619CFF", "#F564E3")
 
-pi.dat.mutS7_OL %>% 
+pi.dat.OL_mutS7 %>% 
   subset(., !is.na(new_median)) %>%  
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + geom_point(size = 0.2) + 
   stat_summary(fun = "mean", geom = "point", size = 2) +
@@ -392,7 +418,7 @@ show_col(hue_pal()(6))
 ```
 
 ```{r}
-pi.MutS7_OL.tp <- pi.dat.mutS7_OL %>% 
+pi.MutS7_OL.tp <- pi.dat.OL_mutS7 %>% 
   filter(time %in% c("0min", "240min" ) & !is.na(median))
 
 
@@ -414,3 +440,4 @@ pi.MutS7_OL.tp %>%
   
            
 ```
+
