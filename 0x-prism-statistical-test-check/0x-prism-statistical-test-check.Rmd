@@ -34,4 +34,6 @@ rim15.result = wilcox.test(rim15_ko$rim15_MOvsMM,rim15_ko$rim15_POvsPM, paired =
 rim15.wt.result = wilcox.test(rim15_ko$wt_MOvsMM, rim15_ko$wt_POvsPM, paired = TRUE)
 print(rim15.wt.result)
 print(rim15.result)
+
+# The p value calculated here is same to the one calculated by prism, however, the p.adjusted is different in some groups
 ```
