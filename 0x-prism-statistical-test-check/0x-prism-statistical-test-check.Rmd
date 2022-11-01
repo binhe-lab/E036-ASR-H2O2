@@ -26,7 +26,7 @@ print(cg.result)
 print(sc.result)
 
 cta1.wt.result = wilcox.test(cta1_ko$wt_MOvsMM,cta1_ko$wt_POvsPM, paired = TRUE)
-cta1.result = wilcox.test(cta1_ko$cta1_MOvsMM,cta1_ko$cta1_POvsPM, paired = TRUE)
+cta1.result = wilcox.test(cta1_ko$cta1_MOvsMM,cta1_ko$cta1_POvsPM, paired = TRUE, p.adjust.methods = "holm")
 print(cta1.wt.result)
 print(cta1.result)
 
@@ -34,6 +34,12 @@ rim15.result = wilcox.test(rim15_ko$rim15_MOvsMM,rim15_ko$rim15_POvsPM, paired =
 rim15.wt.result = wilcox.test(rim15_ko$wt_MOvsMM, rim15_ko$wt_POvsPM, paired = TRUE)
 print(rim15.wt.result)
 print(rim15.result)
+
+rim15 <- read.csv("input/rim15_ko.csv")
+
+#rim15 %>% group_by(genotype) %>% 
+#  wilcox.test(rim15$MOvsMM ~ rim15$POvsPM, p.adjust.method="holm", paired = TRUE)
+
 
 # The p value calculated here is same to the one calculated by prism, however, the p.adjusted is different in some groups
 ```
