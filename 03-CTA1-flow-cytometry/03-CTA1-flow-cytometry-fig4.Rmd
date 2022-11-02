@@ -135,7 +135,8 @@ genotype_color <- c("#F8766D", "#00BFC4", "#00BA38", "#619CFF", "#E76BF3", "#B79
 # map the color to the genotype variable within pi.dat in its order m2-m4-m4s7-s7-wt-y1
 my_genotype <- c("wt", "msn2_ko", "msn4_ko","skn7_ko", "yap1_ko", "msn4skn7_ko")
 
-pi.dat %>% subset(., !is.na(new_median)) %>%  
+pi.dat %>%# subset(., !is.na(new_median)) %>%  
+  filter(!is.na(new_median)) %>% 
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + geom_point(size = 0.2) + 
   stat_summary(fun = "mean", geom = "point", size = 2) +
   stat_smooth(aes(x = new_time), se = FALSE) +
@@ -162,7 +163,16 @@ box plot + dot plot for trans TF kos CTA1-GFP
 pi.tp <- pi.dat %>% 
   filter(time %in% c("0min", "240min" ) & !is.na(median))
 
+pi.tp %>% 
+  mutate(Genotype = factor(Genotype, levels = c("wt", "yap1", "msn2", "msn4", "skn7", "msn4skn7"))) %>% 
+  ggplot(aes(x=Genotype, y=new_median, color = time)) +
+  geom_point(aes(x = Genotype, y = new_median), position = position_jitterdodge(jitter.width = 1)) +
+  stat_summary(aes(group = time), fun = "median", geom = "point", 
+               color = "gray50", position = position_dodge()) +
+  scale_color_manual(values = c("0min" = "gray20", "240min" = "red3"))
+```
 
+```{r}
 pi.tp %>% 
   ggplot(aes(x=Genotype,y=new_median,fill = time)) +
   geom_dotplot(binaxis='y', stackdir='center', binwidth = 1.2,
