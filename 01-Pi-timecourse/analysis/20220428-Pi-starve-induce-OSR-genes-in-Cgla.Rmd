@@ -223,6 +223,10 @@ change the fond size and style of myCompare
 mycomare_rl: remove the legends
 ```{r}
 myCompare <- function(genes = "YML123C"){
+  # ------
+  # this function is used to extract and assemble the expression data from the two species
+  # it returns a tibble that can be used for plotting
+  # ------
   # check gene names against the S. cerevisiae microarray annotation
   scerArray <- rowData(gse)$ORF
   names(scerArray) <- rowData(gse)$Name
@@ -260,98 +264,45 @@ myCompare <- function(genes = "YML123C"){
   Dat <- bind_rows(`S. cerevisiae` = scerDat, `C. glabrata` = cglaDat, .id = "species") %>%
     # sort the gene list by Cgla induction mean
     mutate(ScerName = forcats::fct_reorder(ScerName, log2FC, mean, .desc = TRUE))
-  
-  # plotting
-  p <- ggplot(Dat, aes(x = ScerName, y = log2FC, group = species)) +
-    geom_bar(aes(fill = species), stat = "summary", fun = "mean", alpha = 0.9,
-             position = position_dodge(0.9)) +
-    geom_point(aes(color = species), position = position_dodge(0.9), size = 1) +
-    geom_hline(yintercept = 0, linetype = 1, color = "gray20") +
-    geom_hline(yintercept = 1, linetype = 2, color = "gray50") +
-    scale_color_manual(values = c("S. cerevisiae" = "gray30", "C. glabrata" = "orange2"), guide = NULL) +
-    scale_fill_manual("Species", values = c("S. cerevisiae" = "yellowgreen", "C. glabrata" = "royalblue3")) +
-    labs(x = expression(paste(italic("S. cerevisiae"), " gene names")),
-         y = "log2 Fold Change") +
-    #coord_flip() + 
-    theme_bw(base_size = 12) + 
-    theme(legend.title = element_blank(),
-          legend.text = element_text(size = 18, face = 3), 
-          legend.position = c(0.8, 0.8),
-          legend.background = element_blank(),
-          axis.text.y = element_text(size = 18),
-          axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
-          axis.title = element_text(size = 20),
-          axis.title.x = element_blank(),
-          plot.title = element_text(size = 24)) +
-    background_grid(major = "y", minor = "none")
-  return(p)
+  return(Dat)
 }
 
-myCompare_rl <- function(genes = "YML123C"){
-  # check gene names against the S. cerevisiae microarray annotation
-  scerArray <- rowData(gse)$ORF
-  names(scerArray) <- rowData(gse)$Name
-  if(all(!genes %in% scerArray)){
-    stop("Check ORF names. None are present in the annotation file.")
-  }else if(any(!genes %in% scerArray)){
-    print("The following S. cerevisiae genes are not included on the microarray chip.")
-    print(setdiff(genes, scerArray))
-  }else if(any(!genes %in% re.scToCg$ScerID)){
-    # additionally check if the genes have a C. glabrata ortholog
-    print("The following S. cerevisiae genes do not have a C. glabrata ortholog.")
-    print(setdiff(genes, re.scToCg$ScerID))
-  }
-  # construct a gene set tibble that includes orthologous gene names in both species
-  geneSet <- rowData(gse) %>% 
-    as_tibble(rownames = NULL) %>% 
-    filter(ORF %in% genes) %>% 
-    select(ScerID = ORF) %>% 
-    inner_join(re.scToCg, by = "ScerID")
-  
-  # extract Scer data
-  probes <- rowData(gse1) %>% as_tibble() %>% filter(ORF %in% geneSet$ScerID) %>% select(ID, ORF)
-  scerDat <- assay(gse1)[probes$ID,,drop=FALSE] %>% 
-    as_tibble(rownames = "ID") %>% 
-    left_join(probes, by = "ID") %>% 
-    pivot_longer(cols = starts_with("GSM"), names_to = NULL, values_to = "log2FC") %>% 
-    select(ScerID = ORF, log2FC) %>% 
-    left_join(select(geneSet, ScerID, ScerName), by = "ScerID") %>% 
-    select(ScerName, ID = ScerID, log2FC)
-  # extract Cgla data
-  cglaDat <- cgla.1hr %>% 
-    filter(CglaID %in% na.omit(geneSet$CglaID)) %>% 
-    left_join(select(geneSet, CglaID, ScerName), by = "CglaID") %>% 
-    select(ScerName, ID = CglaID, log2FC)
-  Dat <- bind_rows(`S. cerevisiae` = scerDat, `C. glabrata` = cglaDat, .id = "species") %>%
-    # sort the gene list by Cgla induction mean
-    mutate(ScerName = forcats::fct_reorder(ScerName, log2FC, mean, .desc = TRUE))
-  
-  # plotting
-  p <- ggplot(Dat, aes(x = ScerName, y = log2FC, group = species)) +
+myPlotExn <- function(dat, col = c("S. cerevisiae" = "gray30", "C. glabrata" = "orange2"),
+                      fill = c("S. cerevisiae" = "gray80", "C. glabrata" = "gray20"),
+                      font_size = 16, legend = TRUE, grid = FALSE)
+{
+  ## -------
+  ## this function creates a reproducible plot allowing flexibility in color and legend
+  geoms <- list(
     geom_bar(aes(fill = species), stat = "summary", fun = "mean", alpha = 0.9,
-             position = position_dodge(0.9)) +
-    geom_point(aes(color = species), position = position_dodge(0.9), size = 1) +
-    geom_hline(yintercept = 0, linetype = 1, color = "gray20") +
-    geom_hline(yintercept = 1, linetype = 2, color = "gray50") +
-    scale_color_manual(values = c("S. cerevisiae" = "gray30", "C. glabrata" = "orange2"), guide = NULL) +
-    scale_fill_manual("Species", values = c("S. cerevisiae" = "yellowgreen", "C. glabrata" = "royalblue3")) +
+             position = position_dodge(0.9)),
+    geom_point(aes(color = species), position = position_dodge(0.9), size = 1),
+    geom_hline(yintercept = 0, linetype = 1, color = "gray20"),
+    geom_hline(yintercept = 1, linetype = 2, color = "gray50"),
+    scale_color_manual(values = col, guide = NULL),
+    scale_fill_manual("Species", values = fill),
     labs(x = expression(paste(italic("S. cerevisiae"), " gene names")),
-         y = "log2 Fold Change") +
-    #coord_flip() + 
-    theme_bw(base_size = 12) + 
-    theme(legend.position = "None",
-          axis.text.y = element_text(size = 18),
-          axis.text.x = element_text(angle = 45, hjust = 1, size = 18),
-          axis.title = element_text(size = 20),
+         y = "log2 Fold Change"),
+    theme_bw(base_size = font_size),
+    theme(legend.title = element_blank(),
+          legend.text = element_text(size = rel(1), face = 3), 
+          legend.position = c(0.7, 0.8),
+          legend.background = element_blank(),
+          axis.text.y = element_text(size = rel(1)),
+          axis.text.x = element_text(angle = 45, hjust = 1, size = rel(1)),
+          axis.title = element_text(size = rel(1)),
           axis.title.x = element_blank(),
-          plot.title = element_text(size = 24)) +
-    background_grid(major = "y", minor = "none")
+          plot.title = element_text(size = rel(1.5))),
+    if(!legend) theme(legend.position = "none"),
+    if(!grid) background_grid(major = "none", minor = "none")
+  )
+  p <- ggplot(dat, aes(x = ScerName, y = log2FC, group = species)) + geoms
   return(p)
 }
 ```
 
 Add the TF into the group
-```{r plot_gene, echo=FALSE}
+```{r}
 group <- c("antioxidant", "protein degradation", "chaperon","TF")
 geneList <- lapply(group, function(x){
   scer.osr %>% filter(category == x) %>% pull(scer.sys)
@@ -362,6 +313,31 @@ names(geneList) <- group
 geneList$antioxidant <- setdiff(c(geneList$antioxidant, "YDR256C", "YBL064C", "YCR083W"), 
                                 c("YDR453C", "YAL012W"))
 geneList$TF <- c("YML007W", "YHR206W", "YMR037C", "YKL062W")
+```
+
+Get the dataset for plotting
+```{r}
+dat <- lapply(geneList, myCompare)
+```
+
+Make individual plots
+```{r, fig.width=8, fig.height=6}
+p.obj <- list(
+  myPlotExn(dat$antioxidant, legend = TRUE) + scale_y_continuous(limits = c(-1, NA)),
+  myPlotExn(dat$`protein degradation`, legend = FALSE) + scale_y_continuous(limits = c(-.5, NA)),
+  myPlotExn(dat$chaperon, legend = FALSE) + theme(axis.title = element_blank()) + scale_y_continuous(limits = c(-1.5, NA)),
+  myPlotExn(dat$TF, legend = FALSE) + theme(axis.title = element_blank())
+)
+names(p.obj) <- names(dat)
+row1 <- plot_grid(NULL, p.obj$antioxidant)
+row2 <- plot_grid(p.obj$`protein degradation`, p.obj$chaperon, p.obj$TF, nrow = 1, align = "hv",
+                  rel_widths = c(7, 6, 5))
+plot_grid(row1, row2, nrow = 2)
+ggsave("../output/20221102-HBZ-compare-gene-exn-multipanel.png")
+```
+
+Jinye's addition, deprecated
+```{r plot_gene, eval=FALSE, include=FALSE, echo=FALSE}
 for (i in seq_along(geneList)){
   print(group[i])
   if (i == 1) {p <- myCompare(geneList[[i]])}
