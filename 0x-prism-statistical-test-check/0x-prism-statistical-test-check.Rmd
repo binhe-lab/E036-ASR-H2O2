@@ -12,9 +12,11 @@ library(dplyr)
 
 
 ```{r}
+#holm sidac method from wiki: https://en.wikipedia.org/wiki/Holm%E2%80%93Bonferroni_method
+
 qPCR <- read.csv("input/qPCR.csv")
 qPCR.result = wilcox.test(qPCR$Phosphate_Starvation,qPCR$Control, paired = TRUE)
-print(qPCR.result)
+print(qPCR.result)# p = 0.016, do not need to adjust only one comparison, same to the prism p-value
 
 cg_sc <- read.csv("input/Cg_Sc_ASR.csv")
 cta1_ko <- read.csv("input/cta1_ko_ASR.csv")
@@ -22,23 +24,52 @@ rim15_ko <- read.csv("input/rim15_ko_ASR.csv")
 
 cg.result = wilcox.test(cg_sc$Cg_MOvsMM, cg_sc$Cg_POvsPM, paired = TRUE)
 sc.result = wilcox.test(cg_sc$Sc_MOvsMM, cg_sc$Sc_POvsPM, paired = TRUE)
-print(cg.result)
-print(sc.result)
+print(cg.result) # unadjusted p-value = 0.007813
+print(sc.result) # unadjusted p-value = 0.7422
+# adjust the p-value using the holm-sidac method - used in prism,
+# 2 comparisons, m = 2
+p_cg_prism = 0.016
+p_cg_adj = 1-(1-0.007813)^2
+if (p_cg_adj < 0.05) {
+print(paste("R caculated adjusted p value is",p_cg_adj,"and the prism calculated (adjusted) p_value using holm-sidac method is",p_cg_prism))
+} else {
+print("no significant difference")
+}
+
+
 
 cta1.wt.result = wilcox.test(cta1_ko$wt_MOvsMM,cta1_ko$wt_POvsPM, paired = TRUE)
 cta1.result = wilcox.test(cta1_ko$cta1_MOvsMM,cta1_ko$cta1_POvsPM, paired = TRUE, p.adjust.methods = "holm")
-print(cta1.wt.result)
-print(cta1.result)
+print(cta1.wt.result) # unadjusted p-value = 0.03125
+print(cta1.result) # unadjusted p-value = 0.3125
+p_cta1.wt_prism = 0.062
+p_cta1.wt_adj = 1-(1-0.03125)^2
+if (p_cta1.wt_adj < 0.05) {
+  print(paste("R calculated adjusted p value is", p_cta1.wt_adj, "and the prism calculated (adjusted) p_value using holm sidac method is", p_cta1.wt_prism))
+} else{
+  print(paste("no sig diff", p_cta1.wt_adj))
+}
+
 
 rim15.result = wilcox.test(rim15_ko$rim15_MOvsMM,rim15_ko$rim15_POvsPM, paired = TRUE)
 rim15.wt.result = wilcox.test(rim15_ko$wt_MOvsMM, rim15_ko$wt_POvsPM, paired = TRUE)
-print(rim15.wt.result)
-print(rim15.result)
+print(rim15.wt.result) # unadjusted p-value = 0.01563
+print(rim15.result) # unadjusted p-value = 0.01563 
+p_rim15_prism = 0.031
+p_rim15_adj = 1-(1-0.01563)^2
+if (p_rim15_adj < 0.05) {
+  print(paste("R calculated adjusted p value is", p_rim15_adj, "and the prism calculated (adjusted) p_value using holm sidac method is", p_rim15_prism))
+} else{
+  print(paste("no sig diff", p_rim15_adj))
+}
 
-rim15 <- read.csv("input/rim15_ko.csv")
-
-#rim15 %>% group_by(genotype) %>% 
-#  wilcox.test(rim15$MOvsMM ~ rim15$POvsPM, p.adjust.method="holm", paired = TRUE)
+p_rim15.wt_prism = 0.031
+p_rim15.wt_adj = max(1-(1-0.01563)^2,1-(1-0.01563)^1)
+if (p_rim15_adj < 0.05) {
+  print(paste("R calculated adjusted p value is", p_rim15.wt_adj, "and the prism calculated (adjusted) p_value using holm sidac method is", p_rim15.wt_prism))
+} else{
+  print(paste("no sig diff", p_rim15.wt_adj))
+}
 
 
 # The p value calculated here is same to the one calculated by prism, however, the p.adjusted is different in some groups
