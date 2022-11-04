@@ -120,7 +120,14 @@ pi.dat <- data.cb %>%
   mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
   mutate(.,new_median =median/1000) %>% 
   mutate(.,new_time = as.numeric(gsub("min","",time)))%>% 
-  arrange(new_time, genotype, replicate) 
+  arrange(new_time, genotype, replicate)
+
+pi.dat.summary <- pi.dat %>% 
+  filter(!is.na(new_median)) %>%
+  group_by(Genotype,time) %>% 
+  summarise(sd = sd(new_median, na.rm = TRUE), mean_median = mean(new_median)) %>% 
+  mutate(.,new_time = as.numeric(gsub("min","",time)))
+  # ,new_time = new_time
 
 # equivalent to !genotype %in% c("skn7yap1_ko","msn2msn4_ko") is: genotype != "skn7yap1_ko" & genotype !="msn2msn4_ko")
 # cannot write as: genotype != c("skn7yap1_ko","msn2msn4_ko")
@@ -142,13 +149,14 @@ pi.dat %>%# subset(., !is.na(new_median)) %>%
   stat_smooth(aes(x = new_time), se = FALSE) +
   scale_x_continuous(breaks = seq(0,240,30), minor_breaks = seq(0,240,30))+
   theme_bw() +
-  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+  theme(legend.position=c(0.15,0.72), legend.background = element_rect(fill = "white", color = "black", size = 1),
+        legend.box = "vertical", legend.text = element_text(size=18), 
         legend.title = element_text(size = 18),
         axis.title = element_text(size = 18), 
         axis.title.x = element_blank(),
         axis.text.x = element_text(angle=0,hjust=0.5), axis.text = element_text(size = 18), 
         plot.title = element_text(size = 18, hjust = 0)) + 
-  labs(y = "Cta1-gfp protein level MFI (a.u.)") +
+  labs(y = "Cta1-GFP protein level (a.u.)") +
   scale_color_manual(values= genotype_color)
   ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-trans-TFs-kos.png"),
          width = 7, height = 4,units = 'in', dpi = 300)
@@ -157,6 +165,26 @@ pi.dat %>%# subset(., !is.na(new_median)) %>%
 #show_col(hue_pal()(5))
 #show_col(hue_pal()(6))
 
+pi.dat.summary %>%
+  ggplot(aes(x = new_time, y = mean_median, color = Genotype)) + geom_point(size = 0.5) + 
+  geom_errorbar(aes(ymin=mean_median-sd, ymax=mean_median+sd), width=3, size = 0.8 ) +
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = new_time), se = FALSE) +
+  scale_x_continuous(breaks = seq(0,240,30), minor_breaks = seq(0,240,30))+
+  theme_bw() +
+  theme(legend.position=c(0.15,0.72), legend.background = element_rect(fill = "white", color = "black", size = 1),
+        legend.box = "vertical", legend.text = element_text(size=18), 
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 18), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle=0,hjust=0.5), axis.text = element_text(size = 18), 
+        plot.title = element_text(size = 18, hjust = 0)) + 
+  labs(y = "Cta1-GFP protein level (a.u.)") +
+  scale_color_manual(values= genotype_color)
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-sd-trans-TFs-kos.png"),
+         width = 7, height = 4,units = 'in', dpi = 300)  
+  
+  # position=position_dodge(0.5)
 ```
 box plot + dot plot for trans TF kos CTA1-GFP
 ```{r}
@@ -295,14 +323,15 @@ pi.dat.OL_mutM4 %>%
   stat_smooth(aes(x = new_time), se = FALSE) +
   scale_x_continuous(breaks = seq(0,240,30), minor_breaks = seq(0,240,30))+
   theme_bw() +
-  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+  theme(legend.position=c(0.18,0.75), legend.background = element_rect(fill = "white", color = "black", size = 1),
+        legend.box = "vertical", legend.text = element_text(size=18), 
         legend.title = element_text(size = 18),
         axis.title = element_text(size = 18), 
-        axis.title.y = element_blank(),
+        axis.title.y = element_text(size = 18),
         axis.title.x = element_blank(),
         axis.text.x = element_text(angle=0,hjust=0.5), axis.text = element_text(size = 18), 
         plot.title = element_text(size = 18, hjust = 0)) + 
-  labs(y = "Cta1-gfp protein level MFI (a.u.)") +
+  labs(y = "Cta1-GFP protein level (a.u.)") +
   scale_color_manual(values= MutM4_color)
   ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-Msn4BS.png"),
          width = 7, height = 4,units = 'in', dpi = 300)
