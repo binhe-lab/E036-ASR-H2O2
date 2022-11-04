@@ -116,17 +116,17 @@ data.cb <- add_row(data.tmp, data.m4s7)
 # select out 0Pi data
 pi.dat <- data.cb %>% 
   filter(treat == "0Pi" & !genotype %in% c("skn7yap1_ko","msn2msn4_ko")) %>%  
-  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
   mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
   mutate(.,new_median =median/1000) %>% 
-  mutate(.,new_time = as.numeric(gsub("min","",time)))%>% 
+  mutate(.,new_time = as.numeric(gsub("min","",Time)))%>% 
   arrange(new_time, genotype, replicate)
 
 pi.dat.summary <- pi.dat %>% 
   filter(!is.na(new_median)) %>%
-  group_by(Genotype,time) %>% 
+  group_by(Genotype,Time) %>% 
   summarise(sd = sd(new_median, na.rm = TRUE), mean_median = mean(new_median)) %>% 
-  mutate(.,new_time = as.numeric(gsub("min","",time)))
+  mutate(.,new_time = as.numeric(gsub("min","",Time)))
   # ,new_time = new_time
 
 # equivalent to !genotype %in% c("skn7yap1_ko","msn2msn4_ko") is: genotype != "skn7yap1_ko" & genotype !="msn2msn4_ko")
@@ -158,8 +158,8 @@ pi.dat %>%# subset(., !is.na(new_median)) %>%
         plot.title = element_text(size = 18, hjust = 0)) + 
   labs(y = "Cta1-GFP protein level (a.u.)") +
   scale_color_manual(values= genotype_color)
-  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-trans-TFs-kos.png"),
-         width = 7, height = 4,units = 'in', dpi = 300)
+  #ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-trans-TFs-kos.png"),
+   #      width = 7, height = 4,units = 'in', dpi = 300)
 
 #library(scales)
 #show_col(hue_pal()(5))
@@ -172,7 +172,7 @@ pi.dat.summary %>%
   stat_smooth(aes(x = new_time), se = FALSE) +
   scale_x_continuous(breaks = seq(0,240,30), minor_breaks = seq(0,240,30))+
   theme_bw() +
-  theme(legend.position=c(0.15,0.72), legend.background = element_rect(fill = "white", color = "black", size = 1),
+  theme(legend.position=c(0.18,0.75), legend.background = element_rect(fill = "white", color = "black", size = 1),
         legend.box = "vertical", legend.text = element_text(size=18), 
         legend.title = element_text(size = 18),
         axis.title = element_text(size = 18), 
@@ -182,43 +182,39 @@ pi.dat.summary %>%
   labs(y = "Cta1-GFP protein level (a.u.)") +
   scale_color_manual(values= genotype_color)
   ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-sd-trans-TFs-kos.png"),
-         width = 7, height = 4,units = 'in', dpi = 300)  
+         width = 7, height = 5,units = 'in', dpi = 300)  
   
   # position=position_dodge(0.5)
 ```
 box plot + dot plot for trans TF kos CTA1-GFP
 ```{r}
 pi.tp <- pi.dat %>% 
-  filter(time %in% c("0min", "240min" ) & !is.na(median))
+  filter(Time %in% c("0min", "240min" ) & !is.na(median))
 
 pi.tp %>% 
   mutate(Genotype = factor(Genotype, levels = c("wt", "yap1", "msn2", "msn4", "skn7", "msn4skn7"))) %>% 
-  ggplot(aes(x=Genotype, y=new_median, color = time)) +
+  ggplot(aes(x=Genotype, y=new_median, color = Time)) +
   geom_point(aes(x = Genotype, y = new_median), position = position_jitterdodge(jitter.width = 1)) +
-  stat_summary(aes(group = time), fun = "median", geom = "point", 
-               color = "gray50", position = position_dodge()) +
-  scale_color_manual(values = c("0min" = "gray20", "240min" = "red3"))
-```
-
-```{r}
-pi.tp %>% 
-  ggplot(aes(x=Genotype,y=new_median,fill = time)) +
-  geom_dotplot(binaxis='y', stackdir='center', binwidth = 1.2,
-               position=position_dodge(1),dotsize = 0.8, stackratio = 0.5, alpha = 0.5) +
   theme_bw() +
-  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+  theme(legend.position=c(0.9,0.85), legend.background = element_rect(fill = "white", color = "black", size = 1), legend.box = "vertical", legend.text = element_text(size=18), 
         legend.title = element_text(size = 18),
         axis.title = element_text(size = 18), 
         axis.title.x = element_blank(),
         axis.text.x = element_text(angle=30,hjust = 1, vjust = 1), axis.text = element_text(size = 18), 
         plot.title = element_text(size = 18, hjust = 0)) + 
-  labs(y = "Cta1-gfp protein level MFI (a.u.)") + 
-  scale_fill_manual(values=c("#999999", "#FF00FF"))
-  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-TFs-kos-tp.png"),
-         width = 10, height = 5,units = 'in', dpi = 300)
+  stat_summary(aes(group = Time), fun = "median", geom = "point", 
+               color = "gray50", position = position_dodge()) + 
+  labs(y = "Cta1-GFP protein level (a.u.)") +
+  scale_color_manual(values = c("0min" = "#999999", "240min" = "#F564E3"))
+  #ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-TFs-kos-tp.png"),
+   #      width = 10, height = 5,units = 'in', dpi = 300)
   
-           
+
+#library(scales)
+#show_col(hue_pal()(5))
+#show_col(hue_pal()(6))
 ```
+
 #Internal removal/overlaping (OL) variants
 ```{r, Import the Data into R}
 files.OL <- dir("input/OL_csv_merge", pattern = "d01*") # get the file names of the merged
@@ -306,11 +302,17 @@ data.OL_mutM4 <- add_row(data.OL,data.mutM4)
 # select out 0Pi data
 pi.dat.OL_mutM4 <- data.OL_mutM4 %>% 
   filter(treat == "0Pi" & genotype %in% c("wt","MutMsn4 #1","MutMsn4 #2","msn4_ko","4OL")) %>%  
-  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
   mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
   mutate(.,new_median =median/1000) %>% 
-  mutate(.,new_time = as.numeric(gsub("min","",time)))%>% 
+  mutate(.,new_time = as.numeric(gsub("min","",Time)))%>% 
   arrange(new_time, genotype, replicate)
+
+pi.dat.OL_mutM4.summary <- pi.dat.OL_mutM4 %>% 
+  filter(!is.na(new_median)) %>%
+  group_by(Genotype,Time) %>% 
+  summarise(sd = sd(new_median, na.rm = TRUE), mean_median = mean(new_median)) %>% 
+  mutate(.,`Time (min)`= as.numeric(gsub("min","",Time)))
 ```
 
 ```{r}
@@ -333,35 +335,57 @@ pi.dat.OL_mutM4 %>%
         plot.title = element_text(size = 18, hjust = 0)) + 
   labs(y = "Cta1-GFP protein level (a.u.)") +
   scale_color_manual(values= MutM4_color)
-  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-Msn4BS.png"),
-         width = 7, height = 4,units = 'in', dpi = 300)
+  #ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-Msn4BS.png"),
+   #      width = 7, height = 4,units = 'in', dpi = 300)
+
+pi.dat.OL_mutM4.summary %>%
+  ggplot(aes(x = `Time (min)`, y = mean_median, color = Genotype)) + geom_point(size = 0.5) + 
+  geom_errorbar(aes(ymin=mean_median-sd, ymax=mean_median+sd), width=3, size = 0.8 ) +
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = `Time (min)`), se = FALSE) +
+  scale_x_continuous(breaks = seq(0,240,30), minor_breaks = seq(0,240,30))+
+  theme_bw() +
+  theme(legend.position=c(0.18,0.75), legend.background = element_rect(fill = "white", color = "black", size = 1),
+        legend.box = "vertical", legend.text = element_text(size=18), 
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.text.x = element_text(angle=0,hjust=0.5), axis.text = element_text(size = 18), 
+        plot.title = element_text(size = 18, hjust = 0)) + 
+  labs(y = "Cta1-GFP protein level (a.u.)") +
+  scale_color_manual(values= MutM4_color)
+  #ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-sd-cis-Msn4BS-kos.png"),
+   #      width = 7, height = 5,units = 'in', dpi = 300) 
+
   
 #library(scales)
 #show_col(hue_pal()(5))
-show_col(hue_pal()(6))
+#show_col(hue_pal()(6))
 ```
 
 box plot + dot plot for trans TF kos CTA1-GFP
 ```{r}
 pi.MutM4_OL.tp <- pi.dat.OL_mutM4 %>% 
-  filter(time %in% c("0min", "240min" ) & !is.na(median))
+  filter(Time %in% c("0min", "240min" ) & !is.na(median))
 
 
 pi.MutM4_OL.tp %>% 
-  ggplot(aes(x=Genotype,y=new_median,fill = time)) +
-  geom_dotplot(binaxis='y', stackdir='center', binwidth = 1.2,
-               position=position_dodge(1),dotsize = 0.8, stackratio = 0.5, alpha = 0.5) +
+  mutate(Genotype = factor(Genotype, levels = c("wt", "msn4", "4OL", "MutMsn4 #1", "MutMsn4 #2"))) %>% 
+  ggplot(aes(x=Genotype, y=new_median, color = Time)) +
+  geom_point(aes(x = Genotype, y = new_median), position = position_jitterdodge(jitter.width = 1)) +
   theme_bw() +
-  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+  theme(legend.position=c(0.4,0.85), legend.background = element_rect(fill = "white", color = "black", size = 1), legend.box = "vertical", legend.text = element_text(size=18), 
         legend.title = element_text(size = 18),
         axis.title = element_text(size = 18), 
         axis.title.x = element_blank(),
-        axis.text.x = element_text(angle=30,hjust = 1), axis.text = element_text(size = 18), 
+        axis.text.x = element_text(angle=30,hjust = 1, vjust = 1), axis.text = element_text(size = 18), 
         plot.title = element_text(size = 18, hjust = 0)) + 
-  labs(y = "Cta1-gfp protein level MFI (a.u.)") + 
-  scale_fill_manual(values=c("#999999", "#FF00FF"))
-  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-2-4Imp-tp.png"),
-         width = 7, height = 5,units = 'in', dpi = 300)
+  stat_summary(aes(group = Time), fun = "median", geom = "point", 
+               color = "gray50", position = position_dodge()) + 
+  labs(y = "Cta1-GFP protein level (a.u.)") +
+  scale_color_manual(values = c("0min" = "#999999", "240min" = "#F564E3"))
+  #ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-2-4Imp-tp.png"),
+   #      width = 7, height = 5,units = 'in', dpi = 300)
   
            
 ```
@@ -422,11 +446,17 @@ data.OL_mutS7 <- add_row(data.OL,data.mutS7)
 # select out 0Pi data
 pi.dat.OL_mutS7 <- data.OL_mutS7 %>% 
   filter(treat == "0Pi" & genotype %in% c("wt","MutS7#1","MutS7#2","8OL","skn7_ko")) %>%  
-  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
   mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
   mutate(.,new_median =median/1000) %>% 
-  mutate(.,new_time = as.numeric(gsub("min","",time)))%>% 
+  mutate(.,new_time = as.numeric(gsub("min","",Time)))%>% 
   arrange(new_time, genotype, replicate)
+
+pi.dat.OL_mutS7.summary <- pi.dat.OL_mutS7 %>% 
+  filter(!is.na(new_median)) %>%
+  group_by(Genotype,Time) %>% 
+  summarise(sd = sd(new_median, na.rm = TRUE), mean_median = mean(new_median)) %>% 
+  mutate(.,`Time (min)`= as.numeric(gsub("min","",Time)))
 ```
 
 ```{r}
@@ -446,67 +476,95 @@ pi.dat.OL_mutS7 %>%
         axis.title.x = element_blank(),
         axis.text.x = element_text(angle=0,hjust=0.5), axis.text = element_text(size = 18), 
         plot.title = element_text(size = 18, hjust = 0)) + 
-  labs(y = "Cta1-gfp protein level MFI (a.u.)") +
+  labs(y = "Cta1-GFP protein level (a.u.)") +
   scale_color_manual(values= MutS7_color)
-  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-Skn7BS.png"),
-         width = 7, height = 4,units = 'in', dpi = 300)
+  #ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-Skn7BS.png"),
+   #      width = 7, height = 4,units = 'in', dpi = 300)
+
+pi.dat.OL_mutS7.summary %>%
+  ggplot(aes(x = `Time (min)`, y = mean_median, color = Genotype)) + geom_point(size = 0.5) + 
+  geom_errorbar(aes(ymin=mean_median-sd, ymax=mean_median+sd), width=3, size = 0.8 ) +
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = `Time (min)`), se = FALSE) +
+  scale_x_continuous(breaks = seq(0,240,30), minor_breaks = seq(0,240,30))+
+  theme_bw() +
+  theme(legend.position=c(0.18,0.75), legend.background = element_rect(fill = "white", color = "black", size = 1),
+        legend.box = "vertical", legend.text = element_text(size=18), 
+        legend.title = element_text(size = 18),
+        axis.title = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.text.x = element_text(angle=0,hjust=0.5), axis.text = element_text(size = 18), 
+        plot.title = element_text(size = 18, hjust = 0)) + 
+  labs(y = "Cta1-GFP protein level (a.u.)") +
+  scale_color_manual(values= MutS7_color)
+  #ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-sd-cis-Skn7BS.png"),
+   #      width = 7, height = 5,units = 'in', dpi = 300) 
+
+
   
 #library(scales)
 #show_col(hue_pal()(5))
-show_col(hue_pal()(6))
+#show_col(hue_pal()(6))
 ```
 
 ```{r}
 pi.MutS7_OL.tp <- pi.dat.OL_mutS7 %>% 
-  filter(time %in% c("0min", "240min" ) & !is.na(median))
+  filter(Time %in% c("0min", "240min" ) & !is.na(median))
 
 
 pi.MutS7_OL.tp %>% 
-  ggplot(aes(x=Genotype,y=new_median,fill = time)) +
-  geom_dotplot(binaxis='y', stackdir='center', binwidth = 1.2,
-               position=position_dodge(1),dotsize = 0.8, stackratio = 0.5, alpha = 0.5) +
+  mutate(Genotype = factor(Genotype, levels = c("wt", "skn7", "8OL", "MutS7#1", "MutS7#2"))) %>% 
+  ggplot(aes(x=Genotype, y=new_median, color = Time)) +
+  geom_point(aes(x = Genotype, y = new_median), position = position_jitterdodge(jitter.width = 1)) +
   theme_bw() +
-  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+  theme(legend.position=c(0.4,0.85), legend.background = element_rect(fill = "white", color = "black", size = 1), legend.box = "vertical", legend.text = element_text(size=18), 
         legend.title = element_text(size = 18),
         axis.title = element_text(size = 18), 
         axis.title.x = element_blank(),
-        axis.text.x = element_text(angle=30,hjust = 1), axis.text = element_text(size = 18), 
+        axis.text.x = element_text(angle=30,hjust = 1, vjust = 1), axis.text = element_text(size = 18), 
         plot.title = element_text(size = 18, hjust = 0)) + 
-  labs(y = "Cta1-gfp protein level MFI (a.u.)") + 
-  scale_fill_manual(values=c("#999999", "#FF00FF"))
-  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-6-8Imp-tp.png"),
-         width = 7, height = 5,units = 'in', dpi = 300)
+  stat_summary(aes(group = Time), fun = "median", geom = "point", 
+               color = "gray50", position = position_dodge()) + 
+  labs(y = "Cta1-GFP protein level (a.u.)") +
+  scale_color_manual(values = c("0min" = "#999999", "240min" = "#F564E3"))
+  #ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-6-8Imp-tp.png"),
+   #      width = 7, height = 5,units = 'in', dpi = 300)
+```
 
-# combine MutS7 & Mut Msn4 
+# combine MutS7 & Mut Msn4 BS data
+```{r}
 data.OL_cb <- add_row(data.OL_mutM4,data.mutS7)
 
 pi.dat.OL_cb <- data.OL_cb %>% 
   filter(treat == "0Pi" & genotype %in% c("wt","MutS7#1","MutS7#2","8OL","skn7_ko","MutMsn4 #1","MutMsn4 #2","msn4_ko","4OL")) %>%  
-  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
   mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
   mutate(.,new_median =median/1000) %>% 
-  mutate(.,new_time = as.numeric(gsub("min","",time)))%>% 
+  mutate(.,new_time = as.numeric(gsub("min","",Time)))%>% 
   arrange(new_time, genotype, replicate)
 
 pi.OL.tp <- pi.dat.OL_cb %>% 
-  filter(time %in% c("0min", "240min" ) & !is.na(median))
+  filter(Time %in% c("0min", "240min" ) & !is.na(median))
 
 
 pi.OL.tp %>% 
-  ggplot(aes(x=Genotype,y=new_median,fill = time)) +
-  geom_dotplot(binaxis='y', stackdir='center', binwidth = 1.2,
-               position=position_dodge(1),dotsize = 0.8, stackratio = 0.5, alpha = 0.5) +
+  mutate(Genotype = factor(Genotype, levels = c("wt","4OL","msn4","MutMsn4 #1","MutMsn4 #2", "8OL", "skn7","MutS7#1", "MutS7#2"))) %>% 
+  ggplot(aes(x=Genotype, y=new_median, color = Time)) +
+  geom_point(aes(x = Genotype, y = new_median), position = position_jitterdodge(jitter.width = 1)) +
   theme_bw() +
-  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=18), 
+  theme(legend.position=c(0.25,0.85), legend.background = element_rect(fill = "white", color = "black", size = 1), 
+        legend.box = "vertical", legend.text = element_text(size=18), 
         legend.title = element_text(size = 18),
         axis.title = element_text(size = 18), 
         axis.title.x = element_blank(),
-        axis.text.x = element_text(angle=30,hjust = 1), axis.text = element_text(size = 18), 
+        axis.text.x = element_text(angle=30,hjust = 1, vjust = 1), axis.text = element_text(size = 18), 
         plot.title = element_text(size = 18, hjust = 0)) + 
-  labs(y = "Cta1-gfp protein level MFI (a.u.)") + 
-  scale_fill_manual(values=c("#999999", "#FF00FF"))
-  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-all-tp.png"),
-         width = 10, height = 5,units = 'in', dpi = 300)
+  stat_summary(aes(group = Time), fun = "median", geom = "point", 
+               color = "gray50", position = position_dodge()) + 
+  labs(y = "Cta1-GFP protein level (a.u.)") +
+  scale_color_manual(values = c("0min" = "#999999", "240min" = "#F564E3"))
+#  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-cis-all-tp.png"),
+ #        width = 10, height = 5,units = 'in', dpi = 300)
            
 ```
 
