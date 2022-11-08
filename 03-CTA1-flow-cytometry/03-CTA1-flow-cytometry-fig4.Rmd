@@ -2,20 +2,33 @@
 title: "Fig4"
 author: "JY"
 date: "10/25/2022"
-output: html_document
+output: 
+  html_notebook:
+    toc: true
+    toc_float: true
 ---
 
 ```{r}
 library(tidyverse)
 library(ggplot2)
+library(ggprism)
 library(dplyr)
 library(mgcv)
 library(broom)
 ```
 
 
+# Goal
+To be filled in
 
-```{r, Import the Data into R}
+# Dataset
+To be filled in
+
+# Analysis
+## TF deletion mutants compared with wild type
+### Prepare data
+Import data
+```{r}
 files <- dir("input/msn24_gz_merge", pattern = "merge-*") # get the file names of the merged
 files <- file.path("input/msn24_gz_merge", files)         # this appends the directory to the file names
 files.s7y1 <- dir("input/s7y1_gz_merge", pattern = "merge-*") 
@@ -34,9 +47,8 @@ tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210m
       
 
 # import and process the data to the format we want
-dat.ord <- files %>% 
-  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
-  bind_rows(.id = "Replicate") %>% 
+dat.ord <- map_dfr(files, ~read_csv(., na = c("", "NA", "N/A"), col_types = cols()), .id = "Replicate") %>% 
+  #bind_rows(.id = "Replicate") %>% 
   filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
   select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
          sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
@@ -67,8 +79,8 @@ dat.ord.m4s7 <- files.m4s7 %>%
 
 ```
 
-
-```{r, Subset the dataset and merge with the genotype information:}
+Subset the dataset and merge with the genotype information
+```{r}
 # get genotype info
 tr_files <- dir("input/msn24_treatment", pattern = "d0*")
 tr_files <- file.path("input/msn24_treatment", tr_files)
@@ -117,9 +129,10 @@ data.cb <- add_row(data.tmp, data.m4s7)
 pi.dat <- data.cb %>% 
   filter(treat == "0Pi" & !genotype %in% c("skn7yap1_ko","msn2msn4_ko")) %>%  
   select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
-  mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
-  mutate(.,new_median =median/1000) %>% 
-  mutate(.,new_time = as.numeric(gsub("min","",Time)))%>% 
+  mutate(Genotype = fct_recode(genotype, WT = "wt", `msn2-` = "msn2_ko", `msn4-` = "msn4_ko", `yap1-` = "yap1_ko",
+                               `skn7-` = "skn7_ko", `msn4- skn7-` = "msn4skn7_ko")) %>% 
+  mutate(new_median =median/1000) %>% 
+  mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
   arrange(new_time, genotype, replicate)
 
 pi.dat.summary <- pi.dat %>% 
@@ -136,7 +149,46 @@ pi.dat.summary <- pi.dat %>%
 
 
 CTA1 induction during - Pi in wt/skn7/yap1/msn2/msn4/msn4skn7 strains
-# need to check the skn7 and yap1 data, I got them switched somehow
+
+*need to check the skn7 and yap1 data, I got them switched somehow*
+
+### Bin's version
+
+**Update 2022-11-08** 
+Common plotting elements
+```{r}
+p.timecourse <- list(
+  stat_summary(fun = "mean", geom = "point", size = 3),
+  stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
+  stat_smooth(aes(size = Genotype == "WT"), se = FALSE),
+  scale_x_continuous(breaks = seq(0,240,30)),
+  scale_size_manual(values = c(0.8, 1.5), guide = "none"),
+  labs(y = "Cta1-GFP protein level (a.u.)"),
+  theme_cowplot(line_size = 0.7),
+  theme(legend.position=c(0.05,0.75), 
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        legend.text = element_text(face = 3), 
+        legend.title = element_text(),
+        axis.title = element_text(size = rel(1)), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
+  )
+)
+```
+
+```{r, set up plot}
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 3, 7, 5, 2, 1)] 
+names(genotype_color) <- c("WT", "msn4-", "msn2-","skn7-", "yap1-", "msn4- skn7-")
+
+pi.dat %>%
+  filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= genotype_color)
+ggsave("output/20221108-trans-deletion-timecourse.png", width = 4.5, height = 4)
+```
+
+### JY's version
 ```{r, visualize the data}
 genotype_color <- c("#F8766D", "#00BFC4", "#00BA38", "#619CFF", "#E76BF3", "#B79F00") 
 # map the color to the genotype variable within pi.dat in its order m2-m4-m4s7-s7-wt-y1
@@ -215,8 +267,10 @@ pi.tp %>%
 #show_col(hue_pal()(6))
 ```
 
-#Internal removal/overlaping (OL) variants
-```{r, Import the Data into R}
+## Promoter mutants, Msn4 BS
+### Prepare data
+Import data for 4OL
+```{r}
 files.OL <- dir("input/OL_csv_merge", pattern = "d01*") # get the file names of the merged
 files.OL <- file.path("input/OL_csv_merge", files.OL)         # this appends the directory to the file names
 
@@ -226,9 +280,9 @@ tp <- c("0min", "30min", "60min", "90min", "120min", "150min",  "180min", "210mi
 
 # import and process the data to the format we want
 ## remove characters (0Pi-0min; 240mmin) from group variable 
-dat.ord.OL <- files.OL %>% 
-  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
-  bind_rows(.id = "Replicate") %>% 
+dat.ord.OL <- #files.OL %>% 
+  map_dfr(files.OL, ~read_csv(., na = c("", "NA", "N/A"), col_types = cols()), .id = "Replicate") %>% 
+  #bind_rows(.id = "Replicate") %>% 
   filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
   select(Replicate, Plate = `Experiment`, Group , Sample, Count, median = `X Median`, peak = `X Peak`,
          sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
@@ -245,8 +299,8 @@ data.OL <- add_row(data.cb,data.OL.tmp)
 
 ```
 
-#MutMsn4 #1 & #2
-```{r, Import the Data into R}
+Import data for MutMsn4 #1 & #2
+```{r}
 files.mutM4 <- dir("input/2_4Imp_gz_merge", pattern = "merge-*") # get the file names of the merged
 files.mutM4 <- file.path("input/2_4Imp_gz_merge", files.mutM4)         # this appends the directory to the file names
 
@@ -256,9 +310,9 @@ tp <- c("0min", "30min", "60min", "90min", "120min", "150min",  "180min", "210mi
 
 # import and process the data to the format we want
 ## remove characters (0Pi-0min; 240mmin) from group variable 
-dat.ord.mutM4 <- files.mutM4 %>% 
-  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
-  bind_rows(.id = "Replicate") %>% 
+dat.ord.mutM4 <- #files.mutM4 %>% 
+  map_dfr(files.mutM4, ~read_csv(., na = c("", "NA", "N/A"), col_types = cols()), .id = "Replicate") %>% 
+  #bind_rows(.id = "Replicate") %>% 
   filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
   select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
          sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
@@ -268,8 +322,8 @@ dat.ord.mutM4 <- files.mutM4 %>%
   arrange(Group)   
 ```
 
-
-```{r, Subset the dataset and merge with the genotype information:}
+Subset the dataset and merge with the genotype information
+```{r}
 # get genotype info and petites info
 geno <- read.csv("input/Genotype_2_4Imp.csv")
 names(geno) <- c("HB_strain", names(geno)[-1])
@@ -284,9 +338,9 @@ names(tr_files.mutM4) <-  c("Rep1-H2O2", "Rep1-0Pi","Rep2-0Pi", "Rep3-0Pi" ,"Rep
 #sum(treat.fil$treat == "H2O2")
 
 # combine HB_strain info to rule out petites
-treat.fil.mutM4 <- tr_files.mutM4 %>% 
-  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
-  bind_rows(.id = "Replicate") %>% 
+treat.fil.mutM4 <- #tr_files.mutM4 %>% 
+  map_dfr(tr_files.mutM4, ~read_csv(., na = c("","NA","N/A"), col_types = cols()), .id = "Replicate") %>% 
+  #bind_rows(.id = "Replicate") %>% 
   filter(!is.na(`group_name`)) %>% 
   select(Replicate, genotype = `group_name`, Sample, treat) %>% 
   left_join(., geno, by = c("genotype", "Sample")) # %>% 
@@ -303,9 +357,10 @@ data.OL_mutM4 <- add_row(data.OL,data.mutM4)
 pi.dat.OL_mutM4 <- data.OL_mutM4 %>% 
   filter(treat == "0Pi" & genotype %in% c("wt","MutMsn4 #1","MutMsn4 #2","msn4_ko","4OL")) %>%  
   select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
-  mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
-  mutate(.,new_median =median/1000) %>% 
-  mutate(.,new_time = as.numeric(gsub("min","",Time)))%>% 
+  mutate(Genotype = fct_recode(genotype, WT = "wt", `msn4-` = "msn4_ko", 
+                               `muBS#1` = "MutMsn4 #1", `muBS#2` = "MutMsn4 #2")) %>% 
+  mutate(new_median =median/1000) %>% 
+  mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
   arrange(new_time, genotype, replicate)
 
 pi.dat.OL_mutM4.summary <- pi.dat.OL_mutM4 %>% 
@@ -314,7 +369,22 @@ pi.dat.OL_mutM4.summary <- pi.dat.OL_mutM4 %>%
   summarise(sd = sd(new_median, na.rm = TRUE), mean_median = mean(new_median)) %>% 
   mutate(.,`Time (min)`= as.numeric(gsub("min","",Time)))
 ```
+### Bin version
 
+**Update 2022-11-08**
+```{r}
+MutM4_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 3, 7, 6, 4)] 
+names(MutM4_color) <- c("WT", "msn4-", "muBS#1","muBS#2", "4OL")
+MutM4_color["muBS#1"] = "#e6d602ff" # to avoid having the same color as the msn2-
+
+pi.dat.OL_mutM4 %>%
+  filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= MutM4_color) +
+  scale_y_continuous(limits = c(NA, 40))
+ggsave("output/20221108-msn4BS-cis-deletion-timecourse.png", width = 4.5, height = 4)
+```
+### JY version
 ```{r}
 MutM4_color <- c("#B79F00", "#00BFC4",  "#F8766D", "#00BA38", "#F564E3")
 
@@ -390,8 +460,10 @@ pi.MutM4_OL.tp %>%
            
 ```
 
-#MutSkn7 #1 & #2
-```{r, Import the Data into R}
+## Promoter variants, Skn7
+### Prepare data
+Import data
+```{r}
 files.mutS7 <- dir("input/6_8Imp_gz_merge", pattern = "merge-*") # get the file names of the merged
 files.mutS7 <- file.path("input/6_8Imp_gz_merge", files.mutS7)         # this appends the directory to the file names
 
@@ -401,9 +473,9 @@ tp <- c("0min", "30min", "60min", "90min", "120min", "150min",  "180min", "210mi
 
 # import and process the data to the format we want
 ## remove characters (0Pi-0min; 240mmin) from group variable 
-dat.ord.mutS7 <- files.mutS7 %>% 
-  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
-  bind_rows(.id = "Replicate") %>% 
+dat.ord.mutS7 <- #files.mutS7 %>% 
+  map_dfr(files.mutS7, ~read_csv(., na = c("", "NA", "N/A"), col_types = cols()), .id = "Replicate") %>% 
+  #bind_rows(.id = "Replicate") %>% 
   filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
   select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
          sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
@@ -413,8 +485,8 @@ dat.ord.mutS7 <- files.mutS7 %>%
   arrange(Group)   
 ```
 
-
-```{r, Subset the dataset and merge with the genotype information:}
+Subset the dataset and merge with the genotype information
+```{r}
 # get genotype info and petites info
 geno.mutS7 <- read.csv("input/Genotype_6_8Imp.csv")
 names(geno.mutS7) <- c("HB_strain", names(geno)[-1])
@@ -426,12 +498,12 @@ names(tr_files.mutS7) <-  c("Rep1-H2O2", "Rep1-0Pi","Rep2-0Pi", "Rep3-0Pi" ,"Rep
 
 
 # combine HB_strain info to rule out petites
-treat.fil.mutS7 <- tr_files.mutS7 %>% 
-  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
-  bind_rows(.id = "Replicate") %>% 
+treat.fil.mutS7 <- #tr_files.mutS7 %>% 
+  map_dfr(tr_files.mutS7, ~read_csv(., na = c("","NA","N/A"), col_types = cols()), .id = "Replicate") %>%
+  #bind_rows(.id = "Replicate") %>% 
   filter(!is.na(`group_name`)) %>% 
   select(Replicate, genotype = `group_name`, Sample, treat) %>% 
-  left_join(., geno.mutS7, by = c("genotype", "Sample")) # %>% 
+  left_join(geno.mutS7, by = c("genotype", "Sample")) # %>% 
   #subset(!is.na(YPG))
 
 
@@ -447,18 +519,34 @@ data.OL_mutS7 <- add_row(data.OL,data.mutS7)
 pi.dat.OL_mutS7 <- data.OL_mutS7 %>% 
   filter(treat == "0Pi" & genotype %in% c("wt","MutS7#1","MutS7#2","8OL","skn7_ko")) %>%  
   select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
-  mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
-  mutate(.,new_median =median/1000) %>% 
-  mutate(.,new_time = as.numeric(gsub("min","",Time)))%>% 
+  mutate(Genotype = fct_recode(genotype, WT = "wt", `skn7-` = "skn7_ko",
+                               `muBS#1` = "MutS7#1", `muBS#2` = "MutS7#2")) %>% 
+  mutate(new_median =median/1000) %>% 
+  mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
   arrange(new_time, genotype, replicate)
 
 pi.dat.OL_mutS7.summary <- pi.dat.OL_mutS7 %>% 
   filter(!is.na(new_median)) %>%
-  group_by(Genotype,Time) %>% 
+  group_by(Genotype, Time) %>% 
   summarise(sd = sd(new_median, na.rm = TRUE), mean_median = mean(new_median)) %>% 
-  mutate(.,`Time (min)`= as.numeric(gsub("min","",Time)))
+  mutate(`Time (min)`= as.numeric(gsub("min","",Time)))
 ```
 
+### Bin's version
+```{r}
+MutS7_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 5, 7, 6, 4)] 
+names(MutS7_color) <- c("WT", "skn7-", "muBS#1","muBS#2", "8OL")
+MutM4_color["muBS#1"] = "#e6d602ff" # to avoid having the same color as the msn2-
+
+pi.dat.OL_mutS7 %>%
+  filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= MutS7_color) +
+  scale_y_continuous(limits = c(NA, 40))
+ggsave("output/20221108-skn7BS-cis-deletion-timecourse.png", width = 4.5, height = 4)
+```
+
+### JY's version
 ```{r}
 MutS7_color <- c("#B79F00", "#00BFC4",  "#F8766D", "#619CFF", "#F564E3")
 
@@ -531,7 +619,7 @@ pi.MutS7_OL.tp %>%
    #      width = 7, height = 5,units = 'in', dpi = 300)
 ```
 
-# combine MutS7 & Mut Msn4 BS data
+## Combine Skn7 & Msn4 BS mutant data
 ```{r}
 data.OL_cb <- add_row(data.OL_mutM4,data.mutS7)
 
