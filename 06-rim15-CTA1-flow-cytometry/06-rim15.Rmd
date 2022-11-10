@@ -58,7 +58,7 @@ data.r15 <- left_join(dat.ord.r15, treat.fil.r15, by = c("Replicate", "Sample"))
 
 # select out 0Pi data
 pi.dat.r15 <- data.r15 %>% 
-  filter(treat == "0Pi" & genotype %in% c("wt","msn4_nat_ko","rim15_ko")) %>%  
+  filter(treat == "0Pi" & genotype %in% c("wt","msn4_nat_ko","rim15_ko","msn4rim15_ko")) %>%  
   select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
   mutate(.,Genotype = gsub("_ko","",genotype)) %>% 
   mutate(.,new_median =median/1000) %>% 
@@ -75,7 +75,7 @@ pi.dat.r15.summary <- pi.dat.r15 %>%
 ```
 
 ```{r, visualize the data}
-genotype_color <- c("#00BFC4","#619CFF", "#F564E3") 
+genotype_color <- c("#00BFC4","#B79F00","#619CFF", "#F564E3") 
 
 pi.dat.r15 %>% 
   filter(!is.na(new_median)) %>% 
