@@ -15,6 +15,7 @@ library(ggprism)
 library(dplyr)
 library(mgcv)
 library(broom)
+library(cowplot)
 ```
 
 
@@ -233,8 +234,8 @@ pi.dat.summary %>%
         plot.title = element_text(size = 18, hjust = 0)) + 
   labs(y = "Cta1-GFP protein level (a.u.)") +
   scale_color_manual(values= genotype_color)
-  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-sd-trans-TFs-kos.png"),
-         width = 7, height = 5,units = 'in', dpi = 300)  
+  #ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-sd-trans-TFs-kos.png"),
+   #      width = 7, height = 5,units = 'in', dpi = 300)  
   
   # position=position_dodge(0.5)
 ```
@@ -382,7 +383,7 @@ pi.dat.OL_mutM4 %>%
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
   scale_color_manual(values= MutM4_color) +
   scale_y_continuous(limits = c(NA, 40))
-ggsave("output/20221108-msn4BS-cis-deletion-timecourse.png", width = 4.5, height = 4)
+#ggsave("output/20221108-msn4BS-cis-deletion-timecourse.png", width = 4.5, height = 4)
 ```
 ### JY version
 ```{r}
@@ -543,7 +544,7 @@ pi.dat.OL_mutS7 %>%
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
   scale_color_manual(values= MutS7_color) +
   scale_y_continuous(limits = c(NA, 40))
-ggsave("output/20221108-skn7BS-cis-deletion-timecourse.png", width = 4.5, height = 4)
+#ggsave("output/20221108-skn7BS-cis-deletion-timecourse.png", width = 4.5, height = 4)
 ```
 
 ### JY's version
