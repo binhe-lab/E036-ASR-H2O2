@@ -268,7 +268,8 @@ myCompare <- function(genes = "YML123C"){
 }
 
 myPlotExn <- function(dat, col = c("S. cerevisiae" = "gray30", "C. glabrata" = "orange2"),
-                      fill = c("S. cerevisiae" = "gray80", "C. glabrata" = "gray20"),
+                      #fill = c("S. cerevisiae" = "#61328C", "C. glabrata" = "#5B9A3D"),
+                      fill = c("S. cerevisiae" = "gray60", "C. glabrata" = "#FBB4AE"),
                       font_size = 16, legend = TRUE, grid = FALSE)
 {
   ## -------
@@ -285,7 +286,7 @@ myPlotExn <- function(dat, col = c("S. cerevisiae" = "gray30", "C. glabrata" = "
          y = "log2 Fold Change"),
     theme_bw(base_size = font_size),
     theme(legend.title = element_blank(),
-          legend.text = element_text(size = rel(1), face = 3), 
+          legend.text = element_text(face = 3), 
           legend.position = c(0.7, 0.8),
           legend.background = element_blank(),
           axis.text.y = element_text(size = rel(1)),
