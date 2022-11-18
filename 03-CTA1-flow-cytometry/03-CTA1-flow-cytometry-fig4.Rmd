@@ -10,11 +10,11 @@ output:
 
 ```{r}
 library(tidyverse)
-library(ggplot2)
+#library(ggplot2)
 library(ggprism)
-library(dplyr)
-library(mgcv)
-library(broom)
+#library(dplyr)
+#library(mgcv)
+#library(broom)
 library(cowplot)
 ```
 
@@ -26,6 +26,53 @@ To be filled in
 To be filled in
 
 # Analysis
+## Common plotting functions
+**Update 2022-11-08** 
+This list is used as a shared plotting set up.
+```{r}
+p.timecourse <- list(
+  stat_summary(fun = "mean", geom = "point", size = 3),
+  stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
+  stat_smooth(aes(size = Genotype == "WT"), se = FALSE),
+  scale_x_continuous(breaks = seq(0,240,30)),
+  scale_size_manual(values = c(0.8, 1.5), guide = "none"),
+  labs(y = "Cta1-GFP protein level (a.u.)"),
+  theme_cowplot(line_size = 0.7),
+  theme(legend.position=c(0.05,0.75), 
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        legend.text = element_text(face = 3), 
+        legend.title = element_text(),
+        axis.title = element_text(size = rel(1)), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
+  )
+)
+```
+
+## Cta1 induction dynamics under -Pi and H2O2
+Used in Figure 3B.
+### Prepare data
+```{r}
+pi.dat.long <- read_csv("input/wt-Pi-H2O2/Long_data_CTA1-GFP.csv", col_types = cols()) %>% 
+  mutate(new_time = as.numeric(gsub("min","",Time))) %>% 
+  arrange(new_time, Treatment)
+```
+
+### Bin's version
+```{r}
+treat_color <- c(`2mM H2O2` = "#E69138", `0mM Pi` = "#9900FF", Control = "#666666")
+
+pi.dat.long %>%
+  filter(!is.na(median)) %>% 
+  ggplot(aes(x = new_time, y = median, color = Treatment)) + p.timecourse[-3] +
+  stat_smooth(se = FALSE) +
+  scale_x_continuous(breaks = seq(0,240,by = 60)) +
+  scale_color_manual(values= treat_color, labels = c(bquote("2mM "~H[2]~O[2]), "-Pi", "Control")) +
+  theme(legend.text = element_text(size = rel(0.85), face = 1), legend.position="top", legend.title = element_blank())
+ggsave("output/20221117-Pi-H2O2-timecourse.png", width = 4, height = 3.5)
+```
+
 ## TF deletion mutants compared with wild type
 ### Prepare data
 Import data
@@ -43,9 +90,6 @@ names(files.s7y1) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl","Rep1-H2O2-Rep3-0Pi", "Re
 names(files.m4s7) <- c("Rep1-0Pi-Ctrl","Rep1-H2O2-Rep2-0Pi", "Rep2-H2O2-Rep3-0Pi", "Rep3-H2O2-Ctrl")
 
 tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
-
-
-      
 
 # import and process the data to the format we want
 dat.ord <- map_dfr(files, ~read_csv(., na = c("", "NA", "N/A"), col_types = cols()), .id = "Replicate") %>% 
@@ -135,17 +179,6 @@ pi.dat <- data.cb %>%
   mutate(new_median =median/1000) %>% 
   mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
   arrange(new_time, genotype, replicate)
-
-pi.dat.summary <- pi.dat %>% 
-  filter(!is.na(new_median)) %>%
-  group_by(Genotype,Time) %>% 
-  summarise(sd = sd(new_median, na.rm = TRUE), mean_median = mean(new_median)) %>% 
-  mutate(.,new_time = as.numeric(gsub("min","",Time)))
-  # ,new_time = new_time
-
-# equivalent to !genotype %in% c("skn7yap1_ko","msn2msn4_ko") is: genotype != "skn7yap1_ko" & genotype !="msn2msn4_ko")
-# cannot write as: genotype != c("skn7yap1_ko","msn2msn4_ko")
-
 ```
 
 
@@ -155,30 +188,7 @@ CTA1 induction during - Pi in wt/skn7/yap1/msn2/msn4/msn4skn7 strains
 
 ### Bin's version
 
-**Update 2022-11-08** 
-Common plotting elements
 ```{r}
-p.timecourse <- list(
-  stat_summary(fun = "mean", geom = "point", size = 3),
-  stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
-  stat_smooth(aes(size = Genotype == "WT"), se = FALSE),
-  scale_x_continuous(breaks = seq(0,240,30)),
-  scale_size_manual(values = c(0.8, 1.5), guide = "none"),
-  labs(y = "Cta1-GFP protein level (a.u.)"),
-  theme_cowplot(line_size = 0.7),
-  theme(legend.position=c(0.05,0.75), 
-        #legend.box.background = element_rect(color = "black"),
-        #legend.box.margin = margin(3,3,3,3),
-        legend.text = element_text(face = 3), 
-        legend.title = element_text(),
-        axis.title = element_text(size = rel(1)), 
-        axis.title.x = element_blank(),
-        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
-  )
-)
-```
-
-```{r, set up plot}
 genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 3, 7, 5, 2, 1)] 
 names(genotype_color) <- c("WT", "msn4-", "msn2-","skn7-", "yap1-", "msn4- skn7-")
 
@@ -190,7 +200,7 @@ ggsave("output/20221108-trans-deletion-timecourse.png", width = 4.5, height = 4)
 ```
 
 ### JY's version
-```{r, visualize the data}
+```{r}
 genotype_color <- c("#F8766D", "#00BFC4", "#00BA38", "#619CFF", "#E76BF3", "#B79F00") 
 # map the color to the genotype variable within pi.dat in its order m2-m4-m4s7-s7-wt-y1
 my_genotype <- c("wt", "msn2_ko", "msn4_ko","skn7_ko", "yap1_ko", "msn4skn7_ko")
@@ -655,3 +665,76 @@ pi.OL.tp %>%
            
 ```
 
+## Rim15∆
+### Prepare data
+```{r}
+files.r15 <- dir("input/rim15_gz_merge", pattern = "merge-*", full.names = TRUE) # get the file names of the merged
+names(files.r15) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl", "Rep3-0Pi-Ctrl") # correspond to treatment files
+
+tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
+
+# import and process the data to the format we want
+dat.ord.r15 <-  map_dfr(files.r15, ~read_csv(., na = c("", "NA", "N/A"), col_types = cols()), .id = "Replicate") %>% 
+  #bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group)
+#write_csv(dat.ord, file = "input/rim15_gz_merge/2021014-1019-rim15-KO-flow-data.csv")
+```
+
+
+```{r}
+# get genotype info
+tr_files.r15 <- dir("input/rim15_treatment", pattern = "d0*", full.names = TRUE)
+#tr_files.r15 <- file.path("input/rim15_treatment", tr_files.r15)
+names(tr_files.r15) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl", "Rep3-0Pi-Ctrl")
+
+
+treat.fil.r15 <-  map_dfr(tr_files.r15, ~read_csv(., na = c("","NA","N/A"), col_types = cols()), .id = "Replicate") %>% 
+  #bind_rows(.id = "Replicate") %>% 
+  filter(!is.na(`group_name`)) %>% 
+  select(Replicate, genotype = `group_name`, Sample, treat)
+
+# combine genotype and treat variables into the flow data
+data.r15 <- left_join(dat.ord.r15, treat.fil.r15, by = c("Replicate", "Sample"))
+#sum(is.na(data$Group))
+
+#write_csv(data, file = "gz_merge/20210724-0805-treat-gt-Rim15-KO-flow-data.csv.gz")
+
+# select out 0Pi data
+pi.dat.r15 <- data.r15 %>% 
+  filter(treat == "0Pi" & genotype %in% c("wt","msn4_nat_ko","rim15_ko","msn4rim15_ko")) %>%  
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  mutate(Genotype = fct_recode(genotype, WT = "wt", `msn4-` = "msn4_nat_ko", `rim15-` = "rim15_ko", `msn4- rim15-` = "msn4rim15_ko"),
+         new_median = median/1000,
+         new_time = as.numeric(gsub("min","",Time))) %>% 
+  #mutate(Genotype = gsub("_nat","",Genotype)) %>% 
+  arrange(new_time, genotype, replicate) 
+```
+
+### Bin's version
+
+```{r}
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 3, 7, 5, 2, 1)] 
+names(genotype_color) <- c("WT", "msn4-", "rim15-", "msn4- rim15-")
+
+pi.dat.r15 %>%
+  filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= genotype_color) +
+  scale_
+  theme_cowplot(font_size = 16, line_size = 0.7) +
+  theme(legend.position=c(0.05,0.75),
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        legend.text = element_text(face = 3), 
+        legend.title = element_text(),
+        axis.title = element_text(size = rel(1)), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
+  )
+
+ggsave("output/20221118-rim15-deletion-timecourse.png", width = 4.5, height = 4)
+```
