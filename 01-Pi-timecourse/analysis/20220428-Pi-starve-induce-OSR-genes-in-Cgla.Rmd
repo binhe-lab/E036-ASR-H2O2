@@ -323,11 +323,14 @@ dat <- lapply(geneList, myCompare)
 
 Make individual plots
 ```{r, fig.width=8, fig.height=6}
+par.fill = c("S. cerevisiae" = "gray20", "C. glabrata" = "gray60")
+par.col = c("S. cerevisiae" = "#6aa84f", "C. glabrata" = "orange3")
 p.obj <- list(
-  myPlotExn(dat$antioxidant, legend = TRUE) + scale_y_continuous(limits = c(-1, NA)),
-  myPlotExn(dat$`protein degradation`, legend = FALSE) + scale_y_continuous(limits = c(-.5, NA)),
-  myPlotExn(dat$chaperon, legend = FALSE) + theme(axis.title = element_blank()) + scale_y_continuous(limits = c(-1.5, NA)),
-  myPlotExn(dat$TF, legend = FALSE) + theme(axis.title = element_blank())
+  myPlotExn(dat$antioxidant, legend = TRUE, fill = par.fill, col = par.col) + scale_y_continuous(limits = c(-1, NA)),
+  myPlotExn(dat$`protein degradation`, legend = FALSE, fill = par.fill, col = par.col) + scale_y_continuous(limits = c(-.5, NA)),
+  myPlotExn(dat$chaperon, legend = FALSE, fill = par.fill, col = par.col) + theme(axis.title = element_blank()) + 
+    scale_y_continuous(limits = c(-1.5, NA)),
+  myPlotExn(dat$TF, legend = FALSE, fill = par.fill, col = par.col) + theme(axis.title = element_blank())
 )
 names(p.obj) <- names(dat)
 row1 <- plot_grid(NULL, p.obj$antioxidant)
