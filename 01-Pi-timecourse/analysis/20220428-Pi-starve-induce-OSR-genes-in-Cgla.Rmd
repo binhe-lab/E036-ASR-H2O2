@@ -11,11 +11,12 @@ output:
 
 ```{r load_library, echo=FALSE}
 # install the package if not already available
-suppressMessages(library(tidyverse))
-#suppressMessages(library(data.table))
-suppressMessages(library(cowplot))
-suppressMessages(library(ggtext))
-suppressMessages(library(SummarizedExperiment))
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(cowplot))
+suppressPackageStartupMessages(library(ggtext))
+suppressPackageStartupMessages(library(edgeR))
+suppressPackageStartupMessages(library(SummarizedExperiment))
+suppressPackageStartupMessages(require(broom))
 ```
 
 ## Goal
@@ -36,19 +37,67 @@ Below is a simple chart to show the design:
 | wt-2     | pre, 20', 30', 45', 60',      120',       180', 240' | 1 | biol. repl. for wt-1|
 | 4∆-2     | pre, 20', 30', 45', 60',      120',       180'       | 1 | biol. repl. for 4∆-1| 
 
+Count matrix
 ```{r}
-load("../input/Cgla-Pi-He2017-unpub/E009-Cgla-Pi-time-course-normalized.RData")
+# raw data count
+tmp <- read_table("../input/Cgla-Pi-He2017-unpub/20171025_reads_per_transcript_filtered.txt",
+                col_types = cols()) %>% 
+  column_to_rownames(var = "gene.names")
+# sample sheet
+sample <- 
+  read_csv("../input/Cgla-Pi-He2017-unpub/20171019-Ex009-experiment-setup.csv",
+           col_types = cols()) %>%
+  mutate(
+    Timepoint = factor(Timepoint, levels = 
+                         c("pre", "20m", "30m", "45m", "60m", "90m", 
+                           "120m", "150m", "180m", "240m", "del80")),
+    Group = paste(Genotype, Timepoint, sep = ".")
+  )
+# rearrange the columns in `raw` according to the samples order in `sample`
+tmp <- tmp[, match(sample$Sample, colnames(tmp))]
+```
+
+annotation
+```{r}
+anno <- read_tsv("../input/annotation/C_glabrata_gene_for_mapping_s02-m07-r04.bed",
+                 col_names =  c("Chr", "Start", "End", "GeneID", "Not.Use",
+                                "Strand", "GeneName", "Type.of.Gene")) %>% 
+                   select(Chr, GeneID, GeneName, Type.of.Gene)
+cgToSc <- read_tsv("../input/annotation/C_glabrata_CBS138_S_cerevisiae_orthologs.txt", 
+                   comment = "#",
+                   col_names = c("cgid","cgname","cgid2","scid","scname","scid2"))
+```
+
+```{r}
 cgToSc <- cgToSc %>% 
   select(CglaID = cgid, CglaName = cgname, ScerID = scid, ScerName = scname)
 anno <- left_join(anno, cgToSc, by = c("GeneID" = "CglaID")) %>% 
   select(CglaID = GeneID, CglaName, ScerID, ScerName, Chr, Type.of.Gene)
 ```
 
+Construct DGEList for normalization and calculating count per million
+```{r}
+# organize gene annotations
+anno.select <- column_to_rownames(anno, "CglaID")[match(rownames(tmp), anno$CglaID),]
+all(rownames(anno.select) == rownames(tmp))
+# sample sheet
+all(sample$Sample == names(tmp))
+# construct DGEList
+cgla.eds <- DGEList(
+  counts = tmp, 
+  samples = column_to_rownames(sample, "Sample"), 
+  genes = anno.select
+)
+cgla.eds <- calcNormFactors(cgla.eds, method = "TMM")
+lcpm <- cpm(cgla.eds, normalized.lib.sizes = TRUE, log = TRUE)
+```
+
+
 Construct a SummarizedExperiment object
 ```{r}
 se0 <- SummarizedExperiment(
   assays = lcpm, 
-  rowData = column_to_rownames(anno, "CglaID"),
+  rowData = anno.select,
   colData = column_to_rownames(sample, "Sample")
   )
 # subset the experiment to include just the wt time course
@@ -199,12 +248,13 @@ for (i in seq_along(categories)){
 ```
 
 
-### Plotting _S. cerevisiae_ -Pi at 1hr
+### Compare with _S. cerevisiae_ -Pi at 1hr
 
-To compare OSR genes under phopshate starvation in _C. glabrata_ vs in _S. cerevisiae_, I downloaded Xu's 2011 data, which was measured using two-color microarray at 1hr post starvation. In the future I plan to use Gurvich 2017, which contains the time course data but requires more processing.
+To compare OSR genes under phosphate starvation in _C. glabrata_ vs in _S. cerevisiae_, I downloaded Xu's 2011 data, which was measured using two-color microarray at 1hr post starvation. In the future I plan to use Gurvich 2017, which contains the time course data but requires more processing.
 
 First, we need to assemble the dataset. The idea is to calculate the log2FC between 1hr and pre-stress time points from the _C. glabrata_ dataset. Later we will merge it with the _S. cerevisiae_ data. The final data should include `Species | Name | ID | log2FC`, in which `Name` is always from _S. cerevisiae_ and `ID` from the respective species.
 ```{r}
+
 tmp <- assay(se[, se$Timepoint %in% c("pre", "60m")])
 colnames(tmp) <- c("pre.1","pre.2","60m.1","60m.2","60m.3")
 cgla.1hr <- as_tibble(tmp, rownames = "CglaID") %>% 
@@ -217,6 +267,8 @@ cgla.1hr <- as_tibble(tmp, rownames = "CglaID") %>%
   select(CglaID, starts_with("m60")) %>% 
   pivot_longer(m60.1:m60.3, names_to = NULL, values_to = "log2FC")
 ```
+
+Note that this calculation "hides" the variation in the pre-stress sample by using only the mean level of expression. As a result, the three replicate values are actually an underestimate of the amount of variation in _C. glabrata_. By contrast, the _S. cerevisiae_ dataset were measured using two-color microarrays, which are naturally paired -- it always measures the ratio between the stressed and unstressed samples. That being said, I don't think the magnitude of the underestimation is going to be large, given the tight correlations between the biological replicates. And the overall conclusion from this figure is not going to change -- a group of OSR genes are strongly induced in _C. glabrata_ but not in _S. cerevisiae_
 
 With the Cgla data calculated, we can write a function that takes a list of _S. cerevisiae_ gene names as input and plot the logFC in both species.
 change the fond size and style of myCompare
@@ -322,7 +374,7 @@ dat <- lapply(geneList, myCompare)
 ```
 
 Make individual plots
-```{r, fig.width=8, fig.height=6}
+```{r}
 par.fill = c("S. cerevisiae" = "gray20", "C. glabrata" = "gray60")
 par.col = c("S. cerevisiae" = "#6aa84f", "C. glabrata" = "orange3")
 p.obj <- list(
@@ -337,7 +389,7 @@ row1 <- plot_grid(NULL, p.obj$antioxidant)
 row2 <- plot_grid(p.obj$`protein degradation`, p.obj$chaperon, p.obj$TF, nrow = 1, align = "hv",
                   rel_widths = c(7, 6, 5))
 plot_grid(row1, row2, nrow = 2)
-ggsave("../output/20221102-HBZ-compare-gene-exn-multipanel.png")
+ggsave("../output/20221102-HBZ-compare-gene-exn-multipanel.png", width = 8, height = 6)
 ```
 
 Jinye's addition, deprecated
@@ -386,3 +438,35 @@ ggplot(Dat, aes(x = ScerName, y = log2FC, group = species)) +
 ggsave(paste0("../output/", gsub("-", "", Sys.Date()), "-antioxidant-TF-for-grant.pdf"), width = 6, height = 4)
 ```
 
+### Statistical tests for DGE
+The bar plots above clearly show the differences between the two species in terms of OSR gene induction under phosphate starvation in the two species. It is likely that reviewers would ask for statistical test results to support the trend, i.e., whether the gene inductions were significant and whether the differences between species were significant. Below, we perform simple t-tests to provide such support. Note the caveat due to the subtraction of the mean of the pre-stress sample from the 1hr samples in _C. glabrata_, which is expected to slightly decrease the p-values, as the variance would be underestimated. I don't expect this to have a meaningful impact on the ranking of the genes, given the clear difference in the magnitude of induction between the two species.
+
+First, we need to prepare the data. We would like to get a single dataset with all replicates for each gene in the two species.
+```{r}
+dge.dat <- bind_rows(dat, .id = "group")
+```
+
+T-test for each gene against the null hypothesis of no differential expression
+```{r}
+dge.test <- dge.dat %>% group_by(species, ScerName) %>% 
+  nest() %>% 
+  mutate(test = map(data, ~ t.test(.x$log2FC, alternative = "greater")),
+         tidied = map(test, tidy)) %>% 
+  unnest(tidied) %>% 
+  select(species, ScerName, lfc = estimate, t.stat = statistic, p.value)
+dge.test$p.adj <- p.adjust(dge.test$p.value, method = "BH")
+dge.test %>% filter(p.adj < 0.05, lfc >= 1) %>% arrange(desc(lfc), p.value)
+```
+
+
+T-test for each gene against the null hypothesis of less than 1.5 fold induction
+```{r}
+dge.test1 <- dge.dat %>% group_by(species, ScerName) %>% 
+  nest() %>% 
+  mutate(test = map(data, ~ t.test(.x$log2FC, mu = log2(1.5), alternative = "greater")),
+         tidied = map(test, tidy)) %>% 
+  unnest(tidied) %>% 
+  select(species, ScerName, lfc = estimate, t.stat = statistic, p.value)
+dge.test1$p.adj <- p.adjust(dge.test1$p.value, method = "BH")
+dge.test1 %>% filter(p.adj < 0.05) %>% arrange(desc(lfc), p.value)
+```
