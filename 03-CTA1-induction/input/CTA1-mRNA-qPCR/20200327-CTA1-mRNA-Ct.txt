@@ -1,0 +1,97 @@
+Pos	Group	Name	Target	Treatment	Dilution	Cp
+A1	unknown	yH001	ACT1	untreated	100	17.74
+A2	unknown	yH001	ACT1	untreated	100	17.32
+A3	unknown	yH001	ACT1	untreated	100	17.99
+A4	unknown	yH001	ACT1	10mM H2O2	100	16.44
+A5	unknown	yH001	ACT1	10mM H2O2	100	15.92
+A6	unknown	yH001	ACT1	10mM H2O2	100	15.74
+A7	unknown	yH001	ACT1	no Pi	100	16.82
+A8	unknown	yH001	ACT1	no Pi	100	16.64
+A9	unknown	yH001	ACT1	no Pi	100	16.94
+A10	noRT	yH001	ACT1	NA	100	27.89
+A11	noRT	yH001	ACT1	NA	100	NA
+A12	noRT	yH001	ACT1	NA	100	31.81
+B1	unknown	yH002	ACT1	untreated	100	17.4
+B2	unknown	yH002	ACT1	untreated	100	17.49
+B3	unknown	yH002	ACT1	untreated	100	17.74
+B4	unknown	yH002	ACT1	10mM H2O2	100	17.27
+B5	unknown	yH002	ACT1	10mM H2O2	100	16.69
+B6	unknown	yH002	ACT1	10mM H2O2	100	17.24
+B7	unknown	yH002	ACT1	no Pi	100	16.7
+B8	unknown	yH002	ACT1	no Pi	100	16.71
+B9	unknown	yH002	ACT1	no Pi	100	17.29
+B10	NTC	NA	ACT1	NA	100	NA
+B11	NTC	NA	ACT1	NA	100	NA
+B12	NTC	NA	ACT1	NA	100	NA
+C1	unknown	yH001	CTA1_C	untreated	100	21.95
+C2	unknown	yH001	CTA1_C	untreated	100	21.99
+C3	unknown	yH001	CTA1_C	untreated	100	21.38
+C4	unknown	yH001	CTA1_C	10mM H2O2	100	15.62
+C5	unknown	yH001	CTA1_C	10mM H2O2	100	15.53
+C6	unknown	yH001	CTA1_C	10mM H2O2	100	15.33
+C7	unknown	yH001	CTA1_C	no Pi	100	18.96
+C8	unknown	yH001	CTA1_C	no Pi	100	19.53
+C9	unknown	yH001	CTA1_C	no Pi	100	19.35
+C10	noRT	yH001	CTA1_C	NA	100	12.38
+C11	noRT	yH001	CTA1_C	NA	100	33.36
+C12	noRT	yH001	CTA1_C	NA	100	NA
+D1	unknown	yH002	CTA1_C	untreated	100	20.81
+D2	unknown	yH002	CTA1_C	untreated	100	21.64
+D3	unknown	yH002	CTA1_C	untreated	100	21.55
+D4	unknown	yH002	CTA1_C	10mM H2O2	100	16.53
+D5	unknown	yH002	CTA1_C	10mM H2O2	100	16.39
+D6	unknown	yH002	CTA1_C	10mM H2O2	100	15.97
+D7	unknown	yH002	CTA1_C	no Pi	100	18.79
+D8	unknown	yH002	CTA1_C	no Pi	100	18.67
+D9	unknown	yH002	CTA1_C	no Pi	100	11.86
+D10	NTC	NA	CTA1_C	NA	100	NA
+D11	NTC	NA	CTA1_C	NA	100	NA
+D12	NTC	NA	CTA1_C	NA	100	12.32
+E1	unknown	yH001	CTA1_A	untreated	100	21.84
+E2	unknown	yH001	CTA1_A	untreated	100	21.63
+E3	unknown	yH001	CTA1_A	untreated	100	21.85
+E4	unknown	yH001	CTA1_A	10mM H2O2	100	15.59
+E5	unknown	yH001	CTA1_A	10mM H2O2	100	15.76
+E6	unknown	yH001	CTA1_A	10mM H2O2	100	15.27
+E7	unknown	yH001	CTA1_A	no Pi	100	19.3
+E8	unknown	yH001	CTA1_A	no Pi	100	18.62
+E9	unknown	yH001	CTA1_A	no Pi	100	19.25
+E10	noRT	yH001	CTA1_A	NA	100	29.63
+E11	noRT	yH001	CTA1_A	NA	100	28.74
+E12	noRT	yH001	CTA1_A	NA	100	29.71
+F1	unknown	yH002	CTA1_A	untreated	100	19.79
+F2	unknown	yH002	CTA1_A	untreated	100	21.35
+F3	unknown	yH002	CTA1_A	untreated	100	21.38
+F4	unknown	yH002	CTA1_A	10mM H2O2	100	16.71
+F5	unknown	yH002	CTA1_A	10mM H2O2	100	16.54
+F6	unknown	yH002	CTA1_A	10mM H2O2	100	15.37
+F7	unknown	yH002	CTA1_A	no Pi	100	18.64
+F8	unknown	yH002	CTA1_A	no Pi	100	18.66
+F9	unknown	yH002	CTA1_A	no Pi	100	18.73
+F10	NTC	NA	CTA1_A	NA	100	29.63
+F11	NTC	NA	CTA1_A	NA	100	29.49
+F12	NTC	NA	CTA1_A	NA	100	28.9
+G1	standard	yH001	CTA1_C	untreated	1.00E+03	25.45
+G2	standard	yH001	CTA1_C	untreated	1.00E+03	25.79
+G3	standard	yH001	CTA1_C	untreated	1.00E+03	25.68
+G4	standard	yH001	CTA1_C	untreated	1.00E+04	28.82
+G5	standard	yH001	CTA1_C	untreated	1.00E+04	29.38
+G6	standard	yH001	CTA1_C	untreated	1.00E+04	28.48
+G7	standard	yH001	CTA1_C	untreated	1.00E+05	34.48
+G8	standard	yH001	CTA1_C	untreated	1.00E+05	31.48
+G9	standard	yH001	CTA1_C	untreated	1.00E+05	31.95
+G10	standard	yH001	CTA1_C	untreated	1.00E+06	NA
+G11	standard	yH001	CTA1_C	untreated	1.00E+06	NA
+G12	standard	yH001	CTA1_C	untreated	1.00E+06	35.59
+H1	standard	yH001	CTA1_A	untreated	1.00E+03	24.96
+H2	standard	yH001	CTA1_A	untreated	1.00E+03	11.78
+H3	standard	yH001	CTA1_A	untreated	1.00E+03	24.92
+H4	standard	yH001	CTA1_A	untreated	1.00E+04	27.55
+H5	standard	yH001	CTA1_A	untreated	1.00E+04	27.66
+H6	standard	yH001	CTA1_A	untreated	1.00E+04	28.3
+H7	standard	yH001	CTA1_A	untreated	1.00E+05	29.41
+H8	standard	yH001	CTA1_A	untreated	1.00E+05	29.93
+H9	standard	yH001	CTA1_A	untreated	1.00E+05	29.44
+H10	standard	yH001	CTA1_A	untreated	1.00E+06	30.96
+H11	standard	yH001	CTA1_A	untreated	1.00E+06	29.58
+H12	standard	yH001	CTA1_A	untreated	1.00E+06	20.42

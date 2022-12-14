@@ -1,31 +1,130 @@
 ---
-title: "Fig4"
+title: "CTA1 mRNA and protein induction (Figure 3 and 4)"
 author: "JY"
-date: "10/25/2022"
+date: "2022-10-25 (updated `r Sys.Date()`)"
 output: 
   html_notebook:
+    code_folding: hide
     toc: true
     toc_float: true
 ---
 
 ```{r}
 library(tidyverse)
-#library(ggplot2)
-library(ggprism)
-#library(dplyr)
+library(ggtext)
 #library(mgcv)
-#library(broom)
+library(broom)
 library(cowplot)
 ```
 
 
-# Goal
-To be filled in
+## _CTA1_ mRNA induction (Fig. 3A)
+Experiment was performed on 2020/03/25-27, see [here](https://docs.google.com/spreadsheets/d/1dClNE3oDJyQQlZwcf_NoHs56Wi1G938K44yyCrwCpCQ/edit?usp=sharing) for experimental methods. Briefly, _C. glabrata_ cells were grown to mid-log phase (OD~0.5), washed and treated with either SC media (mock), 0mM Pi (no Pi) or 10 mM H2O2 for 45 minutes. RNA was extracted and qRT-PCR was performed with _ACT1_ used as a reference gene and the mock treated sample as the reference sample. The following dataset was extracted from the above spreadsheet.
+```{r}
+rna <- read_tsv("input/CTA1-mRNA-qPCR/20200327-CTA1-mRNA-Ct.txt") %>% 
+  mutate(Treatment = fct_recode(Treatment, 
+                                H2O2 = "10mM H2O2", 
+                                `-Pi` = "no Pi", 
+                                Mock = "untreated"))
+# check the control wells
+rna %>% filter(Group %in% c("noRT", "NTC"))
+# get the subset for "unknowns" vs "standards"
+rnaT <- rna %>% filter(Group == "unknown")
+rnaS <- rna %>% filter(Group == "standard")
+```
+> C10 and D12 are problematic
 
-# Dataset
-To be filled in
+Check the standard curve
+```{r}
+p <- rnaS %>% 
+  ggplot(aes(x = log10(Dilution), y = Cp)) + 
+  geom_point(aes(color = Target)) +
+  scale_color_brewer(palette = "Set1") +
+  theme_cowplot()
+p
+```
+```{r}
+rnaS %>% 
+  #select(Target, Dilution, Cp) %>% 
+  mutate(x = log10(Dilution)) %>% 
+  group_by(Target) %>% 
+  nest() %>% 
+  mutate(test = map(data, function(df) lm(Cp ~ x, data = df)),
+         slope = map(test, tidy)) %>% 
+  unnest(slope) %>% 
+  filter(term == "x") %>% 
+  select(Target, slope = estimate, std.error, p.value)
+  
+```
 
-# Analysis
+> primer set C behaves better than primer set A
+
+Visualize the Ct values for the unknown samples
+```{r}
+p <- rnaT %>% 
+  ggplot(aes(x = Treatment, y = Cp)) + 
+  geom_point(aes(color = Name), shape = 16, size = 2.5, position = position_dodge(width = 0.4)) + 
+  facet_wrap(~Target) +
+  theme_bw(base_size = 16)
+p
+```
+
+Calculate ∆∆Ct. Because the dilution amount is the same across all samples, we don't have to make any adjustments. `r all(rnaT$Dilution == 100)`
+```{r}
+rna.dCt <- rnaT %>% 
+  # calculate mean Ct for the reference gene
+  filter(Target == "ACT1") %>% 
+  group_by(Name, Treatment) %>% 
+  summarize(refG = mean(Cp), .groups = "drop") %>% 
+  # append the reference gene Ct mean to the original data
+  right_join(filter(rnaT, Target != "ACT1")) %>% 
+  # subtract the reference gene Ct mean from each target
+  mutate(dCt = Cp - refG) %>% 
+  select(-refG)
+
+rna.ddCt <- rna.dCt %>% 
+  # calculate mean dCt for the reference sample
+  filter(Treatment == "Mock") %>% 
+  group_by(Name, Target) %>% 
+  summarize(refT = mean(dCt), .groups = "drop") %>% 
+  right_join(rna.dCt) %>% 
+  mutate(ddCt = dCt - refT, FC = 2^-ddCt) %>% 
+  select(-refT)
+```
+
+Visualize fold changes relative to the mock treated sample and normalized by ACT1. Using CTA1 primer set A. Overall pattern is highly consistent. Primer set C data contains one outlier that is most likely due to experimental mistakes -- one -Pi sample showed >400 fold induction 
+```{r}
+treat_color <- c(`H<sub>2</sub>O<sub>2</sub>` = "#E69138", `-Pi` = "#9900FF", Mock = "#666666")
+p.rna <- filter(rna.ddCt, Target == "CTA1_A") %>% 
+  mutate(Strain = fct_recode(Name, `wild type 1` = "yH001", `wild type 2` = "yH002"),
+         Treatment = fct_recode(Treatment, `H<sub>2</sub>O<sub>2</sub>` = "H2O2")) %>% 
+  ggplot(aes(x = Treatment, y = FC)) +
+  geom_point(aes(shape = Strain, color = Treatment), size = 3.5, alpha = 0.9,
+             position = position_jitterdodge(dodge.width = 0.6, jitter.width = 0.2)) +
+  scale_shape_discrete(solid = TRUE) +
+  scale_color_manual(values = treat_color, guide = "none") +
+  stat_summary(aes(group = Strain), fun = "mean", geom = "crossbar", color = "red",
+               position = position_dodge(0.6), width = 0.4) +
+  scale_y_log10() + ylab("CTA1 mRNA over mock") +
+  theme_cowplot(line_size = 0.7, font_size = 16) +
+  theme(legend.text = element_text(size = rel(0.8)),
+        legend.title = element_text(size = rel(0.9)),
+        legend.position = "top",
+        axis.title.x = element_blank(),
+        axis.text.x = element_markdown(size = rel(1.1)),
+        axis.text.y = element_text(size = rel(1.1)))
+ggsave("output/20221213-CTA1-mRNA-qRT-PCR.png", width = 4, height = 3.5)
+```
+
+Statistical tests
+```{r}
+lm <- rna.ddCt %>% filter(Target == "CTA1_A") %>% 
+  mutate(Treatment = fct_relevel(Treatment, "Mock")) %>% 
+  rename(Strain = Name) %>% 
+  lm(ddCt ~ Treatment + Strain, data = .)
+summary(lm)
+```
+
 ## Common plotting functions
 **Update 2022-11-08** 
 This list is used as a shared plotting set up.
@@ -33,11 +132,11 @@ This list is used as a shared plotting set up.
 p.timecourse <- list(
   stat_summary(fun = "mean", geom = "point", size = 3),
   stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
-  stat_smooth(aes(size = Genotype == "WT"), se = FALSE),
+  stat_smooth(aes(linewidth = Genotype == "WT"), method = "loess", formula = 'y~x', se = FALSE),
   scale_x_continuous(breaks = seq(0,240,30)),
   scale_size_manual(values = c(0.8, 1.5), guide = "none"),
   labs(y = "Cta1-GFP protein level (a.u.)"),
-  theme_cowplot(line_size = 0.7),
+  theme_cowplot(line_size = 0.7, font_size = 15),
   theme(legend.position=c(0.05,0.75), 
         #legend.box.background = element_rect(color = "black"),
         #legend.box.margin = margin(3,3,3,3),
@@ -50,8 +149,9 @@ p.timecourse <- list(
 )
 ```
 
-## Cta1 induction dynamics under -Pi and H2O2
+## Cta1 induction dynamics under -Pi and H<sub>2</sub>O<sub>2</sub>
 Used in Figure 3B.
+
 ### Prepare data
 ```{r}
 pi.dat.long <- read_csv("input/wt-Pi-H2O2/Long_data_CTA1-GFP.csv", col_types = cols()) %>% 
@@ -63,14 +163,18 @@ pi.dat.long <- read_csv("input/wt-Pi-H2O2/Long_data_CTA1-GFP.csv", col_types = c
 ```{r}
 treat_color <- c(`2mM H2O2` = "#E69138", `0mM Pi` = "#9900FF", Control = "#666666")
 
-pi.dat.long %>%
+p.gfp <- pi.dat.long %>%
   filter(!is.na(median)) %>% 
   ggplot(aes(x = new_time, y = median, color = Treatment)) + p.timecourse[-3] +
-  stat_smooth(se = FALSE) +
-  scale_x_continuous(breaks = seq(0,240,by = 60)) +
-  scale_color_manual(values= treat_color, labels = c(bquote("2mM "~H[2]~O[2]), "-Pi", "Control")) +
-  theme(legend.text = element_text(size = rel(0.85), face = 1), legend.position="top", legend.title = element_blank())
-ggsave("output/20221117-Pi-H2O2-timecourse.png", width = 4, height = 3.5)
+  stat_smooth(method = "loess", formula = 'y~x', se = FALSE) +
+  scale_x_continuous(breaks = seq(0, 240, by = 60)) +
+  scale_color_manual(values= treat_color, labels = c(bquote(~H[2]~O[2]), "-Pi", "Mock")) +
+  theme(legend.text = element_text(size = rel(0.85), face = 1),
+        legend.position="top",
+        legend.title = element_blank())
+plot_grid(p.rna, NULL, p.gfp, nrow = 1, rel_widths = c(1, 0.1, 1), align = "hv")
+#ggsave("output/20221117-Pi-H2O2-timecourse.png", width = 4, height = 3.5)
+ggsave("output/20221214-CTA1-rna-gfp-align.png", width = 8, height = 3.5)
 ```
 
 ## TF deletion mutants compared with wild type
