@@ -18,7 +18,7 @@ library(cowplot)
 ```
 
 
-## _CTA1_ mRNA induction (Fig. 3A)
+# _CTA1_ mRNA induction (Fig. 3A)
 Experiment was performed on 2020/03/25-27, see [here](https://docs.google.com/spreadsheets/d/1dClNE3oDJyQQlZwcf_NoHs56Wi1G938K44yyCrwCpCQ/edit?usp=sharing) for experimental methods. Briefly, _C. glabrata_ cells were grown to mid-log phase (OD~0.5), washed and treated with either SC media (mock), 0mM Pi (no Pi) or 10 mM H2O2 for 45 minutes. RNA was extracted and qRT-PCR was performed with _ACT1_ used as a reference gene and the mock treated sample as the reference sample. The following dataset was extracted from the above spreadsheet.
 ```{r}
 rna <- read_tsv("input/CTA1-mRNA-qPCR/20200327-CTA1-mRNA-Ct.txt") %>% 
@@ -103,7 +103,7 @@ p.rna <- filter(rna.ddCt, Target == "CTA1_A") %>%
              position = position_jitterdodge(dodge.width = 0.6, jitter.width = 0.2)) +
   scale_shape_discrete(solid = TRUE) +
   scale_color_manual(values = treat_color, guide = "none") +
-  stat_summary(aes(group = Strain), fun = "mean", geom = "crossbar", color = "red",
+  stat_summary(aes(group = Strain), fun = "mean", geom = "crossbar", color = "darkred",
                position = position_dodge(0.6), width = 0.4) +
   scale_y_log10() + ylab("CTA1 mRNA over mock") +
   theme_cowplot(line_size = 0.7, font_size = 16) +
@@ -125,6 +125,7 @@ lm <- rna.ddCt %>% filter(Target == "CTA1_A") %>%
 summary(lm)
 ```
 
+# Cta1-GFP protein levels
 ## Common plotting functions
 **Update 2022-11-08** 
 This list is used as a shared plotting set up.
@@ -132,11 +133,11 @@ This list is used as a shared plotting set up.
 p.timecourse <- list(
   stat_summary(fun = "mean", geom = "point", size = 3),
   stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
-  stat_smooth(aes(linewidth = Genotype == "WT"), method = "loess", formula = 'y~x', se = FALSE),
+  stat_smooth(aes(size = Genotype == "WT"), method = "loess", formula = 'y~x', se = FALSE),
   scale_x_continuous(breaks = seq(0,240,30)),
   scale_size_manual(values = c(0.8, 1.5), guide = "none"),
   labs(y = "Cta1-GFP protein level (a.u.)"),
-  theme_cowplot(line_size = 0.7, font_size = 15),
+  theme_cowplot(line_size = 0.7, font_size = 14),
   theme(legend.position=c(0.05,0.75), 
         #legend.box.background = element_rect(color = "black"),
         #legend.box.margin = margin(3,3,3,3),
@@ -273,8 +274,11 @@ data.m4s7 <- left_join(dat.ord.m4s7, treat.fil.m4s7, by = c("Replicate", "Sample
 
 data.tmp <- add_row(data,data.s7y1)
 data.cb <- add_row(data.tmp, data.m4s7)
+```
 
-# select out 0Pi data
+### CTA1 induction during -Pi
+Get the subset of no Pi data
+```{r}
 pi.dat <- data.cb %>% 
   filter(treat == "0Pi" & !genotype %in% c("skn7yap1_ko","msn2msn4_ko")) %>%  
   select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
@@ -285,25 +289,22 @@ pi.dat <- data.cb %>%
   arrange(new_time, genotype, replicate)
 ```
 
-
-CTA1 induction during - Pi in wt/skn7/yap1/msn2/msn4/msn4skn7 strains
-
 *need to check the skn7 and yap1 data, I got them switched somehow*
 
-### Bin's version
+#### Bin's version
 
 ```{r}
-genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 3, 7, 5, 2, 1)] 
-names(genotype_color) <- c("WT", "msn4-", "msn2-","skn7-", "yap1-", "msn4- skn7-")
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2, 3, 5, 1)] 
+names(genotype_color) <- c("WT", "msn2-", "yap1-", "msn4-","skn7-", "msn4- skn7-")
 
 pi.dat %>%
   filter(!is.na(new_median)) %>% 
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
-  scale_color_manual(values= genotype_color)
-ggsave("output/20221108-trans-deletion-timecourse.png", width = 4.5, height = 4)
+  scale_color_manual(values= genotype_color, limits = names(genotype_color))
+ggsave("output/20221108-trans-deletion-timecourse-noPi.png", width = 4.5, height = 4)
 ```
 
-### JY's version
+#### JY's version
 ```{r}
 genotype_color <- c("#F8766D", "#00BFC4", "#00BA38", "#619CFF", "#E76BF3", "#B79F00") 
 # map the color to the genotype variable within pi.dat in its order m2-m4-m4s7-s7-wt-y1
@@ -382,6 +383,34 @@ pi.tp %>%
 #show_col(hue_pal()(6))
 ```
 
+
+### CTA1 induction under H2O2
+```{r}
+tmp <- data.cb %>% 
+  filter(treat == "H2O2") %>%  
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  mutate(Genotype = fct_recode(
+    genotype, WT = "wt", `msn2-` = "msn2_ko", `msn4-` = "msn4_ko", 
+    `yap1-` = "yap1_ko", `skn7-` = "skn7_ko", `msn4- skn7-` = "msn4skn7_ko",
+    `msn2- msn4-` = "msn2msn4_ko", `yap1- skn7-` = "skn7yap1_ko")) %>% 
+  mutate(new_median =median/1000) %>% 
+  mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
+  arrange(new_time, genotype, replicate)
+```
+
+plotting
+```{r}
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2, 3, 5, 1, 4, 6)] 
+names(genotype_color) <- c("WT", "msn2-", "yap1-", "msn4-","skn7-", "msn4- skn7-", "yap1- skn7-", "msn2- msn4-")
+tmp %>%
+  filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
+  scale_color_manual(values = genotype_color, 
+                     limits = c("WT", "msn2-", "msn4-", "msn2- msn4-",
+                                "yap1- skn7-", "msn4- skn7-", "yap1-", "skn7-"))
+ggsave("output/20221215-trans-deletion-timecourse-H2O2.png", width = 7, height = 5)
+```
+
 ## Promoter mutants, Msn4 BS
 ### Prepare data
 Import data for 4OL
@@ -411,7 +440,6 @@ treat.fil.OL <- read_csv("input/OL_treatment/OL_tr.csv", na = c("","NA","N/A"), 
 
 data.OL.tmp <- left_join(dat.ord.OL, treat.fil.OL, by = c("Sample"))
 data.OL <- add_row(data.cb,data.OL.tmp)
-
 ```
 
 Import data for MutMsn4 #1 & #2
@@ -442,7 +470,6 @@ Subset the dataset and merge with the genotype information
 # get genotype info and petites info
 geno <- read.csv("input/Genotype_2_4Imp.csv")
 names(geno) <- c("HB_strain", names(geno)[-1])
-
 
 # get treatment info
 tr_files.mutM4 <- dir("input/2_4Imp_treatment", pattern = "d0*")
