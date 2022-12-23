@@ -261,3 +261,31 @@ asr_raw %>% subset(.,Strain == "Cg") %>% mutate(.,ASR_Score = PO.PM/MO.MM, .keep
   
   
 ```
+
+# plot the comparable MO data at 100mM and 10mM for Cg and Sc
+# do the statistical test
+```{r}
+mo_comp <- asr_raw %>% filter(H2O2 %in% c("100mM","10mM"))
+mo_comp %>% ggplot(aes(x = Strain, y = MO.MM_percent)) + geom_point(size =5, alpha = 0.5) +
+  theme_bw() +
+  theme(axis.text.x=element_text(hjust=1)) +
+  ylab("Survival Rate %(MO/MM)") +
+  xlab("Strain")
+
+# test for homogeneity in variance
+res.ftest <- var.test(MO.MM_percent ~ Strain, data = mo_comp)
+res.ftest
+## There is no significant difference between the variances of the two sets of data. Therefore, we can use the classic t-test witch assume equality of the two variances.
+
+# paired t-test
+res <- t.test(MO.MM_percent ~ Strain, data = mo_comp, paired = TRUE, var.equal = TRUE)
+res
+## no significant difference in the survival rate of 100mM treated Cg and 10mM treated Sc
+```
+
+# Fold increase in survival relative to the primary stress
+```{r}
+
+
+
+```
