@@ -85,7 +85,7 @@ asr_raw  %>% subset(., Strain != "Kl" & MO.MM != 1 & PO.PM != 1) %>%
   ylab("PO/PM") +
   xlab("MO/MM") +
   ggtitle("PO/PM vs MO/MM")
-  ggsave("../output/MO_vs_PO_ScCg_HT_d122422.png", width = 4, height = 4, units = 'in',dpi = 300)
+#  ggsave("../output/MO_vs_PO_ScCg_HT_d122422.png", width = 4, height = 4, units = 'in',dpi = 300)
   
 # scatterplot of MO/MM vs PO/PM
 asr_raw  %>% subset(., Strain != "Kl" & Experimenter == "JL" & MO.MM != 1 & PO.PM != 1) %>%
@@ -108,7 +108,7 @@ asr_raw  %>% subset(., Strain != "Kl" & Experimenter == "JL" & MO.MM != 1 & PO.P
   ylab("PO/PM") +
   xlab("MO/MM") +
   ggtitle("PO/PM vs MO/MM")
-  ggsave("../output/d122422_MO_vs_PO.png", width = 4, height = 4, units = 'in',dpi = 300)
+#  ggsave("../output/d122422_MO_vs_PO.png", width = 4, height = 4, units = 'in',dpi = 300)
 
 ```
 
@@ -231,7 +231,7 @@ asr_raw %>% mutate(.,ASR_Score = PO.PM/MO.MM, .keep = "all") %>% subset(., Exper
   ylab("ASR_Score") +
   xlab("MO/MM") +
   ggtitle("ASR effect vs MO/MM")
-  ggsave("../output/d122422_ASR_vs_MOvsMM_rev_x_logy_JL.png", width = 4, height = 4, units = 'in',dpi = 300)
+#  ggsave("../output/d122422_ASR_vs_MOvsMM_rev_x_logy_JL.png", width = 4, height = 4, units = 'in',dpi = 300)
 
 
 # MO/MM vs ASR Score for Cg
@@ -285,9 +285,27 @@ res
 ## no significant difference in the survival rate of 100mM treated Cg and 10mM treated Sc
 ```
 
-# Fold increase in survival relative to the primary stress
+# Fold increase in survival relative to the primary stress (CFU data for Cg and Sc)
 ```{r}
+asr_dot <- asr_raw %>% filter(H2O2 %in% c("20mM","40mM","60mM","80mM","100mM","2mM","4mM","6mM","8mM","10mM") & !(Strain %in% c("Kl"))) %>% mutate(H2O2_con = as.numeric(gsub("mM","",H2O2)))
 
+asr_dot %>% filter(Strain == "Cg") %>% 
+  ggplot(aes(x = H2O2_con, y = ASR_score)) + geom_point(dotsize = 2, alpha = 0.5) +   theme_bw() +
+  theme(axis.text.x=element_text(hjust=1)) +
+  ylab("ASR Score (r'/r)") +
+  xlab("H2O2 conc. (mM)")
 
+asr_dot %>% filter(Strain == "Sc") %>% 
+  ggplot(aes(x = H2O2_con, y = ASR_score)) + geom_point(dotsize = 2, alpha = 0.5) +   theme_bw() +
+  theme(axis.text.x=element_text(hjust=1)) +
+  ylab("ASR Score (r'/r)") +
+  xlab("H2O2 conc. (mM)")
+
+# combine the Cg and Sc onto the same plot
+asr_dot %>%
+  ggplot(aes(x = H2O2_con, y = ASR_score)) + geom_point(aes(color = Strain),dotsize = 2, alpha = 0.5) +   theme_bw() +
+  theme(axis.text.x=element_text(hjust=1)) +
+  ylab("ASR Score (r'/r)") +
+  xlab("H2O2 conc. (mM)")
 
 ```
