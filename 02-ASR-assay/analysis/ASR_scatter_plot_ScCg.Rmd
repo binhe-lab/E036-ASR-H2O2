@@ -289,23 +289,103 @@ res
 ```{r}
 asr_dot <- asr_raw %>% filter(H2O2 %in% c("20mM","40mM","60mM","80mM","100mM","2mM","4mM","6mM","8mM","10mM") & !(Strain %in% c("Kl"))) %>% mutate(H2O2_con = as.numeric(gsub("mM","",H2O2)))
 
+# Cg CFU
 asr_dot %>% filter(Strain == "Cg") %>% 
-  ggplot(aes(x = H2O2_con, y = ASR_score)) + geom_point(dotsize = 2, alpha = 0.5) +   theme_bw() +
+  ggplot(aes(x = H2O2_con, y = ASR_score)) + geom_point(dotsize = 5, alpha = 0.5) + 
+  scale_y_continuous(limits = c(0, 33)) +
+  theme_bw() +
   theme(axis.text.x=element_text(hjust=1)) +
   ylab("ASR Score (r'/r)") +
   xlab("H2O2 conc. (mM)")
+ ggsave("../output/Cg_ASR_grad_CFU.png", width = 4, height = 4, units = 'in',dpi = 300) 
 
+# Sc CFU
 asr_dot %>% filter(Strain == "Sc") %>% 
-  ggplot(aes(x = H2O2_con, y = ASR_score)) + geom_point(dotsize = 2, alpha = 0.5) +   theme_bw() +
+  ggplot(aes(x = H2O2_con, y = ASR_score)) + geom_point(dotsize = 5, alpha = 0.5) + 
+  scale_y_continuous(limits = c(0, 33)) +
+  theme_bw() +
   theme(axis.text.x=element_text(hjust=1)) +
   ylab("ASR Score (r'/r)") +
   xlab("H2O2 conc. (mM)")
+ ggsave("../output/Sc_ASR_grad_CFU.png", width = 4, height = 4, units = 'in',dpi = 300) 
 
 # combine the Cg and Sc onto the same plot
 asr_dot %>%
-  ggplot(aes(x = H2O2_con, y = ASR_score)) + geom_point(aes(color = Strain),dotsize = 2, alpha = 0.5) +   theme_bw() +
+  ggplot(aes(x = H2O2_con, y = ASR_score)) + geom_point(aes(color = Strain),dotsize = 5, alpha = 0.5) + 
+  scale_y_continuous(limits = c(0, 33)) +
+  theme_bw() +
   theme(axis.text.x=element_text(hjust=1)) +
   ylab("ASR Score (r'/r)") +
   xlab("H2O2 conc. (mM)")
 
 ```
+
+# Fold increase in survival relative to the primary stress (spotting assay density data for Cg and Sc)
+```{r}
+spot_asr <-  read.csv("../input/spotting_assay_density.csv")
+
+# Cg spotting assay
+spot_asr %>% filter(Strain == "Cg") %>% 
+  ggplot(aes(x = H2O2_mM, y = ASR_Score)) + geom_point(dotsize = 3, alpha = 0.5) +  
+  scale_y_continuous(limits = c(0, 60)) +
+  theme_bw() +
+  theme(axis.text.x=element_text(hjust=1)) +
+  ylab("ASR Score (r'/r)") +
+  xlab("H2O2 conc. (mM)")
+ ggsave("../output/Cg_ASR_grad_spot.png", width = 4, height = 4, units = 'in',dpi = 300) 
+
+# Sc spotting
+spot_asr %>% filter(Strain == "Sc") %>% 
+  ggplot(aes(x = H2O2_mM, y = ASR_Score)) + geom_point(dotsize = 3, alpha = 0.5) +  
+  scale_y_continuous(limits = c(0, 10)) +
+  theme_bw() +
+  theme(axis.text.x=element_text(hjust=1)) +
+  ylab("ASR Score (r'/r)") +
+  xlab("H2O2 conc. (mM)")
+ ggsave("../output/Sc_ASR_grad_spot.png", width = 4, height = 4, units = 'in',dpi = 300) 
+
+
+# combine Cg and Sc
+spot_asr %>% ggplot(aes(x = H2O2_mM, y = ASR_Score)) + geom_point(aes(color = Strain), dotsize = 3, alpha = 0.5) + 
+  scale_y_continuous(limits = c(0, 60)) +
+  theme_bw() +
+  theme(axis.text.x=element_text(hjust=1)) +
+  ylab("ASR Score (r'/r)") +
+  xlab("H2O2 conc. (mM)")
+
+  
+
+```
+
+# ASR Score vs different length of the primary stress treatment (CFU data)
+```{r}
+time_asr <- read.csv("../input/Time_course_ASR.csv")
+
+time_asr %>%  ggplot(aes(x = Time_min, y = ASR_Score)) + geom_point(aes(color = Strain), dotsize = 5, alpha = 0.5) +
+    scale_x_continuous(minor_breaks = seq(0,135,by=45),
+                     breaks = seq(0,135,by=45),
+                     limits = c(40,140),
+                     expand = c(0,0)) +
+  scale_y_continuous(limits = c(0, 250)) +
+  theme_bw() +
+  theme(axis.text.x=element_text(hjust=1)) +
+  ylab("ASR Score (r'/r)") +
+  xlab("Time (min)")
+ ggsave("../output/timecourse_asr.png", width = 4, height = 4, units = 'in',dpi = 300) 
+
+# transformed the y axis
+time_asr %>%  ggplot(aes(x = Time_min, y = ASR_Score)) + geom_point(aes(color = Strain), dotsize = 5, alpha = 0.5) +
+    scale_x_continuous(minor_breaks = seq(0,135,by=45),
+                     breaks = seq(0,135,by=45),
+                     limits = c(40,140),
+                     expand = c(0,0)) +
+  scale_y_continuous(trans = 'log10',limits = c(0.1, 250)) +
+  theme_bw() +
+  theme(axis.text.x=element_text(hjust=1)) +
+  ylab("ASR Score (r'/r)") +
+  xlab("Time (min)")
+
+```
+
+
+
