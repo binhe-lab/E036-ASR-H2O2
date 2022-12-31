@@ -18,7 +18,7 @@ library(cowplot)
 ```
 
 
-# _CTA1_ mRNA induction (Fig. 3A)
+# _CTA1_ mRNA induction [Fig. 3A]
 Experiment was performed on 2020/03/25-27, see [here](https://docs.google.com/spreadsheets/d/1dClNE3oDJyQQlZwcf_NoHs56Wi1G938K44yyCrwCpCQ/edit?usp=sharing) for experimental methods. Briefly, _C. glabrata_ cells were grown to mid-log phase (OD~0.5), washed and treated with either SC media (mock), 0mM Pi (no Pi) or 10 mM H2O2 for 45 minutes. RNA was extracted and qRT-PCR was performed with _ACT1_ used as a reference gene and the mock treated sample as the reference sample. The following dataset was extracted from the above spreadsheet.
 ```{r}
 rna <- read_tsv("input/CTA1-mRNA-qPCR/20200327-CTA1-mRNA-Ct.txt") %>% 
@@ -150,8 +150,7 @@ p.timecourse <- list(
 )
 ```
 
-## Cta1 induction dynamics under -Pi and H<sub>2</sub>O<sub>2</sub>
-Used in Figure 3B.
+## Cta1 induction under -Pi and H<sub>2</sub>O<sub>2</sub> [Fig. 3B]
 
 ### Prepare data
 ```{r}
@@ -276,7 +275,7 @@ data.tmp <- add_row(data,data.s7y1)
 data.cb <- add_row(data.tmp, data.m4s7)
 ```
 
-### CTA1 induction during -Pi
+### CTA1 induction during -Pi [Fig. 4A]
 Get the subset of no Pi data
 ```{r}
 pi.dat <- data.cb %>% 
@@ -291,7 +290,7 @@ pi.dat <- data.cb %>%
 
 *need to check the skn7 and yap1 data, I got them switched somehow*
 
-#### Bin's version
+#### Full time course
 
 ```{r}
 genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2, 3, 5, 1)] 
@@ -302,6 +301,75 @@ pi.dat %>%
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
   scale_color_manual(values= genotype_color, limits = names(genotype_color))
 ggsave("output/20221108-trans-deletion-timecourse-noPi.png", width = 4.5, height = 4)
+```
+
+#### Basal vs relative induction levels [Fig. S?]
+From the graph above, we can see that the tf∆ mutants affected both the basal expression level (at 0 min) and the fold change (relative to the 0'). To further dissect the effects on these two components, we will make some additional plots below
+```{r}
+genotype_order <- c("WT", "msn2-", "yap1-", "msn4-", "skn7-", "msn4- skn7-")
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2, 3, 5, 1)] 
+names(genotype_color) <- genotype_order
+p.base <- pi.dat %>% 
+  filter(new_time == 0, !is.na(new_median)) %>% 
+  mutate(Genotype = factor(Genotype, levels = genotype_order)) %>% 
+  ggplot(aes(x = Genotype, y = new_median)) +
+  geom_point(position = position_jitter(width = 0.1), alpha = 0.5, shape = 16) +
+  stat_summary(aes(color = Genotype), fun.data = "mean_cl_boot", geom = "errorbar",
+               width = 0.3, linewidth = 1.2) +
+  stat_summary(aes(color = Genotype), fun = "mean", geom = "point", size = 4) +
+  scale_color_manual(values = genotype_color, guide = "none") +
+  labs(y = "Cta1-GFP protein level (a.u.)") +
+  theme_cowplot(line_size = 0.7, font_size = 14) +
+  background_grid() + panel_border(color = "black", size = 1.5) +
+  theme(#legend.position=c(0.05,0.75), 
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        #legend.text = element_text(face = 3), 
+        #legend.title = element_text(),
+    axis.line = element_blank(),
+    axis.title = element_text(size = rel(1)), 
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), axis.text = element_text(size = rel(1)),
+  )
+
+p.base
+```
+
+Statistical test
+```{r}
+pi.dat %>% 
+  filter(new_time == 0, !is.na(new_median)) %>% 
+  mutate(Genotype = factor(Genotype, levels = genotype_order)) %>% 
+  lm(new_median ~ Genotype, data = .) %>% 
+  summary()
+```
+> All comparisons are statistically significant at 0.05 level after Bonferroni correction (threshold: 0.0125)
+
+```{r}
+# subtract 0 min mean from all time points for each genotype
+p.induce <- pi.dat %>% 
+  filter(!is.na(new_median)) %>% 
+  group_by(Genotype) %>% 
+  mutate(delta = new_median - mean(new_median[new_time == 0])) %>% 
+  ggplot(aes(x = new_time, y = delta, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= genotype_color, limits = names(genotype_color)) +
+  scale_x_continuous(breaks = seq(0, 240, by = 30), labels = c(0, '', 60, '', 120, '', 180, '', 240))
+
+plot_grid(p.base, NULL, p.induce, nrow = 1, rel_widths = c(1, 0.1, 1), align = "hv")
+#ggsave("output/20221117-Pi-H2O2-timecourse.png", width = 4, height = 3.5)
+ggsave("output/20221221-CTA1-trans-delete-base-vs-induce.png", width = 10, height = 4.5)
+```
+
+To test for the effect on induction, we can compare the levels at 180 min
+```{r}
+pi.dat %>% 
+  filter(!is.na(new_median)) %>% 
+  group_by(Genotype) %>% 
+  mutate(delta = new_median - mean(new_median[new_time == 0])) %>% 
+  filter(new_time == 120, !is.na(new_median)) %>% 
+  mutate(Genotype = factor(Genotype, levels = genotype_order)) %>% 
+  lm(new_median ~ Genotype, data = .) %>% 
+  summary()
 ```
 
 #### JY's version
@@ -384,7 +452,7 @@ pi.tp %>%
 ```
 
 
-### CTA1 induction under H2O2
+### CTA1 induction under H2O2 [Fig. S?]
 ```{r}
 tmp <- data.cb %>% 
   filter(treat == "H2O2") %>%  
