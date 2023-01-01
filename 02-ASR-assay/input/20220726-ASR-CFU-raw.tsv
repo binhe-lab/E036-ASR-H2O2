@@ -1,3 +1,9 @@
+# Date: experiment date
+# Group: MM = mock primary, mock secondary; MO = mock primary, H2O2 secondary; PM = phosphate starve primary, mock secondary; PO = phosphate starve primary, H2O2 secondary
+# Len_1: length of primary stress treatment
+# Len_2: length of secondary stress treatment
+# Dilutions: dilutions for CFU assay
+# Count: raw counts on CFU plates
 Date	Species	Strain	Genotype	Group	Len_1	Len_2	H2O2	Dilutions	Count
 07/18/22	Cg	yH001	wt	MM	45 min	2 hr	0 mM	1000	505
 07/18/22	Cg	yH001	wt	MO	45 min	2 hr	20 mM	1000	123
