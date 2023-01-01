@@ -1,1 +1,1 @@
-Acquired Stress Resistance phenotype assays, by either spot or CFU.
+Acquired Stress Resistance phenotype assays, by either spotting assays or CFU.
