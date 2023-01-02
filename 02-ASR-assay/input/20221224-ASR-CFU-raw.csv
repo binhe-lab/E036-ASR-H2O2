@@ -1,17 +1,17 @@
-# Date: The experiments conducted date,,,,,,,,,,,,
-# Strain: the HB strain record,,,,,,,,,,,,
-"# Species: Cg - C. glabrata, Sc - S. cerevisiae",,,,,,,,,,,,
-# Genotype: wt - wild type strains without any genetic manipulation,,,,,,,,,,,,
+# Date: The experiments conducted date
+# Strain: lab strain ID
+# Species: Cg - C. glabrata; Sc - S. cerevisiae
+# Genotype: wt - wild type strains without any genetic manipulation
 # Group: treatment type; MM - Mock treatment as the primary stress and secondary stress; MO - Mock treatment as the primary stress and H2O2 stress as the secondary stress; PM: Phosphate starvation as the primary stress and mock treatment as the secondary stress; PO: phosphate starvation as the primary stress and H2O2 as the secondarys tress,,,,,,,,,,,,
-# Len_1: Primary stress treatment time,,,,,,,,,,,,
-# Len_2: Secondaty stress treatment time,,,,,,,,,,,,
-# H2O2: H2O2 stress concentration in mM; Mock - 0mM,,,,,,,,,,,,
-# Dilutions: the final dilutions for the culture used for CFU Count,,,,,,,,,,,,
-# Count: CFU count,,,,,,,,,,,,
-# MO/MM: survival rate on H2O2 stress without the primary stress,,,,,,,,,,,,
-# PO/PM: survival rate on H2O2 stress with phosphate starvation as the primary stress,,,,,,,,,,,,
-# Experimenter: the person who did the experiments,,,,,,,,,,,,
-Date,Species,Strain,Genotype,Group,Len_1,Len_2,H2O2,Dilutions,Count,MO/MM,PO/PM,Experimenter
+# Len_1: Primary stress treatment time
+# Len_2: Secondaty stress treatment time
+# H2O2: H2O2 stress concentration in mM; Mock - 0mM
+# Dilutions: the final dilutions for the culture used for CFU Count
+# Count: CFU count
+# MO/MM: survival rate on H2O2 stress without the primary stress (calculated from the corresponding MO count)
+# PO/PM: survival rate on H2O2 stress with phosphate starvation as the primary stress (calculated from the corresponding PO count)
+# Experimenter: the person who did the experiments
+Date,Strain,Species,Genotype,Group,Len_1,Len_2,H2O2,Dilutions,Count,MO/MM,PO/PM,Experimenter
 d072922,yH001,Cg,wt,MM,45min,2hr,Mock,1000,587,1,,JL
 d072922,yH001,Cg,wt,MO,45min,2hr,20mM,1000,128,0.218057922,,JL
 d072922,yH001,Cg,wt,MO,45min,2hr,40mM,1000,93,0.158432709,,JL
