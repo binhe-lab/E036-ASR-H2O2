@@ -1,4 +1,4 @@
-Date,Species,Strain,Genotype,Group,Len_1,Len_2,H2O2,Dilutions,Count,MO/MM,PO/PM,Experimenter
+Date,Strain,Species,Genotype,Group,Len_1,Len_2,H2O2,Dilutions,Count,MO/MM,PO/PM,Experimenter
 d072922,yH001,Cg,wt,MM,45min,2hr,Mock,1000,587,1,,JL
 d072922,yH001,Cg,wt,MO,45min,2hr,20mM,1000,128,0.2180579216,,JL
 d072922,yH001,Cg,wt,MO,45min,2hr,40mM,1000,93,0.1584327087,,JL
