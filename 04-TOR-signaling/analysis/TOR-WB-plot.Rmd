@@ -14,18 +14,17 @@ require(tidyverse)
 require(cowplot)
 ```
 
-# Western Blot for Rps6 and P-Rps6
 ## Goal
-Jinye performed Wester Blot to probe P-Rps6 and total Rps6 (aka S6) as a readout for the TORC1 activity. Based on the literature, active TORC1 signaling results in the phosphorylation of Rps6 (ribosomal subunit 6, indicative of active growth). Nitrogen starvation is known to suppress TORC1 and therefore leads to the loss of P-Rps6. The total Rps6 level doesn't change dramatically depending on the environmental conditions. Our goal is to use P-Rps6/totalS6 as a reporter for TORC1 activity and compare it between _S. cerevisiae_ and _C. glabrata_ under rich, no nitrogen and no phosphate conditions.
+Jinye performed Western Blot to probe P-Rps6 and total Rps6 (aka S6) as a readout for the TORC1 activity. Based on the literature, active TORC1 signaling results in the phosphorylation of Rps6 (ribosomal subunit 6, indicative of active growth). Nitrogen starvation is known to suppress TORC1 and therefore leads to the loss of P-Rps6. The total Rps6 level doesn't change dramatically depending on the environmental conditions. Our goal is to use P-Rps6/totalS6 as a reporter for TORC1 activity and compare it between _S. cerevisiae_ and _C. glabrata_ under rich, no nitrogen and no phosphate conditions. Additionally, Jinye profiled two outgroup species, _K. lactis_ and _L. waltii_
 
-## Data
-Three replicates performed on 2021-12-17, 2022-01-11 and 2022-01-13. The blots were imaged and quantified using Li-COR software. In particular, each gel is first stained with a total protein stain, imaged, and then probed with antibodies for either P-Rps6 or total S6. The signals of the Western Blot bands are background subtracted using the regions surrounding the lanes, and normalized by the whole protein stain signal for the entire lane. The data were combined into a single text file.
+## Sc vs Cg
+### Data
+Three replicates performed on 2021-12-17, 2022-01-11 and 2022-01-13. The blots were imaged and quantified using Li-COR software. In particular, each gel was first stained with a total protein stain, imaged, and then probed with antibodies for either P-Rps6 or total S6. The signals of the Western Blot bands were background subtracted using the regions surrounding the lanes, and normalized by the whole protein stain signal for the entire lane. The data were combined into a single text file.
 
 ```{r}
 dat <- read_tsv("../input/20221120-Rps6-phospho-WB-quant-combined.txt", col_types = cols())
 ```
 
-## Data wrangling
 We will normalize the signals against the whole protein stain, and then further divide the normalized values between the P-Rps6 and total S6. The resulting values are proportional to the % of phosphorylated Rps6. We could normalize the two starvation treatment values to the rich condition to make the numbers a bit more interpretable.
 ```{r}
 dt <- dat %>% 
@@ -36,13 +35,14 @@ dt <- dat %>%
          treatment = factor(treatment, levels = c("rich", "noNi", "noPi"), labels = c("Rich", "- N", "- Pi")))
 ```
 
-## Plotting
+### Plotting
 ```{r}
 ggplot(dt, aes(x = species, y = PS6.v.tS6, group = treatment)) +
-  geom_bar(aes(fill = treatment), stat = "summary", fun = "mean", position = position_dodge(0.9), width = .8) +
+  geom_bar(aes(fill = treatment), stat = "summary", fun = "mean", 
+           position = position_dodge(0.9), width = .8, color = "gray30") +
   geom_point(position = position_dodge(0.9), size = 2, shape = 18) +
   #scale_color_manual(values = c("S. cerevisiae" = "grey20", "C. glabrata" = "orange2")) +
-  scale_fill_grey(start = 0.3, end = 0.8) +
+  scale_fill_grey(start = 0.3, end = 0.95) +
   ylab("P-Rps6 / total Rps6") +
   theme_cowplot(line_size = 0.7) +
   theme(axis.title.x = element_blank(),
@@ -51,3 +51,36 @@ ggplot(dt, aes(x = species, y = PS6.v.tS6, group = treatment)) +
 ggsave("../output/20221120-Rps6-WB-quant-compare.png", width = 3.5, height = 3.5)
 ```
 
+## Four species
+### Data
+Three replicates performed on 2022-02-16, 2022-03-08 and 2022-03-11. The blots were imaged and quantified using Li-COR software. In particular, each gel was first stained with a total protein stain, imaged, and then probed with antibodies for either P-Rps6 or total S6. The signals of the Western Blot bands were background subtracted using the regions surrounding the lanes, and normalized by the whole protein stain signal for the entire lane. The data were combined into a single text file.
+
+```{r}
+dat <- read_tsv("../input/20221120-Rps6-phospho-WB-quant-combined.txt", col_types = cols())
+```
+
+We will normalize the signals against the whole protein stain, and then further divide the normalized values between the P-Rps6 and total S6. The resulting values are proportional to the % of phosphorylated Rps6. We could normalize the two starvation treatment values to the rich condition to make the numbers a bit more interpretable.
+```{r}
+dt <- dat %>% 
+  mutate(norm.v = signal/whole_prot, .keep = "unused") %>% # remove the variables used to create the new one
+  pivot_wider(names_from = target, values_from = norm.v) %>% 
+  mutate(PS6.v.tS6 = `P-Rps6` / `total Rps6`,
+         species = fct_recode(species, `S. cerevisiae` = "Sc", `C. glabrata` = "Cg"),
+         treatment = factor(treatment, levels = c("rich", "noNi", "noPi"), labels = c("Rich", "- N", "- Pi")))
+```
+
+### Plotting
+```{r}
+ggplot(dt, aes(x = species, y = PS6.v.tS6, group = treatment)) +
+  geom_bar(aes(fill = treatment), stat = "summary", fun = "mean", 
+           position = position_dodge(0.9), width = .8, color = "gray30") +
+  geom_point(position = position_dodge(0.9), size = 2, shape = 18) +
+  #scale_color_manual(values = c("S. cerevisiae" = "grey20", "C. glabrata" = "orange2")) +
+  scale_fill_grey(start = 0.3, end = 0.95) +
+  ylab("P-Rps6 / total Rps6") +
+  theme_cowplot(line_size = 0.7) +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_text(size = rel(1.2), face = 3),
+        legend.position = "top")
+ggsave("../output/20221120-Rps6-WB-quant-compare.png", width = 3.5, height = 3.5)
+```
