@@ -1,0 +1,220 @@
+---
+title: "Bin_code_adpt"
+author: "Jinye Liang"
+date: "August 6, 2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mgcv)
+library(broom)
+```
+
+
+
+```{r, Import the Data into R}
+files <- dir("gz_merge", pattern = "merge-*") # get the file names of the merged
+files <- file.path("gz_merge", files)         # this appends the directory to the file names, check the arrange
+#names(files) <- paste0("Rep", 1:3)        # name the replicates
+
+names(files) <- c("Rep3-0Pi-Ctrl","Rep1-0Pi-Ctrl", "Rep2-0Pi-Ctrl") # correspond to treatment files
+
+tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
+
+# import and process the data to the format we want
+dat.ord <- files %>% 
+  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group)
+
+write_csv(dat.ord, file = "gz_merge/20211215-20220113-bcy1gtr1-KO-flow-data.csv")
+```
+
+
+```{r, Subset the dataset and merge with the genotype information:}
+# get genotype info
+tr_files <- dir("treatment", pattern = "d0*")
+tr_files <- file.path("treatment", tr_files)
+names(tr_files) <- c("Rep3-0Pi-Ctrl","Rep1-0Pi-Ctrl", "Rep2-0Pi-Ctrl")
+
+
+treat.fil <- tr_files %>% 
+  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(!is.na(`group_name`)) %>% 
+  select(Replicate, genotype = `group_name`, Sample, treat)
+
+# combine genotype and treat variables into the flow data
+data <- left_join(dat.ord, treat.fil, by = c("Replicate", "Sample"))
+#sum(is.na(data$Group))
+
+write_csv(data, file = "gz_merge/20211215-20220113-bcy1gtr1-KO-flow-data.csv.gz")
+
+# select out 0Pi & h2o2 data
+pi.dat <- data %>% 
+  filter(treat == "0Pi") %>% 
+  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>% 
+  arrange(time, genotype, replicate)
+
+ctrl.dat <- data %>% 
+  filter(treat == "ctrl") %>% 
+  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>% 
+  arrange(time, genotype, replicate)
+
+```
+
+```{r, visualize the data}
+pi.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = replicate)) + geom_point(size = 0.2) + 
+  facet_wrap(~genotype) + stat_summary(fun = "median", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("CTA1-GFP expression (median)") +
+  ggtitle("Treatment: Phosphate Starvation")
+
+pi.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "CTA1-GFP expression (MFI)", title = "A")
+
+pi.dat %>% subset(., !is.na(median)) %>%
+  filter(genotype == c("wt", "gtr1_ko","bcy1_ko"))  %>%
+  ggplot(aes(x = time, y = median, color = genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "CTA1-GFP expression (MFI)", title = "A")
+
+pi.dat %>% subset(., !is.na(median)) %>%
+  filter(genotype == c("wt", "msn4_ko","msn4_KI"))  %>%
+  ggplot(aes(x = time, y = median, color = genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "CTA1-GFP expression (MFI)", title = "A")
+
+
+ctrl.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = replicate)) + geom_point(size = 0.2) + 
+  facet_wrap(~genotype) + stat_summary(fun = "median", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("CTA1-GFP expression (median)") +
+  ggtitle("Treatment: Ctrl")
+
+ctrl.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) + 
+  labs(y = "CTA1-GFP expression (MFI)", title = "D")
+
+
+# title = "The effects of oxidative stress on CTA1-GFP \nin different TFs KO strains"
+# title = "The effects of Phosphate Starvation on CTA1-GFP \nin different TFs KO strains"
+
+```
+
+Data transformation
+We want to transform the median fluorescent intensity into fold change relative to time point 0 for each genotype. Then we would like to normalize that for each non-wt genotype by the wild type fold change at each time point. The goal is to highlight the deficiency in gene induction in the knock out.
+
+
+```{r, data transformation}
+# first let's calculate the fold change by dividing the median fluorescent indensity of each genotype at each time point by the mean MFI for that genotype at time point 0.
+# we begin by calculating the baseline for each genotype
+pi.summary <- subset(pi.dat, !is.na(median)) %>% 
+  group_by(genotype, time) %>% 
+  summarize(baseline = mean(median)) %>% 
+  filter(time == "0min") %>% 
+  select(-time)
+```
+
+```{r}
+# next we calculate the fold change
+pi.dat1 <- pi.dat %>% 
+  left_join(pi.summary, by = "genotype") %>% 
+  mutate(fc = median / baseline)
+# for each time point, we calculate the mean fold change for the wild type strain  
+pi.wt.fc <- pi.dat1 %>% 
+  filter(genotype == "wt") %>% 
+  group_by(time) %>% 
+  summarize(wt.mFC = mean(fc))
+# finally, we normalize the non-wt strains by the wild type mean fold change at each time point
+pi.dat1 <- pi.dat1 %>% 
+  left_join(pi.wt.fc, by = "time") %>% 
+  mutate(normFC = fc / wt.mFC)
+
+```
+
+plot the normalized fold changes
+```{r, plot the normalized fold changes}
+pi.dat1 %>% 
+  ggplot(aes(x = time, y = normFC, color = genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  ylab("fold change relative to 0 min, normalized to wild type") +
+  ggtitle("Treatment: Phosphate Starvation") +
+  theme_bw()
+
+pi.dat1 %>% 
+  filter(genotype == c("wt", "gtr1_ko","bcy1_ko"))  %>% 
+  ggplot(aes(x = time, y = normFC, color = genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  ylab("fold change relative to 0 min, normalized to wild type") +
+  ggtitle("Treatment: Phosphate Starvation") +
+  theme_bw()
+
+pi.dat1 %>% 
+  filter(genotype == c("wt", "msn4_ko","msn4_KI"))  %>% 
+  ggplot(aes(x = time, y = normFC, color = genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  ylab("fold change relative to 0 min, normalized to wild type") +
+  ggtitle("Treatment: Phosphate Starvation") +
+  theme_bw()
+
+```
+We could perform linear regression on the data to test if the slope is significantly different from zero. We use a “nest-map-unnest” workflow
+
+```{r}
+pi.dat1 %>% 
+  filter(genotype != "wt") %>% 
+  mutate(time = as.numeric(time)) %>% 
+  group_by(genotype) %>% 
+  nest() %>% 
+  mutate(
+    fit = map(data, ~ lm(normFC ~ time, data = .x)),
+    tidied = map(fit, tidy)
+  ) %>% 
+  unnest(tidied)
+
+
+```
