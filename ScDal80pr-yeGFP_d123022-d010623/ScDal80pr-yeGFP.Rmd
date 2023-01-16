@@ -1,0 +1,291 @@
+---
+title: "rim15_Mut"
+author: "JY"
+date: "11/29/2022"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(mgcv)
+library(broom)
+```
+
+
+
+```{r, Import the Data into R}
+files <- dir("gz_merge", pattern = "merge-*") # get the file names of the merged
+files <- file.path("gz_merge", files)         # this appends the directory to the file names
+names(files) <- paste0("Rep", 1:3)        # name the replicates
+
+names(files) <- c("Rep2-0Pi-Ctrl","Rep3-0Pi-Ctrl","Rep4-0Pi-Ctrl") # correspond to treatment files
+
+tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
+
+# import and process the data to the format we want
+dat.ord <- files %>% 
+  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group)
+
+
+```
+
+
+```{r, Subset the dataset and merge with the genotype information:}
+# get genotype info
+tr_files <- dir("treatment", pattern = "d*")
+tr_files <- file.path("treatment", tr_files)
+names(tr_files) <- c("Rep2-0Pi-Ctrl","Rep3-0Pi-Ctrl","Rep4-0Pi-Ctrl")
+
+
+treat.fil <- tr_files %>% 
+  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(!is.na(`group_name`)) %>% 
+  select(Replicate, genotype = `group_name`, Sample, treat)
+
+# combine genotype and treat variables into the flow data
+data <- left_join(dat.ord, treat.fil, by = c("Replicate", "Sample"))
+#sum(is.na(data$Group))
+
+#write_csv(data, file = "gz_merge/20210724-0805-treat-gt-Msn4Skn7-KO-flow-data.csv.gz")
+
+# select out treatment data
+ni.dat <- data %>% 
+  filter(treat == "0Nitrogen") %>% 
+  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>% 
+  arrange(time, genotype, replicate)
+
+
+pi.dat <- data %>% 
+  filter(treat == "0Pi") %>% 
+  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>% 
+  arrange(time, genotype, replicate)
+
+ctrl.dat <- data %>% 
+  filter(treat == "ctrl") %>% 
+  select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>% 
+  arrange(time, genotype, replicate)
+
+```
+
+```{r, visualize the data}
+ni.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = replicate)) + geom_point(size = 0.2) + 
+  facet_wrap(~genotype) + stat_summary(fun = "median", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("ScDal80pr-yeGFP expression (median)") +
+  ggtitle("Treatment: nitrogen Starvation")
+
+ni.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "ScDal80pr-yeGFP expression (MFI)", title = "A")
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-0Pi-ScDal80pr-yeGFP.png"),
+         width = 7, height = 5,units = 'in', dpi = 300)  
+
+
+pi.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = replicate)) + geom_point(size = 0.2) + 
+  facet_wrap(~genotype) + stat_summary(fun = "median", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("ScDal80pr-yeGFP expression (median)") +
+  ggtitle("Treatment: Phosphate Starvation")
+
+pi.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "ScDal80pr-yeGFP expression (MFI)", title = "A")
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-0Pi-ScDal80pr-yeGFP.png"),
+         width = 7, height = 5,units = 'in', dpi = 300)  
+
+
+ctrl.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = replicate)) + geom_point(size = 0.2) + 
+  facet_wrap(~genotype) + stat_summary(fun = "median", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("ScDal80pr-yeGFP expression (median)") +
+  ggtitle("Treatment: Ctrl")
+
+ctrl.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = genotype)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) + 
+  labs(y = "ScDal80pr-yeGFP expression (MFI)", title = "D")
+
+
+# title = "The effects of oxidative stress on CTA1-GFP \nin different TFs KO strains"
+# title = "The effects of Phosphate Starvation on CTA1-GFP \nin different TFs KO strains"
+
+```
+
+```{r}
+#select out the genotype data (to compare Cg and Sc)
+Cg.dat <- data %>% 
+  filter(genotype == "Cgmsn2::ScDal80pr-yeGFP") %>% 
+  select(time = Group, Sample, Plate, replicate = Replicate, treat, median) %>% 
+  arrange(time, treat, replicate)
+
+Sc.dat <- data %>% 
+  filter(genotype == "S288C-pRS315-ScDal80pr-yeGFP") %>% 
+  select(time = Group, Sample, Plate, replicate = Replicate, treat, median) %>% 
+  arrange(time, treat, replicate)
+
+K699.dat <- data %>% 
+  filter(genotype == "K699-pRS315-ScDal80pr-yeGFP") %>% 
+  select(time = Group, Sample, Plate, replicate = Replicate, treat, median) %>% 
+  arrange(time, treat, replicate)
+```
+
+```{r}
+#plot the species-based ScDal80pr-yeGFP induction regardless of the treatment
+Cg.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = replicate)) + geom_point(size = 0.2) + 
+  facet_wrap(~treat) + stat_summary(fun = "median", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("ScDal80pr-yeGFP expression (median)") +
+  ggtitle("Genotype: Cgmsn2::ScDal80pr-yeGFP")
+
+Cg.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = treat)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "ScDal80pr-yeGFP expression (MFI)", title = "A") +
+  ggtitle("Genotype: Cgmsn2::ScDal80pr-yeGFP")
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-Cg-dynamics.png"),
+         width = 7, height = 5,units = 'in', dpi = 300) 
+
+Sc.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = replicate)) + geom_point(size = 0.2) + 
+  facet_wrap(~treat) + stat_summary(fun = "median", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("ScDal80pr-yeGFP expression (median)") +
+  ggtitle("Genotype: S288C-pRS315-ScDal80pr-yeGFP")
+
+Sc.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = treat)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "ScDal80pr-yeGFP expression (MFI)", title = "A") +
+  ggtitle("S288C: pRS315-ScDal80pr-yeGFP")
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-S288C-dynamics.png"),
+         width = 7, height = 5,units = 'in', dpi = 300) 
+
+
+K699.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = replicate)) + geom_point(size = 0.2) + 
+  facet_wrap(~treat) + stat_summary(fun = "median", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=45,hjust=1)) +
+  ylab("ScDal80pr-yeGFP expression (median)") +
+  ggtitle("Genotype: K699-pRS315-ScDal80pr-yeGFP")
+
+
+K699.dat %>% subset(., !is.na(median)) %>% 
+  ggplot(aes(x = time, y = median, color = treat)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "ScDal80pr-yeGFP expression (MFI)", title = "A") +
+  ggtitle("K699: pRS315-ScDal80pr-yeGFP")
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-K699-dynamics.png"),
+         width = 7, height = 5,units = 'in', dpi = 300) 
+
+
+```
+
+```{r}
+# only plot the - Pi and ctrl group
+Cg.dat %>% subset(., !is.na(median)) %>% filter(treat != "0Nitrogen") %>% 
+  ggplot(aes(x = time, y = median, color = treat)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "ScDal80pr-yeGFP expression (MFI)", title = "A") +
+  ggtitle("Genotype: Cgmsn2::ScDal80pr-yeGFP; 0Pi vs Ctrl")
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-Cg-dynamics-0PivsCtrl.png"),
+         width = 7, height = 5,units = 'in', dpi = 300) 
+
+Sc.dat %>% subset(., !is.na(median)) %>% filter(treat != "0Nitrogen") %>% 
+  ggplot(aes(x = time, y = median, color = treat)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "ScDal80pr-yeGFP expression (MFI)", title = "A") +
+  ggtitle("S288C: pRS315-ScDal80pr-yeGFP; 0Pi vs Ctrl")
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-S288C-dynamics-0PivsCtrl.png"),
+         width = 7, height = 5,units = 'in', dpi = 300) 
+
+K699.dat %>% subset(., !is.na(median)) %>% filter(treat != "0Nitrogen") %>% 
+  ggplot(aes(x = time, y = median, color = treat)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  stat_smooth(aes(x = as.numeric(time)), se = FALSE) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=45,hjust=1), axis.text = element_text(size = 12), 
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "ScDal80pr-yeGFP expression (MFI)", title = "A") +
+  ggtitle("K699:pRS315-ScDal80pr-yeGFP")
+  ggsave(paste0("./output/", gsub("-", "", Sys.Date()), "-K699-dynamics-0PivsCtrl.png"),
+         width = 7, height = 5,units = 'in', dpi = 300) 
+
+
+```
