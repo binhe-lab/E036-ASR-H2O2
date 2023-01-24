@@ -56,22 +56,27 @@ ggsave("../output/20221120-Rps6-WB-quant-compare.png", width = 3.5, height = 3.5
 Three replicates performed on 2022-02-16, 2022-03-08 and 2022-03-11. The blots were imaged and quantified using Li-COR software. In particular, each gel was first stained with a total protein stain, imaged, and then probed with antibodies for either P-Rps6 or total S6. The signals of the Western Blot bands were background subtracted using the regions surrounding the lanes, and normalized by the whole protein stain signal for the entire lane. The data were combined into a single text file.
 
 ```{r}
-dat <- read_tsv("../input/20221120-Rps6-phospho-WB-quant-combined.txt", col_types = cols())
+dat1 <- read_tsv("../input/20220216-Rps-phospho-WB-quant-combined-4-species.tsv", col_types = cols())
 ```
 
 We will normalize the signals against the whole protein stain, and then further divide the normalized values between the P-Rps6 and total S6. The resulting values are proportional to the % of phosphorylated Rps6. We could normalize the two starvation treatment values to the rich condition to make the numbers a bit more interpretable.
 ```{r}
-dt <- dat %>% 
+dt1 <- dat1 %>% 
   mutate(norm.v = signal/whole_prot, .keep = "unused") %>% # remove the variables used to create the new one
   pivot_wider(names_from = target, values_from = norm.v) %>% 
   mutate(PS6.v.tS6 = `P-Rps6` / `total Rps6`,
-         species = fct_recode(species, `S. cerevisiae` = "Sc", `C. glabrata` = "Cg"),
-         treatment = factor(treatment, levels = c("rich", "noNi", "noPi"), labels = c("Rich", "- N", "- Pi")))
+         species = factor(species,
+                          levels = c("Cg", "Sc", "Kl", "Lw"),
+                          labels = c("C. glabrata", "S. cerevisiae",
+                                     "K. lactis", "L. waltii")),
+         treatment = factor(treatment, 
+                            levels = c("SC", "Nitrogen Starvation", "Pi starvation"), 
+                            labels = c("Rich", "- N", "- Pi")))
 ```
 
 ### Plotting
 ```{r}
-ggplot(dt, aes(x = species, y = PS6.v.tS6, group = treatment)) +
+ggplot(dt1, aes(x = species, y = PS6.v.tS6, group = treatment)) +
   geom_bar(aes(fill = treatment), stat = "summary", fun = "mean", 
            position = position_dodge(0.9), width = .8, color = "gray30") +
   geom_point(position = position_dodge(0.9), size = 2, shape = 18) +
@@ -82,5 +87,23 @@ ggplot(dt, aes(x = species, y = PS6.v.tS6, group = treatment)) +
   theme(axis.title.x = element_blank(),
         axis.text.x = element_text(size = rel(1.2), face = 3),
         legend.position = "top")
-ggsave("../output/20221120-Rps6-WB-quant-compare.png", width = 3.5, height = 3.5)
+#ggsave("../output/20230105-4sps-Rps6-WB-quant-compare.png", width = 3.5, height = 3.5)
+```
+
+
+```{r}
+ggplot(dt1, aes(x = treatment, y = PS6.v.tS6)) +
+  geom_bar(aes(fill = treatment), 
+           stat = "summary", fun = "mean", width = .8, color = "gray30") +
+  geom_point(size = 2, shape = 18) +
+  stat_summary(fun.data = "mean_se", geom = "errorbar", width = 0.5) +
+  #scale_color_manual(values = c("S. cerevisiae" = "grey20", "C. glabrata" = "orange2")) +
+  scale_fill_grey(start = 0.3, end = 0.95) +
+  ylab("P-Rps6 / total Rps6") +
+  facet_wrap(~species, nrow = 1) +
+  theme_cowplot(line_size = 0.7) +
+  theme(axis.title.x = element_blank(),
+        strip.text.x = element_text(size = rel(1), face = 3),
+        legend.position = "none")
+ggsave("../output/20230105-4sps-Rps6-WB-quant-compare.png", width = 6, height = 3)
 ```
