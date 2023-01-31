@@ -187,11 +187,20 @@ files.s7y1 <- dir("input/s7y1_gz_merge", pattern = "merge-*")
 files.s7y1 <- file.path("input/s7y1_gz_merge", files.s7y1)  
 files.m4s7 <- dir("input/m4s7_gz_merge", pattern = "merge-*") 
 files.m4s7 <- file.path("input/m4s7_gz_merge", files.m4s7)
+files.rapa <- dir("input/Rapa_gz_merge", pattern = "merge-*")
+files.rapa <- file.path("input/Rapa_gz_merge", files.rapa)
+files.r15_B1 <- dir("input/rim15_B1_gz_merge",pattern = "merge-*")
+files.r15_B1 <- file.path("input/rim15_B1_gz_merge", files.r15_B1)
+files.r15_B2 <- dir("input/rim15_B2_gz_merge", pattern = "merge-*")
+files.r15_B2 <- file.path("input/rim15_B2_gz_merge",files.r15_B2)
 
 
 names(files) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Rep1-H2O2", "Rep3-0Pi-Rep2-H2O2", "Rep3-H2O2-Ctrl","Rep4-H2O2-Ctrl")
 names(files.s7y1) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl","Rep1-H2O2-Rep3-0Pi", "Rep2-H2O2-Rep4-0Pi", "Rep3-H2O2-Ctrl")
 names(files.m4s7) <- c("Rep1-0Pi-Ctrl","Rep1-H2O2-Rep2-0Pi", "Rep2-H2O2-Rep3-0Pi", "Rep3-H2O2-Ctrl")
+names(files.rapa) <- c("Rep1-Rapa-Ctrl","Rep2-Rapa-Ctrl","Rep3-Rapa-Ctrl")
+names(files.r15_B1) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl","Rep3-0Pi-Ctrl")
+names(files.r15_B2) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl","Rep3-0Pi-Ctrl")
 
 tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
 
@@ -226,6 +235,37 @@ dat.ord.m4s7 <- files.m4s7 %>%
   mutate(Group = ordered(Group, levels = tp)) %>% 
   arrange(Group)
 
+
+# import and process the data to the format we want
+dat.ord.rapa <- files.rapa %>% 
+  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group)
+
+# import and process the data to the format we want
+dat.ord.r15_B1 <- files.r15_B1 %>% 
+  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group)
+
+# import and process the data to the format we want
+dat.ord.r15_B2 <- files.r15_B2 %>% 
+  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group)
+
 ```
 
 Subset the dataset and merge with the genotype information
@@ -242,6 +282,18 @@ names(tr_files.s7y1) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl","Rep1-H2O2-Rep3-0Pi", 
 tr_files.m4s7 <- dir("input/m4s7_treatment", pattern = "d0*")
 tr_files.m4s7 <- file.path("input/m4s7_treatment", tr_files.m4s7)
 names(tr_files.m4s7) <- c("Rep1-0Pi-Ctrl","Rep1-H2O2-Rep2-0Pi", "Rep2-H2O2-Rep3-0Pi", "Rep3-H2O2-Ctrl")
+
+tr_files.rapa <- dir("input/Rapa_treatment", pattern = "d0*")
+tr_files.rapa <- file.path("input/Rapa_treatment", tr_files.rapa)
+names(tr_files.rapa) <- c("Rep1-Rapa-Ctrl","Rep2-Rapa-Ctrl","Rep3-Rapa-Ctrl")
+
+tr_files.r15_B1 <- dir("input/rim15_B1_treatment", pattern = "d0*")
+tr_files.r15_B1 <- file.path("input/rim15_B1_treatment", tr_files.r15_B1)
+names(tr_files.r15_B1) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl","Rep3-0Pi-Ctrl")
+
+tr_files.r15_B2 <- dir("input/rim15_B2_treatment", pattern = "d0*")
+tr_files.r15_B2 <- file.path("input/rim15_B2_treatment", tr_files.r15_B2)
+names(tr_files.r15_B2) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl","Rep3-0Pi-Ctrl")
 
 
 treat.fil <- tr_files %>% 
@@ -264,16 +316,41 @@ treat.fil.m4s7 <- tr_files.m4s7 %>%
   filter(!is.na(`group_name`)) %>% 
   select(Replicate, genotype = `group_name`, Sample, treat)
 
+treat.fil.rapa <- tr_files.rapa %>% 
+  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(!is.na(`group_name`)) %>% 
+  select(Replicate, genotype = `group_name`, Sample, treat)
+
+treat.fil.r15_B1 <- tr_files.r15_B1 %>% 
+  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(!is.na(`group_name`)) %>% 
+  select(Replicate, genotype = `group_name`, Sample, treat)
+
+treat.fil.r15_B2 <- tr_files.r15_B2 %>% 
+  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(!is.na(`group_name`)) %>% 
+  select(Replicate, genotype = `group_name`, Sample, treat)
+
 
 # combine genotype and treat variables into the flow data
 data <- left_join(dat.ord, treat.fil, by = c("Replicate", "Sample"))
 data.s7y1 <- left_join(dat.ord.s7y1, treat.fil.s7y1, by = c("Replicate", "Sample"))
 data.m4s7 <- left_join(dat.ord.m4s7, treat.fil.m4s7, by = c("Replicate", "Sample"))
-
+data.rapa <- left_join(dat.ord.rapa, treat.fil.rapa, by = c("Replicate","Sample"))
+data.r15_B1 <- left_join(dat.ord.r15_B1, treat.fil.r15_B1, by = c("Replicate","Sample"))
+data.r15_B2 <- left_join(dat.ord.r15_B2, treat.fil.r15_B2, by = c("Replicate","Sample"))
 
 data.tmp <- add_row(data,data.s7y1)
 data.cb <- add_row(data.tmp, data.m4s7)
+
+data.r15 <- add_row(data.r15_B1,data.r15_B2)
+
 ```
+
+### CTA1 induction during Nitrogen starvation & Rapa treatment
 
 ### CTA1 induction during -Pi [Fig. 4A]
 Get the subset of no Pi data
@@ -302,6 +379,62 @@ pi.dat %>%
   scale_color_manual(values= genotype_color, limits = names(genotype_color))
 ggsave("output/20221108-trans-deletion-timecourse-noPi.png", width = 4.5, height = 4)
 ```
+```{r}
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2, 3, 5, 1)] 
+names(genotype_color) <- c("WT", "rim15-", "S986E", "S1038E","S986E S1038E", "S986E S1032E S1050E")
+
+pi.dat <- data.r15 %>% 
+  filter(treat == "0Pi" & genotype %in% c("wt", "S986E","S1038E","S986E_S1038E","S986E_S1032E_S1050E","rim15_ko")) %>%  
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  mutate(Genotype = fct_recode(genotype, WT = "wt", `rim15-` = "rim15_ko", `S986E` = "S986E", `S1038E` = "S1038E",
+                               `S986E S1038E` = "S986E_S1038E", `S986E S1032E S1050E` = "S986E_S1032E_S1050E")) %>% 
+  mutate(new_median =median/1000) %>% 
+  mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
+  arrange(new_time, genotype, replicate)
+
+pi.dat %>%
+  filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= genotype_color, limits = names(genotype_color))
+ggsave("output/20230130-rim15-phosphomimetic-mutants-timecourse-noPi.png", width = 4.5, height = 4)
+```
+
+```{r}
+treat_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2, 3, 5, 1, 4, 6)] 
+names(treat_color) <- c("0Pi", "0Nitrogen", "50_Rapa", "62.5_Rapa","100_Rapa", "125_Rapa","150_Rapa")
+
+pi.dat <- data.rapa %>% 
+  filter(treat != "Ctrl") %>%  
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median, treat) %>% 
+  mutate(new_median =median/1000) %>% 
+  mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
+  arrange(new_time, treat, replicate)
+
+new.pi.course <- list(
+  stat_summary(fun = "mean", geom = "point", size = 3),
+  stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
+  stat_smooth(aes(size = genotype == "wt"), method = "loess", formula = 'y~x', se = FALSE),
+  scale_x_continuous(breaks = seq(0,240,30)),
+  scale_size_manual(values = c(0.8, 1.5), guide = "none"),
+  labs(y = "Cta1-GFP protein level (a.u.)"),
+  theme_cowplot(line_size = 0.7, font_size = 14),
+  theme(legend.position=c(0.05,0.75), 
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        legend.text = element_text(face = 3), 
+        legend.title = element_text(),
+        axis.title = element_text(size = rel(1)), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
+  )
+)
+
+pi.dat %>%
+  filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = treat)) + new.pi.course 
+ggsave("output/20230130-rapa-0nitrogen-timecourse-noPi.png", width = 4.5, height = 4)
+```
+
 
 #### Basal vs relative induction levels [Fig. S?]
 From the graph above, we can see that the tf∆ mutants affected both the basal expression level (at 0 min) and the fold change (relative to the 0'). To further dissect the effects on these two components, we will make some additional plots below
