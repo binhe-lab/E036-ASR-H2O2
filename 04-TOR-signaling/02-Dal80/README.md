@@ -1,0 +1,1 @@
+Dal80 is downstream of the PP2A branch and thus reveals how that branch responds to phosphate starvation in different species. The Dal80 transcriptional reporter has been used in PMC2686269 for _S. cerevisiae_.
