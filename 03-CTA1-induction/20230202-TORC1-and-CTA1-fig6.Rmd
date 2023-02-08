@@ -1,0 +1,106 @@
+---
+title: "Inhibition of TORC1 and deletion of Rim15 effects on CTA1 induction (Figure 6, 7)"
+author: "HB"
+date: "2023-01-02 (updated `r Sys.Date()`)"
+output: 
+  html_notebook:
+    code_folding: hide
+    toc: true
+    toc_float: true
+---
+
+```{r}
+library(tidyverse)
+library(ggtext)
+library(cowplot)
+```
+
+# TORC inhibition
+## Goal
+Here, we aim at establishing the regulatory connections between phosphate starvation and TORC1, and how it affects downstream _CTA1_ induction. Specifically, we wish to determine how various treatments known to inhibit or perturb TORC1 affect _CTA1_ induction.
+
+## Background
+TORC1 has multiple inputs and several downstream branches. In other parts of the work, we showed that phosphate starvation rapidly reduces P-Rps6 in _C. glabrata_. This suggests that at least one branch (either Sch9 or Yak3, still debated) of TORC1 is inhibited by -Pi. Here we wish to determine if inhibition of TORC1 can lead to _CTA1_ induction (and ASR, analyzed in another experiment). The ideal experiment would be to mimic the inhibitory effect of -Pi on TORC1 without the physiological treatment, which could have pleiotropic effects and hence not allowing us to pinpoint the role of TORC1. However, since we still don't know the precise mechanism by which -Pi affects TORC1, or the protein component in TORC1 or upstream of it that signals -Pi, a specific perturbation is out of the question for now. Instead, we decided to use two well-established inhibitory signals of TORC1, namely nitrogen starvation and rapamycin treatment. The caveat is that they may not mimic the effects of -Pi due to the complexity of the TORC1 signaling.
+
+## Design
+The cta1::Cta1-GFP strain (one of yH298-299, three independent colonies from the same transformation) was treated with either rich media (control), -Pi, -N or rapamycin (50, 62.5, 100, 125, 150 ng/mL). Flow cytometry was performed on the samples every 30 minutes from 0 - 4 hr. The resulting median fluorescent intensity data is collected and used for plotting below.
+
+## Data import and prep
+```{r}
+tp <- c("0",  "30", "60", "90", "120", "150",  "180", "210", "240") # ordered time points
+
+raw <- dir("input/Rapa_gz_merge", pattern = "merge", full.names = TRUE) %>% 
+  map_dfr(read_csv, col_types = cols(), na = c("", "NA", "N/A"), .id = "replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(replicate, plate = Plate, Group, well = Sample, 
+         count = Count, median = `X Median`,  peak = `X Peak`, 
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate(Time = ordered(Group, levels = paste0(tp, "min"), labels = tp),
+         time = as.numeric(gsub("min", "", Group)),
+         Group = NULL) %>% 
+  arrange(time)
+```
+
+merge with sample metadata
+```{r}
+sample <- dir("input/Rapa_treatment", pattern = "^d", full.names = TRUE) %>% 
+  map_dfr(read_csv, na = c("","NA","N/A"), col_types = cols(), .id = "replicate") %>% 
+  filter(!is.na(group_name)) %>% 
+  select(replicate, genotype = group_name, well = Sample, treat) %>% 
+  mutate(treat = fct_recode(treat, `-Nitrogen` = "0Nitrogen",
+                            `-Pi` = "0Pi", Rich = "Ctrl"))
+
+# combine genotype and treat variables into the flow data
+data <- left_join(raw, sample, by = c("replicate", "well")) %>% 
+  separate(well, into = c("row", "column"), sep = 1)
+
+# any unannotated rows?
+data %>% filter(is.na(genotype) | is.na(treat))
+```
+
+## Plot
+Common plotting functions
+**Update 2022-11-08** 
+This list is used as a shared plotting set up.
+```{r}
+p.timecourse <- list(
+  stat_summary(fun = "mean", geom = "point", size = 3),
+  stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
+  stat_smooth(method = "loess", formula = 'y~x', se = FALSE),
+  scale_x_continuous(breaks = seq(0,240,30)),
+  #scale_size_manual(values = c(0.8, 1.5), guide = "none"),
+  labs(y = "Cta1-GFP protein level (a.u.)"),
+  theme_cowplot(line_size = 0.7, font_size = 14),
+  theme(legend.position=c(0.05,0.72), 
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        legend.text = element_text(face = 3), 
+        legend.title = element_text(),
+        axis.title = element_text(size = rel(1)), 
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
+  )
+)
+```
+
+```{r}
+treat_colors <- c(
+  "#666666", "#E7298A", "#9900FF",
+  viridis::viridis(5, begin = 0.3, end = 0.9, direction = -1)
+)
+treat_levels <- c(
+  "Rich", "-Nitrogen", "-Pi",
+  paste(c(50, 62.5, 100, 125, 150), "Rapa", sep = "_")
+)
+names(treat_colors) <- treat_levels                       
+
+data %>%
+  mutate(new_median = median/1000,
+         treat = factor(treat, levels = treat_levels)) %>% 
+  #filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = time, y = new_median, color = treat, group = treat)) + p.timecourse +
+  scale_color_manual("Treatment", values= treat_colors) +
+  scale_y_continuous(limits = c(NA, 20))
+ggsave("output/20230203-rapa-nitrogen-pi-induce.png", width = 5, height = 4)
+```
+

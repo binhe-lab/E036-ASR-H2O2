@@ -12,8 +12,6 @@ output:
 ```{r}
 library(tidyverse)
 library(ggtext)
-#library(mgcv)
-library(broom)
 library(cowplot)
 ```
 
