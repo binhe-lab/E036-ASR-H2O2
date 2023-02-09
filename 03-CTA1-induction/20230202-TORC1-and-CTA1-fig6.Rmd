@@ -83,24 +83,53 @@ p.timecourse <- list(
 )
 ```
 
+We can't fully explain the nitrogen starvation result yet. Here we will leave it out.
 ```{r}
+#treat_colors <- c(
+#  "#666666", "#E7298A", "#9900FF",
+#  viridis::viridis(5, begin = 0.3, end = 0.9, direction = -1)
+#)
+#treat_levels <- c(
+#  "Rich", "-Nitrogen", "-Pi",
+#  paste(c(50, 62.5, 100, 125, 150), "Rapa", sep = "_")
+#)
 treat_colors <- c(
-  "#666666", "#E7298A", "#9900FF",
+  "#666666", "#9966DD", #"#9900FF",
   viridis::viridis(5, begin = 0.3, end = 0.9, direction = -1)
 )
 treat_levels <- c(
-  "Rich", "-Nitrogen", "-Pi",
+  "Rich", "-Pi",
   paste(c(50, 62.5, 100, 125, 150), "Rapa", sep = "_")
 )
 names(treat_colors) <- treat_levels                       
 
 data %>%
+  filter(treat != "-Nitrogen") %>% 
   mutate(new_median = median/1000,
          treat = factor(treat, levels = treat_levels)) %>% 
   #filter(!is.na(new_median)) %>% 
   ggplot(aes(x = time, y = new_median, color = treat, group = treat)) + p.timecourse +
   scale_color_manual("Treatment", values= treat_colors) +
   scale_y_continuous(limits = c(NA, 20))
-ggsave("output/20230203-rapa-nitrogen-pi-induce.png", width = 5, height = 4)
+ggsave("output/20230208-rapa-pi-induce.png", width = 5, height = 4)
+```
+
+Subtract the rich media background from the treated samples
+```{r}
+treat_colors <- c( "#9900FF", viridis::viridis(5, begin = 0.3, end = 0.9, direction = -1))
+treat_levels <- c("-Pi", paste(c(50, 62.5, 100, 125, 150), "Rapa", sep = "_"))
+names(treat_colors) <- treat_levels                       
+data %>%
+  # subtract the Rich condition as background
+  group_by(time) %>% 
+  mutate(new_median = (median - mean(median[treat == "Rich"]))/1000) %>%
+  # remove the nitrogen and Rich conditions
+  filter(!treat %in% c("-Nitrogen", "Rich")) %>% 
+  # reorder the levels
+  mutate(treat = factor(treat, levels = treat_levels)) %>% 
+  ggplot(aes(x = time, y = new_median, color = treat, group = treat)) + p.timecourse +
+  scale_color_manual("Treatment", values= treat_colors) +
+  scale_y_continuous(limits = c(NA, 20))
+ggsave("output/20230208-rapa-pi-induce-bg-subtracted.png", width = 5, height = 4)
 ```
 
