@@ -100,6 +100,50 @@ Date       Species   Strain    Replicate
 _**Plotting**_
 
 ```{r}
+# expand the species names
+species.label <- c(
+  "Sc" = "S. cerevisiae",
+  "Cg" = "C. glabrata"
+)
+
+
+p_Cg <- asr_score %>% 
+  #1st_Stress is a character variable before converting to factor
+  filter(`1st_Stress` %in% c("62.5","125"), Species == "Cg") %>% 
+  mutate(`1st_Stress` = factor(`1st_Stress`,levels = c("62.5", "125"))) %>% 
+  ggplot(aes(x = `1st_Stress`, y = ASR_Score)) +
+  geom_hline(yintercept = 1, linetype = 2, color = "gray50") +
+  geom_point(position = position_jitter(width = 0.1), size = 2) + 
+  stat_summary(position = position_nudge(x = 0.2),
+               fun.data = "mean_cl_boot", geom = "pointrange", color = "red") +
+  xlab("Primary Stress (Rapamycin ng/ml)") + ylab("ASR score") +
+  facet_wrap(~Species, scales = "free_x", labeller = as_labeller(species.label)) +
+  theme_cowplot(line_size = 0.7) +
+  theme(legend.text = element_text(size = rel(1), face = 3),
+        legend.position = c(0.1, 0.85),
+        strip.text = element_text(size = rel(1), face = 3))
+p_Cg
+ggsave("../output/20230205-ASR-Rapa-Cg-all-H2O2conc.png", width = 4, height = 5)
+
+p <- asr_score %>% 
+  #1st_Stress is a character variable before converting to factor
+  filter(`1st_Stress` %in% c("62.5","125")) %>% 
+  mutate(`1st_Stress` = factor(`1st_Stress`,levels = c("62.5", "125"))) %>% 
+  ggplot(aes(x = `1st_Stress`, y = ASR_Score)) +
+  geom_hline(yintercept = 1, linetype = 2, color = "gray50") +
+  geom_point(position = position_jitter(width = 0.1), size = 2) + 
+  stat_summary(position = position_nudge(x = 0.2),
+               fun.data = "mean_cl_boot", geom = "pointrange", color = "red") +
+  xlab("Primary Stress (Rapamycin ng/ml)") + ylab("ASR score") +
+  facet_wrap(~Species, scales = "free_x", labeller = as_labeller(species.label)) +
+  theme_cowplot(line_size = 0.7) +
+  theme(legend.text = element_text(size = rel(1), face = 3),
+        legend.position = c(0.1, 0.85),
+        strip.text = element_text(size = rel(1), face = 3))
+p
+ggsave("../output/20230205-ASR-Rapa-species-all-H2O2conc.png", width = 4, height = 5)
+
+
 p <- asr_score %>% 
   #1st_Stress is a character variable before converting to factor
   mutate(`1st_Stress` = factor(`1st_Stress`,levels = c("62.5", "125", "0Ni"))) %>% 
@@ -115,7 +159,7 @@ p <- asr_score %>%
         legend.position = c(0.1, 0.85),
         strip.text = element_text(size = rel(1), face = 3))
 p
-ggsave("../output/20230205-ASR-Rapa-0Nitrogen-species-all-H2O2conc.png", width = 5, height = 3)
+#ggsave("../output/20230205-ASR-Rapa-0Nitrogen-species-all-H2O2conc.png", width = 5, height = 3)
 
 p_4 <- asr_score %>% 
   filter(H2O2 %in% c("40mM", "4mM")) %>% 
@@ -133,7 +177,7 @@ p_4 <- asr_score %>%
         legend.position = c(0.1, 0.85),
         strip.text = element_text(size = rel(1), face = 3))
 p_4
-ggsave("../output/20230205-ASR-Rapa-0Nitrogen-species-40mMns4mM.png", width = 5, height = 3)
+#ggsave("../output/20230205-ASR-Rapa-0Nitrogen-species-40mMns4mM.png", width = 5, height = 3)
 
 p_6 <- asr_score %>% 
   filter(H2O2 %in% c("60mM", "6mM")) %>% 
@@ -151,7 +195,7 @@ p_6 <- asr_score %>%
         legend.position = c(0.1, 0.85),
         strip.text = element_text(size = rel(1), face = 3))
 p_6
-ggsave("../output/20230205-ASR-Rapa-0Nitrogen-species-all-60mMvs6Mm.png", width = 5, height = 3)
+#ggsave("../output/20230205-ASR-Rapa-0Nitrogen-species-all-60mMvs6Mm.png", width = 5, height = 3)
 ```
 
 
@@ -172,7 +216,7 @@ p_sep <- asr_score %>%
   xlab("Type of Primary Stress_combine all H2O2 conc.") + ylab("ASR score (r'/r)") +
   theme_cowplot(line_size = 0.7)
 p_sep
-ggsave("../output/20230205-ASR-score-Rapa-Ni-across-1st-Stress-sep-panel-combine-46.png", width = 6, height = 3)
+#ggsave("../output/20230205-ASR-score-Rapa-Ni-across-1st-Stress-sep-panel-combine-46.png", width = 6, height = 3)
 
 
 p_sep_4 <- asr_score %>% 
@@ -191,7 +235,7 @@ p_sep_4 <- asr_score %>%
   xlab("Type of Primary Stress; H2O2 at 40mM vs 4mM") + ylab("ASR score (r'/r)") +
   theme_cowplot(line_size = 0.7)
 p_sep_4
-ggsave("../output/20230205-ASR-score-Rapa-Ni-across-1st-Stress-sep-panel-40vs4.png", width = 6, height = 3)
+#ggsave("../output/20230205-ASR-score-Rapa-Ni-across-1st-Stress-sep-panel-40vs4.png", width = 6, height = 3)
 
 p_sep_6 <- asr_score %>% 
   filter(H2O2 %in% c("60mM","6mM")) %>% 
@@ -209,5 +253,5 @@ p_sep_6 <- asr_score %>%
   xlab("Type of Primary Stress; H2O2 at 60mM vs 6mM") + ylab("ASR score (r'/r)") +
   theme_cowplot(line_size = 0.7)
 p_sep_6
-ggsave("../output/20230205-ASR-score-Rapa-Ni-across-1st-Stress-sep-panel-60vs6.png", width = 6, height = 3)
+#ggsave("../output/20230205-ASR-score-Rapa-Ni-across-1st-Stress-sep-panel-60vs6.png", width = 6, height = 3)
 ```
