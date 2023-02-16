@@ -242,7 +242,7 @@ pi.dat %>%
   filter(!is.na(new_median)) %>% 
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
   scale_color_manual(values= genotype_color, limits = names(genotype_color))
-ggsave("output/20221108-trans-deletion-timecourse-noPi.png", width = 4.5, height = 4)
+#ggsave("output/20221108-trans-deletion-timecourse-noPi.png", width = 4.5, height = 4)
 ```
 ```{r}
 genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2, 3, 5, 1)] 
@@ -261,7 +261,29 @@ pi.dat %>%
   filter(!is.na(new_median)) %>% 
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
   scale_color_manual(values= genotype_color, limits = names(genotype_color))
-ggsave("output/20230130-rim15-phosphomimetic-mutants-timecourse-noPi.png", width = 4.5, height = 4)
+#ggsave("output/20230130-rim15-phosphomimetic-mutants-timecourse-noPi.png", width = 4.5, height = 4)
+
+# examine the statistical significance of the single timepoint
+
+genotype_order <- c("WT", "rim15-", "S986E", "S1038E","S986E S1038E", "S986E S1032E S1050E")
+
+pi.dat %>%
+  filter(new_time == 240, !is.na(new_median)) %>% 
+  mutate(Genotype = factor(Genotype, levels = genotype_order)) %>% 
+  lm(median ~ Genotype, data = .) %>% 
+  summary()
+
+pi.dat %>%
+  filter(new_time == 210, !is.na(new_median)) %>% 
+  mutate(Genotype = factor(Genotype, levels = genotype_order)) %>% 
+  lm(median ~ Genotype, data = .) %>% 
+  summary()
+
+pi.dat %>%
+  filter(new_time == 180, !is.na(new_median)) %>% 
+  mutate(Genotype = factor(Genotype, levels = genotype_order)) %>% 
+  lm(median ~ Genotype, data = .) %>% 
+  summary()
 ```
 
 ```{r}
