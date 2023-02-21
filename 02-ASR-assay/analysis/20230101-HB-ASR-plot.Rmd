@@ -200,12 +200,12 @@ S. cerevisiae 45, 90, 135 min   10mM        full ASR experiment
 
 Date       Species   Len_noPi    Strain 
 -----      --------  ---------   -------
-06/06/33   Cg        45 min      yH001
-06/06/22   Sc        45 min      yH154
-06/06/33   Cg        90 min      yH001
-06/06/22   Sc        90 min      yH154
-06/06/33   Cg        135 min     yH001
-06/06/22   Sc        135 min     yH154
+06/06/20   Cg        45 min      yH001
+06/06/20   Sc        45 min      yH154
+06/06/20   Cg        90 min      yH001
+06/06/20   Sc        90 min      yH154
+06/06/20   Cg        135 min     yH001
+06/06/20   Sc        135 min     yH154
 
 **Supporting dataset**: 
 
@@ -213,9 +213,9 @@ Date       Species   Len_noPi    Strain
 -----      --------  ---------   -------
 05/30/22   Cg        45 min      yH001  
 05/30/22   Sc        45 min      yH154
-06/01/33   Cg        45 min      yH001
+06/01/22   Cg        45 min      yH001
 06/01/22   Sc        45 min      yH154
-06/04/33   Cg        45 min      yH001
+06/04/22   Cg        45 min      yH001
 06/04/22   Sc        45 min      yH154
 
 _**Plotting**_
@@ -250,17 +250,29 @@ dat.S3 <- tmp %>%
 dat.S3
 ```
 ```{r}
+p.asr <- list(
+  geom_hline(yintercept = 1, linetype = 2, color = "gray50"),
+  geom_point(position = position_jitter(width = 0.1), size = 2),
+  stat_summary(fun.data = "mean_cl_boot", geom = "pointrange", color = "red",
+               position = position_nudge(x = 0.2)),
+  facet_wrap(~Species, scales = "free_x", labeller = as_labeller(species.label)),
+  theme_cowplot(line_size = 0.7),
+  theme(strip.text = element_text(size = rel(1.1), face = 3))
+)
+```
+
+```{r}
 p <- dat.S3 %>% 
   #filter(!is.na(ASR_score)) %>% 
   mutate(len_1 = factor(gsub(" ?min", "", Len_1), levels = c("45", "90", "135"))) %>% 
-  ggplot(aes(x = len_1, y = ASR_score)) +
-  geom_hline(yintercept = 1, linetype = 2, color = "gray50") +
-  geom_point(position = position_jitter(width = 0.1), size = 2) + 
-  stat_summary(position = position_nudge(x = 0.2),
-               fun.data = "mean_cl_boot", geom = "pointrange", color = "red") +
+  ggplot(aes(x = len_1, y = ASR_score)) + p.asr +
+#  geom_hline(yintercept = 1, linetype = 2, color = "gray50") +
+#  geom_point(position = position_jitter(width = 0.1), size = 2) + 
+#  stat_summary(position = position_nudge(x = 0.2),
+#               fun.data = "mean_cl_boot", geom = "pointrange", color = "red") +
   xlab("Length of primary stress (min)") + ylab("ASR score (r'/r)") +
-  facet_wrap(~Species, scales = "free_x", labeller = as_labeller(species.label)) +
-  theme_cowplot(line_size = 0.7) +
+#  facet_wrap(~Species, scales = "free_x", labeller = as_labeller(species.label)) +
+#  theme_cowplot(line_size = 0.7) +
   theme(legend.text = element_text(size = rel(1), face = 3),
         legend.position = c(0.1, 0.85),
         strip.text = element_text(size = rel(1), face = 3))
@@ -288,3 +300,153 @@ p <- dat.S3 %>%
 p
 ggsave("../output/20230103-ASR-score-across-noPi-length-sep-panel.png", width = 6, height = 3)
 ```
+
+
+## ASR by rapamycin (Fig. 6)
+_**Goal**_
+
+- Test the hypothesis that direct inhibition of TORC1 can provide ASR in _C. glabrata_. We will also test _S. cerevisiae_ to determine if the negative regulation by TORC1 on stress response genes behind the ASR is conserved.
+
+_**Data**_
+
+Species       Rapamycin (ng/mL)    H2O2        Description 
+--------      ------------------   ------      ------------
+C. glabrata   50, 62.5, 125, 150   60 mM       full ASR experiment
+S. cerevisiae 50, 62.5, 125, 150   6  mM       full ASR experiment
+
+Date       Species   Rapa (ng/mL)  H2O2        Strain 
+-----      --------  ------------  ----        -------
+01/12/23   Cg        62.5, 125     60 mM       yH181
+01/18/23   Cg        62.5, 125     60 mM       yH181
+01/21/23   Sc        62.5, 125     4, 6 mM     yH154
+01/21/23   Cg        62.5, 125     40, 60 mM   yH181
+01/25/23   Sc        62.5, 125     4, 6 mM     yH154
+01/25/23   Cg        62.5, 125     40, 60 mM   yH181
+01/26/23   Sc        62.5, 125     4, 6 mM     yH154
+01/26/23   Cg        62.5, 125     40, 60 mM   yH181
+01/31/23   Sc        62.5, 125     4, 6 mM     yH154
+01/31/23   Cg        62.5, 125     40, 60 mM   yH181
+02/02/23   Cg        62.5, 125     40, 60 mM   yH181
+
+_**Note**_
+
+Jinye used lower H2O2 concentration compared with preivous ASR experiments (100 mM for Cg and 10 mM for Sc) because the primary stresses tested here, i.e., rapamycin and nitrogen starvation, reduced survival while phosphate starvation used in previous ASR experiments didn't. In order to maintain a similar CFU at the end, a lower H2O2 concentration was applied.
+
+```{r}
+dat.6 <- read_csv("../input/20230205-Sc-Cg-rapamycin-nitrogen-ASR-raw.csv", col_types = cols(), comment = "#") %>% 
+  mutate(Date = gsub("d(\\d\\d)(\\d\\d)(\\d\\d)", "\\1/\\2/\\3", Date))
+
+# data sanity check, quick view
+sapply(select(dat.6, Species, Strain, Genotype), unique)
+```
+
+_**Plotting**_
+
+### Effect of primary stress (Rapamycin and -N) on survival
+Jinye mentioned that unlike phosphate starvation, rapamycin and nitrogen starvation reduce survival by themselves. To see this myself, I'm plotting the CFU after just the primary 
+
+```{r}
+tmp <- dat.6 %>% 
+  filter(H2O2 == "Mock") %>% 
+  group_by(Date, Species) %>% 
+  mutate(
+    # arbitrarily decide any CFU counts < 3 are not included due to high CV
+    Count = ifelse(Count < 3, NA, Count),
+    scaled = Count * Dilutions * 1e-2,
+    r = scaled / scaled[`1st_Stress` == "Mock"]
+  ) %>% 
+  ungroup() %>% 
+  filter(`1st_Stress` != "Mock") %>% 
+  select(Date, Species, Strain, Primary = `1st_Stress`, Count, r)
+
+dat.Prim <-  raw %>%
+  separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
+  # use the S2 dataset to examine the effect of phosphate starvation on survival
+  filter(Date %in% use.s2, Secondary == "M") %>% 
+  mutate(
+    # arbitrarily decide any CFU counts < 3 are not included due to high CV
+    Count = ifelse(Count < 3, NA, Count),
+    scaled = Count * Dilutions * 1e-2
+  ) %>% 
+  group_by(Date, Strain) %>% 
+  # calculate r and r'
+  mutate(r = scaled / scaled[Primary == "M"]) %>% 
+  ungroup() %>% filter(Primary != "M") %>% 
+  select(Date, Species, Strain, Primary, Count, r) %>% 
+  bind_rows(tmp) %>% 
+  mutate(Primary = factor(Primary,
+                          levels = c("P", "62.5", "125", "0Ni"),
+                          labels = c("-Pi", "Rapa\n62.5", 
+                                     "Rapa\n125", "-Nitrogen")))
+ggplot(dat.Prim, aes(x = Primary, y = r)) + p.asr +
+  scale_y_continuous(breaks = seq(0.2, 1.2, by = 0.2)) +
+  xlab("Primary stress (45 min)") + ylab("Survival %")
+ggsave("../output/20230211-primary-stress-effect-on-survival.png")
+```
+
+### Calibrate secondary stress strength
+Jinye used two sets of H2O2 concentrations in this experiment, i.e., 40/4 mM and 60/6 mM for _C. glabrata_ and _S. cerevisiae_, respectively. 
+
+```{r}
+with(dat.6, table(Date, paste(Species, H2O2, sep = ":")))
+```
+
+First, we will test if the survival under these H2O2 concentrations are comparable across species, by analyzing the basal survival rate r
+
+Statistical test for differences in basal survival between species at 60 or 6 mM.
+```{r}
+tmp <- dat.6 %>% 
+  filter(H2O2 %in% c("60mM", "6mM"), Group == "MO", 
+         !(Date %in% c("01/12/23", "01/18/23", "02/02/23")))# %>% 
+tmp %>% group_by(Species) %>% summarize(mean = mean(`MO/MM`))
+wilcox.test(`MO/MM` ~ Species, data = tmp, paired = TRUE)
+```
+
+Statistical test for differences in basal survival between species at 40 or 4 mM.
+```{r}
+tmp <- dat.6 %>% 
+  filter(H2O2 %in% c("40mM", "4mM"), Group == "MO", !(Date %in% c("02/02/23")))
+tmp %>% group_by(Species) %>% summarize(mean = mean(`MO/MM`))
+wilcox.test(`MO/MM` ~ Species, data = tmp, paired = FALSE)
+```
+
+Statistical test for differences in basal survival between the two pairs of concentrations (60/6 vs 40/4 mM), species combined.
+```{r}
+tmp <- filter(dat.6, Group == "MO") %>% 
+  mutate(secondary = factor(H2O2, levels = c("60mM", "6mM", "40mM", "4mM"),
+                            labels = c("high", "high", "low", "low")))
+tmp %>% 
+  group_by(secondary, Species) %>% 
+  summarize(mean = num(mean(`MO/MM`), digits = 3), .groups = "drop")
+wilcox.test(`MO/MM` ~ secondary, data = tmp, paired = FALSE)
+```
+We can conclude that there is no significant difference in survival when comparing 40 vs 4 mM or 60 vs 6 mM for _C. glabrata_ and _S. cerevisiae_. However, the survival rate is significantly lower under the higher set of concentrations (60 and 6 mM) compared with the lower ones (40 and 4 mM)
+
+### Rapamycin ASR
+Will use JY's pre-calculated ASR values. We will first plot the 40/4 mM and 60/6 mM data separately. Then, we will combine them. A final conclusion will be drawn.
+```{r}
+# we will not use the days of experiments where only one species was assayed
+dat.6p <- filter(dat.6, H2O2 != "Mock") %>% # remove the XM groups
+  rename(primary = `1st_Stress`, r = `MO/MM`, rP = `PO/PM`) %>% 
+  group_by(Date, Strain, H2O2) %>% # form groups to apply the same MO/MM
+  mutate(r = r[primary == "Mock"], # MO/MM for each group
+         secondary = 
+           factor(H2O2, levels = c("40mM", "4mM", "60mM", "6mM"),
+                  labels = c("40/4mM", "40/4mM", "60/6mM", "60/6mM"))) %>% 
+  ungroup() %>%
+  filter(!is.na(rP))
+```
+
+my calculation is the same as JY's
+```{r}
+with(dat.6p, sum(round(rP/r, 5) != round(ASR_Score, 5)))
+```
+
+```{r}
+dat.6p %>% 
+  filter(primary != "0Ni") %>% 
+  ggplot(aes(x = primary, y = ASR_Score)) + p.asr +
+  labs(x = "Rapamycin (ng/mL)", y = "ASR Score (r'/r)")
+ggsave("../output/20230221-rapamycin-ASR.png", width = 4, height = 4)
+```
+  
