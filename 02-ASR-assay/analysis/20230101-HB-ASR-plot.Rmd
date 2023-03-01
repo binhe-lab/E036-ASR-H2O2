@@ -28,15 +28,156 @@ Read in data
 ```{r}
 tmp <- read_tsv("../input/20220726-ASR-CFU-raw.tsv", col_types = cols(), comment = "#")
 raw <- read_csv("../input/20221224-ASR-CFU-raw.csv", col_types = cols(), comment = "#") %>% 
-  mutate(Date = gsub("d(\\d\\d)(\\d\\d)(\\d\\d)", "\\1/\\2/\\3", Date)) %>% 
+  mutate(Date = gsub("d(\\d\\d)(\\d\\d)(\\d\\d)", "\\1/\\2/\\3", Date),
+         Len_1 = recode(Len_1, `2hr` = "2 hr", `45min` = "45 min"),
+         Len_2 = recode(Len_2, `2hr` = "2 hr")) %>% 
   select(-`MO/MM`, -`PO/PM`) %>% 
   bind_rows(add_column(tmp, Experimenter = "JL"))
 
 # data sanity check, quick view
-sapply(select(raw, Species, Strain, Genotype), unique)
+sapply(select(raw, Species, Strain, Genotype, Len_1, Len_2, H2O2), unique)
 ```
 
-## Basal H2O2 resistance (S1A)
+### Common plotting functions
+
+```{r}
+species.label <- c(Sc = "S. cerevisiae", Cg = "C. glabrata")
+
+p.survival <- list(
+  geom_point(shape = 1, stroke = 1, size = 2, 
+             position = position_jitter(width = 0.15)),
+  stat_summary(fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5),
+  facet_wrap(~Species, scales = "free_x", labeller = as_labeller(species.label)),
+  theme_cowplot(line_size = 0.7, font_size = 14),
+  theme(strip.text = element_text(size = rel(1), face = 3))
+)
+
+p.asr <- list(
+  geom_hline(yintercept = 1, linetype = 2, color = "gray50"),
+  geom_point(position = position_jitter(width = 0.1), size = 2),
+  stat_summary(fun.data = "mean_cl_boot", geom = "pointrange", color = "red",
+               position = position_nudge(x = 0.2)),
+  facet_wrap(~Species, scales = "free_x", labeller = as_labeller(species.label)),
+  theme_cowplot(line_size = 0.7),
+  theme(strip.text = element_text(size = rel(1.1), face = 3))
+)
+```
+
+
+## Fig1: ASR between species
+_**Goal**_
+
+- Compare the ASR effect between _S. cerevisiae_ and _C. glabrata_ at 10 mM and 100 mM [H2O2], respectively.
+
+_**Experiment**_
+
+Jinye has performed several experiments at these two concentrations, as shown below
+```{r}
+raw %>% 
+  filter(Genotype == "wt", H2O2 %in% c("10mM", "10 mM", "100mM", "100 mM"),
+         Len_1 == "45 min", Group == "PO") %>% 
+  mutate(group = paste(recode(Strain, yH154 = "Sc", yH001 = "Cg1", yH002 = "Cg2"), 
+                       gsub(" ?mM", "", H2O2), sep = "_")) %>% 
+  count(Date, group) %>% 
+  pivot_wider(names_from = group, values_from = n)
+```
+We will use the 05/30/20, 06/01/20 and 06/04/20 data, which were three consecutive replicates meant to compare the ASR under -Pi between the two species. The other datasets were part of an experiment with different purposes.
+
+_**Data**_
+
+**Main dataset**: 
+
+Date       Species   Replicate
+--------   --------  ----------
+05/30/20   Sc, Cg    1
+06/01/20   Sc, Cg    2
+06/04/20   Sc, Cg    2
+
+**Note**: one replicate for Sc on 05/30/20 showed much lower CFU numbers than the other plates.
+```{r}
+filter(raw, Date == "05/30/20", Species == "Sc")
+```
+Jinye removed the second replicate for both Sc and Cg from her downstream analyses.
+
+Below are the filtered data:
+
+```{r}
+use.f1 <- paste0(c("06/04", "06/01", "05/30"), "/20")
+tmp <-  raw %>%
+  filter(Date %in% use.f1) %>% 
+  mutate(
+    scaled = Count * Dilutions * 1e-2
+  ) %>% 
+  # remove uninformative columns. only one H2O2 conc used for each species
+  select(-Strain, -Genotype, -H2O2, -Len_1, -Len_2, -Experimenter)
+  
+# Assume the triplicates were paired in the order they appear in the table,
+# i.e., the first row in the MO, MM, PO, PM groups belong to the same biological 
+# replicate, we can derive three ASR_scores for each date x species x Len_1
+
+dat.f1 <- tmp %>% 
+  group_by(Date, Species, Group) %>%
+  mutate(Repl = row_number()) %>% 
+  # group by primary to calculate r (MO/MM) or r' (PO/PM)
+  separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
+  group_by(Date, Species, Repl, Primary) %>% 
+  # calculate % survival
+  mutate(s.perc = num(scaled / scaled[Secondary == "M"]*100, digits = 3)) %>% 
+  # remove the secondary mock as the information are all used
+  filter(Secondary != "M") %>% 
+  # 5/30/20 replicate 2 is excluded
+  filter(!(Date == "05/30/20" & Repl == 2))
+dat.f1
+```
+
+_**Plotting**_
+
+```{r}
+dat.f1 %>% 
+  mutate(Primary = recode(Primary, M = "Mock", P = "-Pi")) %>% 
+  ggplot(aes(x = Primary, y = s.perc)) + p.survival +
+  xlab("Primary stress (45 min)") + ylab("% survival")
+
+ggsave("../output/20230228-fig1d-asr-noPi-compare.png", width = 3.5, height = 3)
+```
+
+_**Statistical tests**_
+
+1. Determine if the basal survival rates are different between species (Wilcoxon signed-rank test)
+1. Determine if the primary stress enhanced the survival in _each_ species (Wilcoxon signed-rank test)
+
+_Basal survival rate_
+
+```{r}
+tmp <- dat.f1 %>% 
+  filter(Primary == "M") %>% 
+  pivot_wider(id_cols = c(Date, Repl), names_from = Species, values_from = s.perc)
+tmp
+with(tmp, wilcox.test(Cg, Sc, paired = FALSE))
+```
+_Primary stress enhanced in Cg_
+
+```{r}
+tmp <- dat.f1 %>% 
+  filter(Species == "Cg") %>% 
+  pivot_wider(id_cols = c(Date, Repl), names_from = Primary, values_from = s.perc)
+tmp
+with(tmp, wilcox.test(P, M, paired = FALSE, alternative = "g"))
+```
+
+_Primary stress no effect in Sc_
+
+```{r}
+tmp <- dat.f1 %>% 
+  filter(Species == "Sc") %>% 
+  pivot_wider(id_cols = c(Date, Repl), names_from = Primary, values_from = s.perc)
+tmp
+with(tmp, wilcox.test(P, M, paired = FALSE, alternative = "g"))
+```
+
+
+## S1A: Basal H2O2 resistance
 _**Goal**_
 
 - Compare the basal survival rates of the two species at different [H2O2] to identify comparable concentrations for ASR.
@@ -68,22 +209,16 @@ _**Plotting**_
 
 ```{r}
 use.s1 <- paste0(c("03/21", "03/22", "03/24", "03/28", "04/01"), "/22")
-dat.Basal <- raw %>% select(-Experimenter, -Len_1, -Len_2, -Genotype) %>% 
+dat.s1 <- raw %>% select(-Experimenter, -Len_1, -Len_2, -Genotype) %>% 
   mutate(scaled = Count * Dilutions * 1e-3) %>% 
   filter(Date %in% use.s1) %>% 
   group_by(Date, Strain) %>% 
   mutate(r = num(scaled / scaled[Group == "M"], digits = 3))
-dat.Basal
+dat.s1
 ```
 
 ```{r}
-# expand the species names
-species.label <- c(
-  "Sc" = "S. cerevisiae",
-  "Cg" = "C. glabrata"
-)
-
-p <- dat.Basal %>% 
+p <- dat.s1 %>% 
   mutate(H2O2 = gsub(" mM", "", H2O2),
          H2O2 = fct_reorder(H2O2, as.numeric(H2O2))) %>% 
   filter(H2O2 != "0") %>% 
@@ -102,16 +237,16 @@ p
 ggsave("../output/20230101-basal-survival-across-h2o2-range-sc-cg.png", width = 5, height = 3)
 ```
 
-Statistical test for difference between species at the highest concentration
+Statistical test for difference between species at the highest concentration. Using the Wilcoxon rank-sum test (aka Mann-Whitney's U test)
 ```{r}
-tmp <- dat.Basal %>% 
+tmp <- dat.s1 %>% 
   filter(H2O2 %in% c("100 mM", "10 mM"))
 tmp %>% group_by(Species) %>% summarize(mean = mean(r))
 
-wilcox.test(r ~ Species, data = tmp, paired = TRUE)
+wilcox.test(r ~ Species, data = tmp, paired = FALSE)
 ```
 
-## ASR at different H2O2 (S1B)
+## S1B: ASR at different H2O2
 _**Goal**_
 
 - Generalize the main figure finding of a stronger ASR in _C. glabrata_ than in _S. cerevisiae_ at a single primary stress treatment length by extending the analysis to multiple length of primary treatment
@@ -144,15 +279,15 @@ Date       Species   Strain    Replicate
 _**Plotting**_
 
 ```{r}
-use.s2 <- paste0(c("07/16", "07/17", "07/18", "07/29", "08/01", "08/02", "08/04", "08/11"), "/22")
-dat.S2 <-  raw %>%
+use.s1b <- paste0(c("07/16", "07/17", "07/18", "07/29", "08/01", "08/02", "08/04", "08/11"), "/22")
+dat.s1b <-  raw %>%
   separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
   mutate(
     # arbitrarily decide any CFU counts < 3 are not included due to high CV
     Count = ifelse(Count < 3, NA, Count),
     scaled = Count * Dilutions * 1e-3
   ) %>% 
-  filter(Date %in% use.s2) %>% 
+  filter(Date %in% use.s1b) %>% 
   group_by(Date, Strain, Primary) %>% 
   # calculate r and r'
   mutate(r = num(scaled / scaled[Secondary == "M"], digits = 3)) %>% 
@@ -162,29 +297,30 @@ dat.S2 <-  raw %>%
               names_from = Primary, values_from = r, names_prefix = "r") %>% 
   mutate(ASR_score = rP / rM)
   
-dat.S2
+dat.s1b
 ```
 
 ```{r}
-p <- dat.S2 %>% 
+p <- dat.s1b %>% 
   filter(!is.na(ASR_score)) %>% 
   mutate(H2O2 = gsub(" ?mM", "", H2O2),
          H2O2 = fct_reorder(H2O2, as.numeric(H2O2))) %>% 
   filter(H2O2 != "0") %>% 
-  ggplot(aes(x = H2O2, y = ASR_score)) +
-  geom_point(position = position_jitter(width = 0.1), alpha = 0.8) + 
-  stat_summary(fun.data = "mean_cl_boot", geom = "pointrange", color = "red",
-               size = 0.8, position = position_nudge(x = 0.2)) +
+  ggplot(aes(x = H2O2, y = ASR_score)) + p.asr +
+  #geom_hline(yintercept = 1, linetype = 2, color = "gray50") +
+  #geom_point(position = position_jitter(width = 0.1), alpha = 0.8) + 
+  #stat_summary(fun.data = "mean_cl_boot", geom = "pointrange", color = "red",
+  #             size = 0.8, position = position_nudge(x = 0.2)) +
   #scale_y_log10() +
-  facet_wrap(~Species, scales = "free_x", labeller = as_labeller(species.label)) +
-  xlab(bquote(H[2]*O[2]~(mM))) + ylab("ASR score (r'/r)") +
-  theme_cowplot(line_size = 0.7) +
-  theme(strip.text = element_text(size = rel(1), face = 3))
+  #facet_wrap(~Species, scales = "free_x", labeller = as_labeller(species.label)) +
+  xlab(bquote(H[2]*O[2]~(mM))) + ylab("ASR score (r'/r)")# +
+  #theme_cowplot(line_size = 0.7) +
+  #theme(strip.text = element_text(size = rel(1), face = 3))
 p
 ggsave("../output/20230102-ASR-score-across-h2o2-range-sc-cg.png", width = 5, height = 3)
 ```
 
-## ASR at different primary stress duration (S2)
+## S2: ASR at different primary stress duration
 _**Goal**_
 
 - Generalize the main figure finding of a stronger ASR in _C. glabrata_ than in _S. cerevisiae_ at a single [H~2~O~2~] by extending the analysis to multiple concentrations
@@ -221,9 +357,9 @@ Date       Species   Len_noPi    Strain
 _**Plotting**_
 
 ```{r}
-use.s3 <- paste0(c("06/06", "06/04", "06/01", "05/30"), "/20")
+use.s2 <- paste0(c("06/06", "06/04", "06/01", "05/30"), "/20")
 tmp <-  raw %>%
-  filter(Date %in% use.s3) %>% 
+  filter(Date %in% use.s2) %>% 
   mutate(
     # arbitrarily decide any CFU counts < 3 are not included due to high CV
     # not in use here. instead, label them in the plot (see below)
@@ -236,7 +372,7 @@ tmp <-  raw %>%
   
 Assume the triplicates were paired in the order they appear in the table, i.e., the first row in the MO, MM, PO, PM groups belong to the same biological replicate, we can derive three ASR_scores for each date x species x Len_1
 ```{r}
-dat.S3 <- tmp %>% 
+dat.s2 <- tmp %>% 
   group_by(Date, Species, Len_1, Group) %>%
   mutate(Repl = row_number()) %>% 
   pivot_wider(id_cols = c(Date, Species, Len_1, Repl),
@@ -247,22 +383,10 @@ dat.S3 <- tmp %>%
     ASR_score = rp/r,
     low_count = MO < 1 # mark experiments with < 3 counts
   )
-dat.S3
+dat.s2
 ```
 ```{r}
-p.asr <- list(
-  geom_hline(yintercept = 1, linetype = 2, color = "gray50"),
-  geom_point(position = position_jitter(width = 0.1), size = 2),
-  stat_summary(fun.data = "mean_cl_boot", geom = "pointrange", color = "red",
-               position = position_nudge(x = 0.2)),
-  facet_wrap(~Species, scales = "free_x", labeller = as_labeller(species.label)),
-  theme_cowplot(line_size = 0.7),
-  theme(strip.text = element_text(size = rel(1.1), face = 3))
-)
-```
-
-```{r}
-p <- dat.S3 %>% 
+p <- dat.s2 %>% 
   #filter(!is.na(ASR_score)) %>% 
   mutate(len_1 = factor(gsub(" ?min", "", Len_1), levels = c("45", "90", "135"))) %>% 
   ggplot(aes(x = len_1, y = ASR_score)) + p.asr +
@@ -282,14 +406,13 @@ ggsave("../output/20230103-ASR-score-across-noPi-length-sc-cg.png", width = 5, h
 
 
 ```{r}
-p <- dat.S3 %>% 
+p <- dat.s2 %>% 
   #filter(!is.na(ASR_score)) %>% 
   mutate(len_1 = factor(Len_1, levels = c("45 min", "90 min", "135 min"))) %>% 
   ggplot(aes(x = Species, y = ASR_score)) +
   geom_point(#aes(fill = low_count),
     position = position_jitter(0.1), size = 1.5, shape = 21) + 
-  stat_summary(
-               fun.data = "mean_se", geom = "pointrange", color = "red") +
+  stat_summary(fun.data = "mean_se", geom = "pointrange", color = "red") +
   #scale_y_log10() +
   scale_shape_manual(values = c(21,22), labels = species.label) +
   #scale_fill_manual(values = c("white", "gray40"), guide = "none") +
@@ -301,8 +424,151 @@ p
 ggsave("../output/20230103-ASR-score-across-noPi-length-sep-panel.png", width = 6, height = 3)
 ```
 
+## Fig3: cta1∆
+_**Goal**_
 
-## ASR by rapamycin (Fig. 6)
+- Determine if _CTA1_ is required for the ASR
+
+_**Experiment**_
+
+- Jinye deleted _CTA1_ and compared ASR in this strain to the wt _C. glabrata_
+
+_**Data**_
+
+Species       Strain           Genotype     H2O2         
+--------      -------------    ----------   ------------
+C. glabrata   yH001, yH002     wildtype     80, 100 mM 
+C. glabrata   yH271, yH272     _cta1∆_      2.2, 2.5 mM 
+
+Six replicates, two each from 07/08, 07/11, 07/12 of 2022.
+
+```{r}
+use.f3 <- paste0(c("07/08", "07/11", "07/12"), "/22")
+tmp <-  raw %>%
+  filter(Date %in% use.f3) %>% 
+  mutate(
+    scaled = Count * Dilutions * 1e-2
+  ) %>% 
+  # remove uninformative columns. only one H2O2 conc used for each species
+  select(-Len_1, -Len_2, -Experimenter)
+# Assume the replicates were paired in the order they appear in the table,
+# i.e., the first row in the MO, MM, PO, PM groups belong to the same biological 
+# replicate, we can derive three ASR_scores for each date x species x Len_1
+
+dat.f3 <- tmp %>% 
+  # group by primary to calculate r (MO/MM) or r' (PO/PM)
+  separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
+  group_by(Date, Strain, Primary) %>% 
+  # calculate % survival
+  mutate(s.perc = num(scaled / scaled[Secondary == "M"]*100, digits = 3)) %>% 
+  # remove the secondary mock as the information are all used
+  filter(Secondary != "M")
+dat.f3
+```
+
+```{r}
+dat.f3 %>% 
+  mutate(
+    Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+    Genotype = factor(Genotype, levels = c("wt", "cta1Δ"),
+                      labels = c("wildtype", "cta1Δ")),
+    Group = factor(H2O2, levels = c("100 mM", "2.5 mM", "80 mM", "2.2 mM"),
+                   labels = c("High", "High", "Medium", "Medium"))
+  ) %>%
+  ggplot(aes(x = H2O2, y = s.perc)) + #p.survival[-3] +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_dodge(0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Group + Genotype, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  xlab("Primary stress (45 min)") + ylab("% survival") +
+  theme_bw(base_size = 14, base_line_size = 1) +
+  panel_border(color = "black", size = 1) +
+  theme(strip.text = element_text(size = rel(1), face = 3),
+        strip.background = element_blank())
+```
+
+To be consistent with panel C, we will use the 100 mM vs 2.5 mM pair and leave out the 80 mM vs 2.2 mM pair.
+```{r}
+dat.f3a <- dat.f3 %>% 
+  mutate( Primary = factor(Primary, levels = c("M", "P"), 
+                           labels = c("Mock", "-Pi")),
+          Genotype = factor(Genotype, levels = c("wt", "cta1Δ"),
+                            labels = c("wildtype", "cta1Δ")),
+          Group = factor(H2O2, levels = c("100 mM", "2.5 mM", "80 mM", "2.2 mM"),
+                         labels = c("High", "High", "Medium", "Medium"))) %>%
+  filter(Group == "High") %>% 
+  ungroup()
+```
+
+```{r}
+p <- ggplot(dat.f3a, aes(x = H2O2, y = s.perc)) +
+  geom_point(aes(shape = Primary), stroke = 0.9, size = 2.5, 
+             position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Genotype, nrow = 1, scales = "free_x") +
+  scale_shape_manual(name = "Primary stress", values = c("Mock" = 1, "-Pi" = 16)) +
+  xlab(bquote(H[2]*O[2]~(mM))) + ylab("% survival") +
+  theme_cowplot(line_size = 1.2) +
+  panel_border(color = "black", size = 1) +
+  theme(strip.text = element_text(size = rel(1)),
+        strip.background = element_blank(),
+        #strip.placement = "inside",
+        axis.line = element_blank(),
+        axis.ticks.x = element_blank(),
+        legend.position = "top",
+        legend.justification = "center",
+        legend.margin = margin(b = -10),
+        legend.text = element_text(size = rel(0.9)),
+        legend.title = element_text(size = rel(0.9)))
+p
+
+ggsave("../output/20230301-fig3d-asr-cta1.png", width = 3.5, height = 3.5)
+```
+
+_**Statistical tests**_
+
+1. Determine if the basal survival rates are different between species (Wilcoxon signed-rank test)
+1. Determine if the primary stress enhanced the survival in _each_ species (Wilcoxon signed-rank test)
+
+_Basal survival rate_
+
+```{r}
+tmp <- dat.f3a %>% 
+  filter(Primary == "Mock") %>% 
+  select(Date, Genotype, s.perc) %>% 
+  arrange(Genotype)
+tmp
+wilcox.test(s.perc ~ Genotype, paired = FALSE, data = tmp)
+```
+
+
+_Primary stress enhanced in wildtype_
+
+```{r}
+tmp <- dat.f3a %>% 
+  filter(Genotype == "wildtype") %>% 
+  pivot_wider(id_cols = c(Date, Strain), names_from = Primary, values_from = s.perc)
+tmp
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+
+_Primary stress no effect in cta1Δ_
+
+```{r}
+tmp <- dat.f3a %>% 
+  filter(Genotype == "cta1Δ") %>% 
+  pivot_wider(id_cols = c(Date, Strain), names_from = Primary, values_from = s.perc)
+tmp
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+
+## Fig6: ASR by rapamycin
 _**Goal**_
 
 - Test the hypothesis that direct inhibition of TORC1 can provide ASR in _C. glabrata_. We will also test _S. cerevisiae_ to determine if the negative regulation by TORC1 on stress response genes behind the ASR is conserved.
@@ -450,3 +716,10 @@ dat.6p %>%
 ggsave("../output/20230221-rapamycin-ASR.png", width = 4, height = 4)
 ```
   
+Statistical tests
+```{r}
+lm <- dat.6p %>% 
+  filter(primary != "0Ni") %>% 
+  lm(ASR)
+```
+
