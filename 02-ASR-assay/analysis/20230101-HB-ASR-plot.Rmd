@@ -123,7 +123,7 @@ dat.f1 <- tmp %>%
   separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
   group_by(Date, Species, Repl, Primary) %>% 
   # calculate % survival
-  mutate(s.perc = num(scaled / scaled[Secondary == "M"]*100, digits = 3)) %>% 
+  mutate(r = num(scaled / scaled[Secondary == "M"], digits = 3)) %>% 
   # remove the secondary mock as the information are all used
   filter(Secondary != "M") %>% 
   # 5/30/20 replicate 2 is excluded
@@ -133,10 +133,12 @@ dat.f1
 
 _**Plotting**_
 
+#### Plot
 ```{r}
 dat.f1 %>% 
   mutate(Primary = recode(Primary, M = "Mock", P = "-Pi")) %>% 
-  ggplot(aes(x = Primary, y = s.perc)) + p.survival +
+  ggplot(aes(x = Primary, y = r)) + p.survival +
+  scale_y_continuous(labels = scales::percent) +
   xlab("Primary stress (45 min)") + ylab("% survival")
 
 ggsave("../output/20230228-fig1d-asr-noPi-compare.png", width = 3.5, height = 3)
@@ -144,26 +146,38 @@ ggsave("../output/20230228-fig1d-asr-noPi-compare.png", width = 3.5, height = 3)
 
 _**Statistical tests**_
 
+#### Statistical tests
 1. Determine if the basal survival rates are different between species (Wilcoxon signed-rank test)
 1. Determine if the primary stress enhanced the survival in _each_ species (Wilcoxon signed-rank test)
 
 _Basal survival rate_
 
+The basal survival rates between species within the same day are not "paired". We will use a rank-sum test here.
 ```{r}
 tmp <- dat.f1 %>% 
   filter(Primary == "M") %>% 
-  pivot_wider(id_cols = c(Date, Repl), names_from = Species, values_from = s.perc)
+  pivot_wider(id_cols = c(Date, Repl), names_from = Species, values_from = r)
 tmp
+with(tmp, t.test(as.numeric(Cg), as.numeric(Sc), paired = FALSE))
+
 with(tmp, wilcox.test(Cg, Sc, paired = FALSE))
 ```
 _Primary stress enhanced in Cg_
 
+The comparison between r and r' is paired. We will use a signed-rank test.
 ```{r}
 tmp <- dat.f1 %>% 
   filter(Species == "Cg") %>% 
-  pivot_wider(id_cols = c(Date, Repl), names_from = Primary, values_from = s.perc)
+  pivot_wider(id_cols = c(Date, Repl), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = P/M)
 tmp
-with(tmp, wilcox.test(P, M, paired = FALSE, alternative = "g"))
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(P), as.numeric(M), paired = TRUE, alternative = "g"))
+
+with(tmp, wilcox.test(P, M, paired = TRUE, alternative = "g"))
 ```
 
 _Primary stress no effect in Sc_
@@ -171,9 +185,18 @@ _Primary stress no effect in Sc_
 ```{r}
 tmp <- dat.f1 %>% 
   filter(Species == "Sc") %>% 
-  pivot_wider(id_cols = c(Date, Repl), names_from = Primary, values_from = s.perc)
+  pivot_wider(id_cols = c(Date, Repl), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = P/M)
+
 tmp
-with(tmp, wilcox.test(P, M, paired = FALSE, alternative = "g"))
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(P), as.numeric(M), paired = TRUE, alternative = "g"))
+
+with(tmp, wilcox.test(P, M, paired = TRUE, alternative = "g"))
 ```
 
 
@@ -205,7 +228,6 @@ Date       Species   Replicate
 03/28/22   Sc, Cg    4
 04/01/22   Sc, Cg    5
 
-_**Plotting**_
 
 ```{r}
 use.s1 <- paste0(c("03/21", "03/22", "03/24", "03/28", "04/01"), "/22")
@@ -216,6 +238,7 @@ dat.s1 <- raw %>% select(-Experimenter, -Len_1, -Len_2, -Genotype) %>%
   mutate(r = num(scaled / scaled[Group == "M"], digits = 3))
 dat.s1
 ```
+#### Plot
 
 ```{r}
 p <- dat.s1 %>% 
@@ -237,6 +260,7 @@ p
 ggsave("../output/20230101-basal-survival-across-h2o2-range-sc-cg.png", width = 5, height = 3)
 ```
 
+#### Statistical tests
 Statistical test for difference between species at the highest concentration. Using the Wilcoxon rank-sum test (aka Mann-Whitney's U test)
 ```{r}
 tmp <- dat.s1 %>% 
@@ -276,7 +300,6 @@ Date       Species   Strain    Replicate
 08/11/22   Cg        yH001      b5
 08/11/22   Sc        yH154      b5
 
-_**Plotting**_
 
 ```{r}
 use.s1b <- paste0(c("07/16", "07/17", "07/18", "07/29", "08/01", "08/02", "08/04", "08/11"), "/22")
@@ -299,6 +322,7 @@ dat.s1b <-  raw %>%
   
 dat.s1b
 ```
+#### Plot
 
 ```{r}
 p <- dat.s1b %>% 
@@ -354,8 +378,6 @@ Date       Species   Len_noPi    Strain
 06/04/22   Cg        45 min      yH001
 06/04/22   Sc        45 min      yH154
 
-_**Plotting**_
-
 ```{r}
 use.s2 <- paste0(c("06/06", "06/04", "06/01", "05/30"), "/20")
 tmp <-  raw %>%
@@ -385,6 +407,7 @@ dat.s2 <- tmp %>%
   )
 dat.s2
 ```
+#### Plot
 ```{r}
 p <- dat.s2 %>% 
   #filter(!is.na(ASR_score)) %>% 
@@ -460,12 +483,12 @@ dat.f3 <- tmp %>%
   separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
   group_by(Date, Strain, Primary) %>% 
   # calculate % survival
-  mutate(s.perc = num(scaled / scaled[Secondary == "M"]*100, digits = 3)) %>% 
+  mutate(r = num(scaled / scaled[Secondary == "M"], digits = 3)) %>% 
   # remove the secondary mock as the information are all used
   filter(Secondary != "M")
 dat.f3
 ```
-
+### Plot (all data)
 ```{r}
 dat.f3 %>% 
   mutate(
@@ -476,7 +499,7 @@ dat.f3 %>%
     Group = factor(H2O2, levels = c("100 mM", "2.5 mM", "80 mM", "2.2 mM"),
                    labels = c("High", "High", "Medium", "Medium"))
   ) %>%
-  ggplot(aes(x = H2O2, y = s.perc)) + #p.survival[-3] +
+  ggplot(aes(x = H2O2, y = r)) + #p.survival[-3] +
   geom_point(aes(shape = Primary), stroke = 1, size = 2, 
              position = position_dodge(0.9)) +
   stat_summary(aes(group = Primary), position = position_dodge(0.9),
@@ -484,6 +507,7 @@ dat.f3 %>%
                geom = "crossbar", color = "red", width = 0.5) +
   facet_wrap(~ Group + Genotype, nrow = 1, scales = "free_x") +
   scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(labels = scales::percent) +
   xlab("Primary stress (45 min)") + ylab("% survival") +
   theme_bw(base_size = 14, base_line_size = 1) +
   panel_border(color = "black", size = 1) +
@@ -491,6 +515,7 @@ dat.f3 %>%
         strip.background = element_blank())
 ```
 
+### 100 vs 2.5 mM
 To be consistent with panel C, we will use the 100 mM vs 2.5 mM pair and leave out the 80 mM vs 2.2 mM pair.
 ```{r}
 dat.f3a <- dat.f3 %>% 
@@ -504,8 +529,9 @@ dat.f3a <- dat.f3 %>%
   ungroup()
 ```
 
+#### Plot
 ```{r}
-p <- ggplot(dat.f3a, aes(x = H2O2, y = s.perc)) +
+p <- ggplot(dat.f3a, aes(x = H2O2, y = r)) +
   geom_point(aes(shape = Primary), stroke = 0.9, size = 2.5, 
              position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9)) +
   stat_summary(aes(group = Primary), position = position_dodge(0.9),
@@ -513,6 +539,7 @@ p <- ggplot(dat.f3a, aes(x = H2O2, y = s.perc)) +
                geom = "crossbar", color = "red", width = 0.5) +
   facet_wrap(~ Genotype, nrow = 1, scales = "free_x") +
   scale_shape_manual(name = "Primary stress", values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(labels = scales::percent) +
   xlab(bquote(H[2]*O[2]~(mM))) + ylab("% survival") +
   theme_cowplot(line_size = 1.2) +
   panel_border(color = "black", size = 1) +
@@ -533,38 +560,158 @@ ggsave("../output/20230301-fig3d-asr-cta1.png", width = 3.5, height = 3.5)
 
 _**Statistical tests**_
 
+#### Statistical test
 1. Determine if the basal survival rates are different between species (Wilcoxon signed-rank test)
 1. Determine if the primary stress enhanced the survival in _each_ species (Wilcoxon signed-rank test)
 
 _Basal survival rate_
-
+Across species, unpaired, rank-sum test.
 ```{r}
 tmp <- dat.f3a %>% 
   filter(Primary == "Mock") %>% 
-  select(Date, Genotype, s.perc) %>% 
+  select(Date, Genotype, r) %>% 
   arrange(Genotype)
-tmp
-wilcox.test(s.perc ~ Genotype, paired = FALSE, data = tmp)
+
+tmp %>% group_by(Genotype) %>% summarize(mean = mean(r), sd = num(sd(r), digits = 3))
+
+wilcox.test(r ~ Genotype, paired = FALSE, data = tmp)
 ```
 
 
 _Primary stress enhanced in wildtype_
 
+Comparison between r and r', paired, signed-rank test.
 ```{r}
 tmp <- dat.f3a %>% 
   filter(Genotype == "wildtype") %>% 
-  pivot_wider(id_cols = c(Date, Strain), names_from = Primary, values_from = s.perc)
+  pivot_wider(id_cols = c(Date, Strain), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
 tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
 with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
 ```
 
 _Primary stress no effect in cta1Δ_
 
+Paired, signed-rank test
 ```{r}
 tmp <- dat.f3a %>% 
   filter(Genotype == "cta1Δ") %>% 
-  pivot_wider(id_cols = c(Date, Strain), names_from = Primary, values_from = s.perc)
+  pivot_wider(id_cols = c(Date, Strain), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
 tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+
+### 80 vs 2.2 mM
+Corresponding results for 80 mM vs 2.2 mM
+```{r}
+dat.s3b <- dat.f3 %>% 
+  mutate( Primary = factor(Primary, levels = c("M", "P"), 
+                           labels = c("Mock", "-Pi")),
+          Genotype = factor(Genotype, levels = c("wt", "cta1Δ"),
+                            labels = c("wildtype", "cta1Δ")),
+          Group = factor(H2O2, levels = c("100 mM", "2.5 mM", "80 mM", "2.2 mM"),
+                         labels = c("High", "High", "Medium", "Medium"))) %>%
+  filter(Group == "Medium") %>% 
+  ungroup()
+```
+
+#### Plot
+```{r}
+p <- ggplot(dat.s3b, aes(x = H2O2, y = r)) +
+  geom_point(aes(shape = Primary), stroke = 0.9, size = 2.5, 
+             position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Genotype, nrow = 1, scales = "free_x") +
+  scale_shape_manual(name = "Primary stress", values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(labels = scales::percent) +
+  xlab(bquote(H[2]*O[2]~(mM))) + ylab("% survival") +
+  theme_cowplot(line_size = 1.2) +
+  panel_border(color = "black", size = 1) +
+  theme(strip.text = element_text(size = rel(1)),
+        strip.background = element_blank(),
+        #strip.placement = "inside",
+        axis.line = element_blank(),
+        axis.ticks.x = element_blank(),
+        legend.position = "top",
+        legend.justification = "center",
+        legend.margin = margin(b = -10),
+        legend.text = element_text(size = rel(0.9)),
+        legend.title = element_text(size = rel(0.9)))
+p
+
+ggsave("../output/20230301-s3b-asr-cta1.png", width = 3.5, height = 3.5)
+```
+
+_**Statistical tests**_
+
+#### Statistical test
+1. Determine if the basal survival rates are different between species (Wilcoxon signed-rank test)
+1. Determine if the primary stress enhanced the survival in _each_ species (Wilcoxon signed-rank test)
+
+_Basal survival rate_
+Across species, unpaired, rank-sum test.
+```{r}
+tmp <- dat.s3b %>% 
+  filter(Primary == "Mock") %>% 
+  select(Date, Genotype, r) %>% 
+  arrange(Genotype)
+tmp %>% group_by(Genotype) %>% summarize(mean = mean(r), sd = num(sd(r), digits = 3))
+wilcox.test(r ~ Genotype, paired = FALSE, data = tmp)
+```
+
+
+_Primary stress enhanced in wildtype_
+
+Comparison between r and r', paired, signed-rank test.
+```{r}
+tmp <- dat.s3b %>% 
+  filter(Genotype == "wildtype") %>% 
+  pivot_wider(id_cols = c(Date, Strain), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+
+_Primary stress no effect in cta1Δ_
+
+Paired, signed-rank test
+```{r}
+tmp <- dat.s3b %>% 
+  filter(Genotype == "cta1Δ") %>% 
+  pivot_wider(id_cols = c(Date, Strain), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
 with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
 ```
 
@@ -628,7 +775,7 @@ tmp <- dat.6 %>%
 dat.Prim <-  raw %>%
   separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
   # use the S2 dataset to examine the effect of phosphate starvation on survival
-  filter(Date %in% use.s2, Secondary == "M") %>% 
+  filter(Date %in% use.s1b, Secondary == "M") %>% 
   mutate(
     # arbitrarily decide any CFU counts < 3 are not included due to high CV
     Count = ifelse(Count < 3, NA, Count),
@@ -644,8 +791,11 @@ dat.Prim <-  raw %>%
                           levels = c("P", "62.5", "125", "0Ni"),
                           labels = c("-Pi", "Rapa\n62.5", 
                                      "Rapa\n125", "-Nitrogen")))
+```
+
+```{r}
 ggplot(dat.Prim, aes(x = Primary, y = r)) + p.asr +
-  scale_y_continuous(breaks = seq(0.2, 1.2, by = 0.2)) +
+  scale_y_continuous(breaks = seq(0.2, 1.2, by = 0.2), labels = scales::percent) +
   xlab("Primary stress (45 min)") + ylab("Survival %")
 ggsave("../output/20230211-primary-stress-effect-on-survival.png")
 ```
@@ -659,7 +809,7 @@ with(dat.6, table(Date, paste(Species, H2O2, sep = ":")))
 
 First, we will test if the survival under these H2O2 concentrations are comparable across species, by analyzing the basal survival rate r
 
-Statistical test for differences in basal survival between species at 60 or 6 mM.
+Statistical test for differences in basal survival between species at 60 or 6 mM. A Wilcoxon signed-rank test is used here since the two groups are dependent (=grouped) by the day of the experiment. One replicate was run per day. Using a paired-test ensures that day-to-day variation is accounted for.
 ```{r}
 tmp <- dat.6 %>% 
   filter(H2O2 %in% c("60mM", "6mM"), Group == "MO", 
@@ -673,7 +823,7 @@ Statistical test for differences in basal survival between species at 40 or 4 mM
 tmp <- dat.6 %>% 
   filter(H2O2 %in% c("40mM", "4mM"), Group == "MO", !(Date %in% c("02/02/23")))
 tmp %>% group_by(Species) %>% summarize(mean = mean(`MO/MM`))
-wilcox.test(`MO/MM` ~ Species, data = tmp, paired = FALSE)
+wilcox.test(`MO/MM` ~ Species, data = tmp, paired = TRUE)
 ```
 
 Statistical test for differences in basal survival between the two pairs of concentrations (60/6 vs 40/4 mM), species combined.
