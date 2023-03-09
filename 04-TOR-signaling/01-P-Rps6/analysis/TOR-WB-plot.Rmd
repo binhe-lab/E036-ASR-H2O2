@@ -10,6 +10,7 @@ output:
 ---
 
 ```{r setup, message=FALSE}
+require(multcomp)
 require(tidyverse)
 require(cowplot)
 ```
@@ -32,7 +33,8 @@ dt <- dat %>%
   pivot_wider(names_from = target, values_from = norm.v) %>% 
   mutate(PS6.v.tS6 = `P-Rps6` / `total Rps6`,
          species = fct_recode(species, `S. cerevisiae` = "Sc", `C. glabrata` = "Cg"),
-         treatment = factor(treatment, levels = c("rich", "noNi", "noPi"), labels = c("Rich", "- N", "- Pi")))
+         treatment = factor(treatment, levels = c("rich", "noNi", "noPi"), labels = c("Rich", "-N", "-Pi"))) %>% 
+  arrange(species, date, treatment)
 ```
 
 ### Plotting
@@ -49,6 +51,63 @@ ggplot(dt, aes(x = species, y = PS6.v.tS6, group = treatment)) +
         axis.text.x = element_text(size = rel(1.2), face = 3),
         legend.position = "top")
 ggsave("../output/20221120-Rps6-WB-quant-compare.png", width = 3.5, height = 3.5)
+```
+
+### Statistical tests
+Perform pairwise t tests to assess significance. For each species, there will be two comparisons: -Ni vs rich and -Pi vs rich. P-values will be corrected for multiple testing.
+
+> I tried two other approaches also. 1) Wilcoxon signed-rank test or Mann-Whitney U test. These rank based tests do not assume normality and thus are more robust to violations of the normal distribution assumption. However, their lack of power is especially obvious in the case of a small sample size such as here. With a sample size of 3, the smallest p-value achivable by either test is 0.25 (4 samples goes to 0.06). 2) I also tried a linear modeling approach using aov() followed by multcomp::glht() (see code below). This approach estimates a shared error distribution from all data. I can't quite justify the shared error distribution for the two species and different conditions. Hence I eventually settled for the simple pairwise t-test.
+
+```{r}
+tmp <- dt %>% 
+  mutate(
+    sp = factor(species, levels = c("C. glabrata", "S. cerevisiae"), 
+                 labels = c("C", "S")),
+    group = factor(paste(gsub(" ", "", treatment), sp, sep = ":"),
+                   levels = c("Rich:C", "-N:C", "-Pi:C",
+                              "Rich:S", "-N:S", "-Pi:S"))
+  ) %>% 
+  select(date, species, treatment, x = PS6.v.tS6, group)
+```
+
+```{r}
+my_pairwise_ttest <- function(groups, dat = tmp){
+  dat1 <- filter(dat, group %in% groups)
+  res <- t.test(x ~ group, paired = TRUE, alternative = "t", data = dat1)
+  return(broom::tidy(res) %>% select(estimate, p.value))
+}
+```
+
+```{r}
+myContrasts <- list(
+  "Cg -N vs Rich" = c("-N:C", "Rich:C"),
+  "Cg -Pi vs Rich" = c("-Pi:C", "Rich:C"),
+  "Sc -N vs Rich" = c("-N:S", "Rich:S"),
+  "Sc -Pi vs Rich" = c("-Pi:S", "Rich:S")
+)
+res <- map_dfr(myContrasts, my_pairwise_ttest, .id = "comparison") %>% 
+  mutate(
+    p.bonf = p.adjust(p.value, method = "bonferroni"),
+    p.holm = p.adjust(p.value, method = "holm")
+  )
+res
+```
+
+
+(not in use) Set contrasts, following pp4 from https://cran.r-project.org/web/packages/multcomp/vignettes/multcomp-examples.pdf
+```{r}
+tmp.aov <- aov(x ~ group-1, data = tmp)
+sprintf("The levels of the grouping variable are %s", 
+        paste(gsub("group", "", names(coef(tmp.aov))), collapse = " "))
+K <- rbind(
+  "Cg -N vs rich" = c(-1, 1, 0, 0, 0, 0), 
+  "Cg -Pi vs rich" = c(-1, 0, 1, 0, 0, 0), 
+  "Sc -N vs rich" = c(0, 0, 0, -1, 1, 0), 
+  "Sc -Pi vs rich" = c(0, 0, 0, -1, 0, 1) 
+)
+colnames(K) <- levels(tmp$group)
+K
+summary(glht(tmp.aov, linfct = K))
 ```
 
 ## Four species
@@ -71,7 +130,7 @@ dt1 <- dat1 %>%
                                      "K. lactis", "L. waltii")),
          treatment = factor(treatment, 
                             levels = c("SC", "Nitrogen Starvation", "Pi starvation"), 
-                            labels = c("Rich", "- N", "- Pi")))
+                            labels = c("Rich", "-N", "-Pi")))
 ```
 
 ### Plotting
@@ -93,17 +152,49 @@ ggplot(dt1, aes(x = species, y = PS6.v.tS6, group = treatment)) +
 
 ```{r}
 ggplot(dt1, aes(x = treatment, y = PS6.v.tS6)) +
+  stat_summary(fun.data = "mean_se", geom = "errorbar", width = 0.5) +
   geom_bar(aes(fill = treatment), 
            stat = "summary", fun = "mean", width = .8, color = "gray30") +
-  geom_point(size = 2, shape = 18) +
-  stat_summary(fun.data = "mean_se", geom = "errorbar", width = 0.5) +
+  geom_point(size = 2, color = "orange2") +
   #scale_color_manual(values = c("S. cerevisiae" = "grey20", "C. glabrata" = "orange2")) +
   scale_fill_grey(start = 0.3, end = 0.95) +
   ylab("P-Rps6 / total Rps6") +
   facet_wrap(~species, nrow = 1) +
   theme_cowplot(line_size = 0.7) +
+  background_grid(major = "y") +
   theme(axis.title.x = element_blank(),
         strip.text.x = element_text(size = rel(1), face = 3),
         legend.position = "none")
 ggsave("../output/20230105-4sps-Rps6-WB-quant-compare.png", width = 6, height = 3)
+```
+
+### Statistical tests
+```{r}
+tmp <- dt1 %>% 
+  mutate(
+    group = factor(paste(treatment, str_sub(species, 1, 1), sep = ":"),
+                   levels = paste(rep(c("Rich", "-N", "-Pi"), times = 4),
+                                  rep(c("C", "S", "K", "L"), each = 3), sep = ":"))
+  ) %>% 
+  select(date, species, treatment, x = PS6.v.tS6, group)
+levels(tmp$group)
+```
+
+```{r}
+myContrasts <- list(
+  "Cg -N vs Rich" = c("-N:C", "Rich:C"),
+  "Cg -Pi vs Rich" = c("-Pi:C", "Rich:C"),
+  "Sc -N vs Rich" = c("-N:S", "Rich:S"),
+  "Sc -Pi vs Rich" = c("-Pi:S", "Rich:S"),
+  "Kl -N vs Rich" = c("-N:K", "Rich:K"),
+  "Kl -Pi vs Rich" = c("-Pi:K", "Rich:K"),
+  "Lw -N vs Rich" = c("-N:L", "Rich:L"),
+  "Lw -Pi vs Rich" = c("-Pi:L", "Rich:L")
+)
+res <- map_dfr(myContrasts, my_pairwise_ttest, .id = "comparison") %>% 
+  mutate(
+    p.bonf = p.adjust(p.value, method = "bonferroni"),
+    p.holm = p.adjust(p.value, method = "holm")
+  )
+res
 ```
