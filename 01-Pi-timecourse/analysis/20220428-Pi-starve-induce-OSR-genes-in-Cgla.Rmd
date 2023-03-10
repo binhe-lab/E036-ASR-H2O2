@@ -327,8 +327,8 @@ myPlotExn <- function(dat, col = c("S. cerevisiae" = "gray30", "C. glabrata" = "
   ## -------
   ## this function creates a reproducible plot allowing flexibility in color and legend
   geoms <- list(
-    geom_bar(aes(fill = species), stat = "summary", fun = "mean", alpha = 0.9,
-             position = position_dodge(0.9)),
+    geom_bar(aes(fill = species), stat = "summary", fun = "mean",width = 0.8,
+             color = "grey20", linewidth = 1, position = position_dodge(0.9)),
     geom_point(aes(color = species), position = position_dodge(0.9), size = 1),
     geom_hline(yintercept = 0, linetype = 1, color = "gray20"),
     geom_hline(yintercept = 1, linetype = 2, color = "gray50"),
@@ -342,7 +342,7 @@ myPlotExn <- function(dat, col = c("S. cerevisiae" = "gray30", "C. glabrata" = "
           legend.position = c(0.7, 0.8),
           legend.background = element_blank(),
           axis.text.y = element_text(size = rel(1)),
-          axis.text.x = element_text(angle = 45, hjust = 1, size = rel(1)),
+          axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.9)),
           axis.title = element_text(size = rel(1)),
           axis.title.x = element_blank(),
           plot.title = element_text(size = rel(1.5))),
@@ -375,7 +375,7 @@ dat <- lapply(geneList, myCompare)
 
 Make individual plots
 ```{r}
-par.fill = c("S. cerevisiae" = "gray20", "C. glabrata" = "gray60")
+par.fill = c("S. cerevisiae" = "white", "C. glabrata" = "gray40")
 par.col = c("S. cerevisiae" = "#6aa84f", "C. glabrata" = "orange3")
 p.obj <- list(
   myPlotExn(dat$antioxidant, legend = TRUE, fill = par.fill, col = par.col) + scale_y_continuous(limits = c(-1, NA)),
@@ -408,34 +408,40 @@ for (i in seq_along(geneList)){
 }
 ```
 
-Plot for the grant, combining antioxidant and TF
+Plot for the grant, combining antioxidant, HSP and TF
+
+_**update 2023-03-08**_
+
+Modified for CERT talk. Dropped out TF and included HSP
+
 ```{r}
 # add a fourth category, namely TFs with known roles in oxidative stress response
 list.TF <- c(YAP1 = "YML007W", SKN7 = "YHR206W", MSN2 = "YMR037C", MSN4 = "YKL062W")
 Dat <- bind_rows(
   list(
-    Antioxidant = myCompare(geneList$antioxidant)$data,
-    TF = myCompare(list.TF)$data
+    Antioxidant = myCompare(geneList$antioxidant),
+    Chaperon = myCompare(geneList$chaperon)#,
+    #TF = myCompare(list.TF)
   ),
   .id = "category"
 )
 
 ggplot(Dat, aes(x = ScerName, y = log2FC, group = species)) +
     geom_bar(aes(fill = species), stat = "summary", fun = "mean",
-             position = position_dodge(0.9)) +
+             color = "gray20", linewidth = 1, position = position_dodge(0.9)) +
     geom_point(aes(color = species), position = position_dodge(0.9), size = 1) +
     geom_hline(yintercept = 0, linetype = 1, color = "gray20") +
     geom_hline(yintercept = 1, linetype = 2, color = "gray50") +
     scale_color_manual(values = c("S. cerevisiae" = "gray30", "C. glabrata" = "orange2"), guide = NULL) +
-    scale_fill_manual("Species", values = c("S. cerevisiae" = "yellowgreen", "C. glabrata" = "royalblue2")) +
+    scale_fill_manual("Species", values = c("S. cerevisiae" = "white", "C. glabrata" = "gray40")) +
     labs(x = expression(paste(italic("S. cerevisiae"), " gene names")),
          y = "log2 Fold Change") +
-    facet_grid(.~category, space = "free_x", scales = "free_x") +
+    facet_grid(.~category, space = "free", scales = "free") +
     theme_cowplot() + panel_border() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.8)),
           legend.text = element_text(face = 3), legend.position = "top") +
     background_grid(major = "y", minor = "none")
-ggsave(paste0("../output/", gsub("-", "", Sys.Date()), "-antioxidant-TF-for-grant.pdf"), width = 6, height = 4)
+ggsave(paste0("../output/", gsub("-", "", Sys.Date()), "-antioxidant-TF-for-grant.png"), width = 6, height = 4)
 ```
 
 ### Statistical tests for DGE
