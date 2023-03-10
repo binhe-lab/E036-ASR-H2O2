@@ -216,8 +216,6 @@ data.r15 <- add_row(data.r15_B1,data.r15_B2)
 
 ```
 
-### CTA1 induction during Nitrogen starvation & Rapa treatment
-
 ### CTA1 induction during -Pi [Fig. 4A]
 Get the subset of no Pi data
 ```{r}
@@ -345,7 +343,7 @@ ggsave("output/20230130-rapa-0nitrogen-timecourse-noPi.png", width = 4.5, height
 ```
 
 
-#### Basal vs relative induction levels [Fig. S?]
+### Basal vs relative induction levels [Fig. S?]
 From the graph above, we can see that the tf∆ mutants affected both the basal expression level (at 0 min) and the fold change (relative to the 0'). To further dissect the effects on these two components, we will make some additional plots below
 ```{r}
 genotype_order <- c("WT", "msn2-", "yap1-", "msn4-", "skn7-", "msn4- skn7-")
@@ -379,13 +377,15 @@ p.base
 
 Statistical test
 ```{r}
-pi.dat %>% 
+# filter the data and set the basal level
+tmp <- pi.dat %>% 
   filter(new_time == 0, !is.na(new_median)) %>% 
-  mutate(Genotype = factor(Genotype, levels = genotype_order)) %>% 
-  lm(new_median ~ Genotype, data = .) %>% 
+  mutate(Genotype = factor(Genotype, levels = genotype_order))
+lm(new_median ~ Genotype, data = tmp) %>% 
   summary()
+  #TukeyHSD()
 ```
-> All comparisons are statistically significant at 0.05 level after Bonferroni correction (threshold: 0.0125)
+> All comparisons except for msn2- vs WT are statistically significant at 0.05 level after Bonferroni correction (threshold: 0.05/5 = 0.01)
 
 ```{r}
 # subtract 0 min mean from all time points for each genotype
