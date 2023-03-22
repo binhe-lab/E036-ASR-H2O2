@@ -1,0 +1,116 @@
+---
+title: "Msn4 nuclear localization under various stress and in two species"
+author: Bin He
+date: "2023-03-22 (updated `r Sys.Date()`)"
+output:
+  html_notebook:
+    toc: true
+    toc_depth: 4
+    code_folding: hide
+---
+
+```{r}
+require(tidyverse)
+require(cowplot)
+```
+
+## Goal
+Use fluorescent microscopy to track Msn4 (and Msn2) nuclear localization in both _S. cerevisiae_ and _C. glabrata_ under different conditions.
+
+## _rim15∆_ effect on CgMsn4<sup>nuc</sup>
+
+### data
+
+| Date_from | Date_to | Strains | Experiment |
+|:----------|:----------|:----------|:----------|
+| 2022/11/15 | 2022/11/17 | wt, rim15∆ | determine Msn4<sup>nuc</sup> under -Pi |
+
+```{r}
+dat.f7 <- read_tsv("input/20221117-rim15-noPi-raw.tsv", col_types = cols())
+```
+
+### summary and stat test
+1. sum the total number of nuc and cyto cells for the same strain across replicates
+1. calculate the percentage of Msn4<sup>nuc</sup> cells in each genotype
+1. conduct Fisher's exact test to determine if the difference between strains under -Pi or rich conditions are significant
+```{r}
+sum.f7 <- dat.f7 %>% 
+  group_by(treatment, genotype) %>% 
+  summarize(across(nuc:cyto, sum), .groups = "drop") %>% 
+  mutate(percent = scales::percent(nuc / (nuc+cyto)))
+sum.f7
+```
+Fisher's exact test comparing _rim15∆_ vs wild type under 0Pi condition
+```{r}
+tmp <- sum.f7 %>% 
+  filter(treatment == "0Pi") %>% 
+  select(genotype, nuc, cyto) %>% 
+  column_to_rownames(var = "genotype") %>% 
+  as.matrix()
+fisher.test(tmp)
+```
+
+
+Fisher's exact test comparing _rim15∆_ vs wild type under rich media condition
+```{r}
+tmp <- sum.f7 %>% 
+  filter(treatment == "Ctrl") %>% 
+  select(genotype, nuc, cyto) %>% 
+  column_to_rownames(var = "genotype") %>% 
+  as.matrix()
+fisher.test(tmp)
+```
+
+> The difference under 0Pi is significant, but not under rich media condition.
+
+
+## Msn4<sup>nuc</sup> in _S. cerevisiae_ vs _C. glabrata_ under different stresses
+
+### data
+
+```{r}
+dat.f5 <- read_tsv("input/20230322-wildtype-multiple-conditions-raw.tsv", col_types = cols())
+dat.f5 %>% group_by(species, treatment) %>% 
+  summarize(n_days = length(unique(date)), 
+            n_pics = length(unique(picture_name)), 
+            total_cells = sum(total_fluorescent_cell), 
+            .groups = "drop") %>% 
+  arrange(treatment, species)
+```
+
+### summary and stat test
+1. sum the total number of nuc and cyto cells for the same strain across replicates
+1. calculate the percentage of Msn4<sup>nuc</sup> cells in each genotype
+1. conduct Fisher's exact test to determine if the difference between strains under -Pi or rich conditions are significant
+```{r}
+sum.f5 <- dat.f5 %>% 
+  group_by(treatment, species) %>% 
+  summarize(across(nuc:cyto, sum), .groups = "drop") %>% 
+  mutate(percent = scales::percent(nuc / (nuc+cyto)))
+sum.f5
+```
+Fisher's exact test comparing _rim15∆_ vs wild type under 0Pi condition
+```{r}
+my_fisher_test <- function(data, treat){
+  #sprintf("Testing %s", treat)
+  tmp <- data %>% 
+    filter(treatment == treat) %>% 
+    select(species, nuc, cyto) %>% 
+    column_to_rownames(var = "species") %>% 
+    as.matrix()
+  fisher.test(tmp)
+}
+```
+
+```{r}
+treatments <- setdiff(sum.f5$treatment, "H2O2")
+FET.res <- sapply(treatments, function(x) my_fisher_test(sum.f5, x)) %>% 
+  t() %>% as.data.frame() %>% 
+  rownames_to_column(var = "treatment") %>% 
+  as_tibble() %>% 
+  select(treatment, p.value, odds.ratio = estimate) %>% 
+  unnest(p.value:odds.ratio) %>% 
+  mutate(p.adj = p.adjust(p.value, method = "bonf"))
+FET.res %>% select(treatment, odds.ratio, p.value, p.adj) %>% arrange(desc(odds.ratio))
+```
+
