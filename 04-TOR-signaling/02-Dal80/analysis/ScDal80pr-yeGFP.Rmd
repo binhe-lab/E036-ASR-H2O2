@@ -111,11 +111,17 @@ summary(lm)
 Common plotting functions
 ```{r}
 p.timecourse <- list(
-  stat_summary(fun = "mean", geom = "point", size = 3),
-  stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
-  stat_smooth(method = "loess", formula = 'y~x', se = FALSE),
+  stat_summary(aes(color = treat), fun = "mean", geom = "point", size = 2),
+  stat_summary(aes(color = treat), 
+               fun.data = "mean_cl_boot", geom = "errorbar", width = 2),
+  stat_smooth(aes(color = treat),
+              method = "loess", formula = 'y~x', se = FALSE),
   scale_x_continuous(breaks = seq(0,240,60)),
   scale_size_manual(values = c(0.8, 1.5), guide = "none"),
+  scale_color_manual(name = "Treatment",
+                     values = c("-Nitrogen" = "royalblue",
+                                "-Pi" = "#9900FF",
+                                "Rich" = "#666666")),
   labs(x = "", y = ""),
   theme_bw(base_line_size = 1.2, base_size = 14),
   theme(#legend.position=c(0.05,0.75), 
@@ -137,18 +143,17 @@ Nitrogen starvation
 ```{r}
 p1 <- data %>% 
   filter(!is.na(median), row != "F", strain != "K699",
-         treat %in% c("-Nitrogen", "Rich")) %>% 
-  ggplot(aes(x = time, y = median, group = treat, shape = treat)) +
+         treat %in% c("-Nitrogen", "-Pi", "Rich")) %>% 
+  ggplot(aes(x = time, y = median, group = treat)) +
   p.timecourse + facet_wrap(~species, scales = "free_y")
   #ggtitle("Treatment: Nitrogen Starvation")
 
 p2 <- data %>% 
   filter(!is.na(median), row != "F", strain != "K699",
          treat %in% c("-Pi", "Rich")) %>% 
-  ggplot(aes(x = time, y = median, group = treat, shape = treat)) +
+  ggplot(aes(x = time, y = median, group = treat)) +
   p.timecourse + facet_wrap(~species, scales = "free_y")
 
-  labs(x = "Time (min)", y = "ScDAL80-GFP MFI (a.u.)")
 plot_grid(p1, p2, NULL, nrow = 3, rel_heights = c(1, 1, 0.1), align = "hv") +
   draw_label("Time (min)", x = 0.5, y = 0, vjust = -0.5, angle = 0) +
   draw_label("ScDAL80-GFP MFI (a.u.)", x = 0, y = 0.5, vjust = 1.5, angle = 90)
