@@ -1,0 +1,118 @@
+---
+title: "ROS_staining"
+author: "JY"
+date: "3/29/2023"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(cowplot)
+#library(ggplot2)
+library(dplyr)
+#library(mgcv)
+library(broom)
+```
+
+```{r}
+ros <- read.csv("../input/ROS_processed_data.csv")
+# arrange the factor level
+ros$Treatment <- factor(ros$Treatment, levels = c("Ctrl","0Pi","0.2mM","1mM","2mM","10mM","20mM","100mM"))
+```
+
+```{r}
+# plot two species together
+ros %>% 
+  ggplot(aes(x = Treatment, y = X.Gated, color = Species)) + geom_point(size = 0.2) + 
+  stat_summary(fun = "mean", geom = "point", size = 2) +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=0,vjust=-0.5), axis.text = element_text(size = 12), 
+        axis.title.x = element_text(vjust=-2),
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "Relative ROS(%)")
+ggsave("../output/20230329-Raw-Cg&Sc-ROS-Staining.png", width = 8, height = 6)
+
+# separately plot the species Cg
+ros %>% filter(., Species == "Cg") %>% 
+  ggplot(aes(x = Treatment, y = X.Gated)) +
+  geom_boxplot(width=0.3) +
+  geom_dotplot(binaxis = 'y', binwidth=0.04, stackdir = "center") +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=0,vjust=-0.5), axis.text = element_text(size = 12), 
+        axis.title.x = element_text(vjust=-2),
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "Relative ROS(%) in C. glabrata")
+ggsave("../output/20230329-Cg-ROS-Staining.png", width = 8, height = 6)
+
+# separately plot the species Sc
+ros %>% filter(., Species == "Sc") %>% 
+  ggplot(aes(x = Treatment, y = X.Gated)) +
+  geom_boxplot(width=0.3) +
+  geom_dotplot(binaxis = 'y', binwidth=0.04, stackdir = "center") +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=0,vjust=-0.5), axis.text = element_text(size = 12), 
+        axis.title.x = element_text(vjust=-2),
+        plot.title = element_text(size = 14, hjust = 0)) +
+  labs(y = "Relative ROS(%) in S. cerevisiae")
+ggsave("../output/20230329-Sc-ROS-Staining.png", width = 8, height = 6)
+
+# Draw two species side by side
+ros %>%
+  ggplot(aes(x = Treatment, y = X.Gated, color = Species)) +
+  geom_boxplot(width=0.5) +
+  geom_dotplot(binaxis = 'y', binwidth=0.04, stackdir = "center") +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=0,vjust=-0.5), axis.text = element_text(size = 12), 
+        axis.title.x = element_text(vjust=-2),
+        plot.title = element_text(size = 14, hjust = 0.5)) +
+  labs(y = "Relative ROS(%)")
+ggsave("../output/20230329-Cg&Sc-ROS-Staining.png", width = 8, height = 6)
+
+```
+
+```{r}
+# statistical analysis between groups, compare all the categorical variable (0Pi, H2O2 treatment) to Ctrl treatment
+## One-way ANOVA
+# Cg
+ros %>% 
+  filter(Species == "Cg") %>% # for a specific species
+  lm(X.Gated ~ Treatment, data = .) %>%  # did one-way anova using different treatment
+  summary()
+
+ros %>% 
+  filter(Species == "Sc") %>% # for a specific species
+  lm(X.Gated ~ Treatment, data = .) %>%  # did one-way anova using different treatment
+  summary()
+
+#pair-wise t-test 
+#(I do not know how to write the code to compare it, so I mannually generated the wide_data_format.csv from the ros file)
+ros.wide <- read.csv("../input/wide_data_format.csv")
+ros.wide%>% 
+group_by(Treatment) %>% 
+do(tidy(t.test(.$Cg, 
+               .$Sc, 
+               mu = 0, 
+               alt = "two.sided", 
+               paired = TRUE, 
+               conf.level = 0.95)))
+# Conlusion: no significant difference of ROS level between Cg and Sc at Ctrl, 0mM Pi and 0.2mM H2O2 treatment. 
+
+# two way anova to include both species and treatment
+ros %>% 
+  filter(!Treatment %in% c("20mM","100mM")) %>% 
+  aov(X.Gated ~ Species * Treatment, data = .) %>% 
+  summary()
+
+ros %>% 
+  filter(!Treatment %in% c("20mM","100mM")) %>% 
+  aov(X.Gated ~ Species * Treatment, data = .) %>%
+  TukeyHSD(., which = "Treatment")
+```
