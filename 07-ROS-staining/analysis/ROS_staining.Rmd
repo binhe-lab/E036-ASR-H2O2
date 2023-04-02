@@ -14,12 +14,141 @@ library(tidyverse)
 library(cowplot)
 #library(broom)
 ```
+load the raw data:
+1) merged from d032423 to d032823 (5 biological replicates) --> merge-add_gate.csv
+2) treatment info --> Sample_treatment.csv
+```{r}
+# import the data
+ros <- read.csv("../input/merge-add_gate.csv")
+cond <- read.csv("../input/Sample_treatment.csv")
+
+# match the treatment and species to the raw data
+ros.cb <- left_join(ros,cond)
+
+#filter out the % of the BLH-1 gate we need and factor the treatment level
+ros.ps <- ros.cb %>% 
+          select(.,Plate, Group, Sample, Gate, X.Parameter, Species, Treatment, Count, X.Total, X.Gated, X.Mean, X.Median) %>% 
+          filter(.,X.Parameter == "BL1-H" & Gate %in% c("High_ROS","500_gate","2000_gate")) %>% 
+          mutate(.,Treatment = factor(Treatment, levels = c("Ctrl","0Pi","0.2mM","1mM","2mM","10mM","20mM","100mM")))
+```
+
+
+plot the gated data
+```{r}
+# plot the 500_gate
+ros.ps %>% filter(., Gate == "500_gate") %>% 
+  ggplot(aes(x = Treatment, y = X.Gated, color = Species)) +
+  geom_boxplot(width=0.5) +
+  geom_dotplot(binaxis = 'y', binwidth=0.04, stackdir = "center") +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=0,vjust=-0.5), axis.text = element_text(size = 12), 
+        axis.title.x = element_text(vjust=-2),
+        plot.title = element_text(size = 14, hjust = 0.5)) +
+  labs(y = "Relative ROS(%)")
+ggsave("../output/20230402-Raw-Cg&Sc-500_gate.png", width = 8, height = 6)  
+
+# plot the 1000_gate
+ros.ps %>% filter(., Gate == "High_ROS") %>% 
+  ggplot(aes(x = Treatment, y = X.Gated, color = Species)) +
+  geom_boxplot(width=0.5) +
+  geom_dotplot(binaxis = 'y', binwidth=0.04, stackdir = "center") +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=0,vjust=-0.5), axis.text = element_text(size = 12), 
+        axis.title.x = element_text(vjust=-2),
+        plot.title = element_text(size = 14, hjust = 0.5)) +
+  labs(y = "Relative ROS(%)")
+ggsave("../output/20230402-Raw-Cg&Sc-1000_gate.png", width = 8, height = 6)  
+
+# plot the 2000_gate
+ros.ps %>% filter(., Gate == "2000_gate") %>% 
+  ggplot(aes(x = Treatment, y = X.Gated, color = Species)) +
+  geom_boxplot(width=0.5) +
+  geom_dotplot(binaxis = 'y', binwidth=0.04, stackdir = "center") +
+  theme_bw() +
+  theme(legend.position="right", legend.box = "vertical", legend.text = element_text(size=10), 
+        axis.title = element_text(size = 12), 
+        axis.text.x = element_text(angle=0,vjust=-0.5), axis.text = element_text(size = 12), 
+        axis.title.x = element_text(vjust=-2),
+        plot.title = element_text(size = 14, hjust = 0.5)) +
+  labs(y = "Relative ROS(%)")
+ggsave("../output/20230402-Raw-Cg&Sc-2000_gate.png", width = 8, height = 6)  
+
+```
+
+
+
+statistical analysis for different gate
+```{r}
+# Cg different gates
+ros.ps %>% filter(., Gate == "500_gate" & Species == "Cg") %>% 
+  lm(X.Gated ~ Treatment, data = .) %>%  # did one-way anova using different treatment
+  summary()
+
+ros.ps %>% filter(., Gate == "High_ROS" & Species == "Cg") %>% 
+  lm(X.Gated ~ Treatment, data = .) %>%  # 
+  summary()
+
+ros.ps %>% filter(., Gate == "2000_gate" & Species == "Cg") %>% 
+  lm(X.Gated ~ Treatment, data = .) %>%  
+  summary()
+
+# Sc with different gates
+ros.ps %>% filter(., Gate == "500_gate" & Species == "Sc") %>% 
+  lm(X.Gated ~ Treatment, data = .) %>%  
+  summary()
+
+ros.ps %>% filter(., Gate == "High_ROS" & Species == "Sc") %>% 
+  lm(X.Gated ~ Treatment, data = .) %>%  
+  summary()
+
+ros.ps %>% filter(., Gate == "2000_gate" & Species == "Sc") %>% 
+  lm(X.Gated ~ Treatment, data = .) %>%  
+  summary()
+
+
+```
+statistical analysis for different median
+```{r}
+# Cg different gates
+ros.ps %>% filter(., Gate == "500_gate" & Species == "Cg") %>% 
+  lm(X.Median ~ Treatment, data = .) %>%  # did one-way anova using different treatment
+  summary()
+
+ros.ps %>% filter(., Gate == "High_ROS" & Species == "Cg") %>% 
+  lm(X.Median ~ Treatment, data = .) %>%  # 
+  summary()
+
+ros.ps %>% filter(., Gate == "2000_gate" & Species == "Cg") %>% 
+  lm(X.Median ~ Treatment, data = .) %>%  
+  summary()
+
+# Sc with different gates
+ros.ps %>% filter(., Gate == "500_gate" & Species == "Sc") %>% 
+  lm(X.Median ~ Treatment, data = .) %>%  
+  summary()
+
+ros.ps %>% filter(., Gate == "High_ROS" & Species == "Sc") %>% 
+  lm(X.Median ~ Treatment, data = .) %>%  
+  summary()
+
+ros.ps %>% filter(., Gate == "2000_gate" & Species == "Sc") %>% 
+  lm(X.Median ~ Treatment, data = .) %>%  
+  summary()
+
+
+```
+
 
 ## Goal
 The goal of this set of experiments is to quantify the intracellular ROS levels to determine if phoshate starvation leads to an increased ROS level. The reason for the question is because if phoshate starvation induces ROS compared with hydrogen peroxide, and whether the changes differ between species.
 
 
 ## Data
+old analysis chunk 
 ```{r}
 treat <- c("Ctrl","0Pi","0.2mM","1mM","2mM","10mM","20mM","100mM")
 species <- c(Cg = "C. glabrata", Sc = "S. cerevisiae")
