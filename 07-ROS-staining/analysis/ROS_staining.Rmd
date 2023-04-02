@@ -2,24 +2,53 @@
 title: "ROS_staining"
 author: "JY"
 date: "3/29/2023"
-output: html_document
+output: 
+  html_notebook:
+    toc: true
+    toc_float: true
+    code_folding: hide
 ---
 
 ```{r}
 library(tidyverse)
 library(cowplot)
-#library(ggplot2)
-library(dplyr)
-#library(mgcv)
-library(broom)
+#library(broom)
+```
+
+## Goal
+The goal of this set of experiments is to quantify the intracellular ROS levels to determine if phoshate starvation leads to an increased ROS level. The reason for the question is because if phoshate starvation induces ROS compared with hydrogen peroxide, and whether the changes differ between species.
+
+
+## Data
+```{r}
+treat <- c("Ctrl","0Pi","0.2mM","1mM","2mM","10mM","20mM","100mM")
+species <- c(Cg = "C. glabrata", Sc = "S. cerevisiae")
+sample <- read_csv("../input/Sample_treatment.csv", col_types = cols()) %>% 
+  # arrange the factor level
+  mutate(Treatment = factor(Treatment, levels = treat),
+         Species = factor(Species, levels = c("Cg", "Sc"), labels = species)
+  )
+
+raw <- read_csv("../input/ROS_staining_data_raw.csv", col_types = cols())
+
+ros <- left_join(raw, sample, by = "Sample") %>% 
+  # remove a couple of H2O2 treatment levels
+  #mutate(group = paste(Species, Treatment, sep = "_")) %>% 
+  #filter(group %in% c("Cg_0.2mM", "Cg_1mM", ))
+  select(plate = Plate, treatment = Treatment, species = Species, sample = Sample,
+         count = Count, highROS = `%Gated`, x.mean = `X Mean`, x.median = `X Median`,
+         x.rSD = `X rSD`, x.pCV = `X %CV`)
+                            
 ```
 
 ```{r}
-ros <- read.csv("../input/ROS_processed_data.csv")
-# arrange the factor level
-ros$Treatment <- factor(ros$Treatment, levels = c("Ctrl","0Pi","0.2mM","1mM","2mM","10mM","20mM","100mM"))
+ros %>% 
+  group_by(plate, treatment, species) %>% 
+  summarize(across(count:median, ~ mean(.x)))
 ```
 
+
+## Plotting
 ```{r}
 # plot two species together
 ros %>% 

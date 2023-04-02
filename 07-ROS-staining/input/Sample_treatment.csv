@@ -1,4 +1,12 @@
 Sample,Species,Treatment
+A3,Cg,0Pi
+B3,Cg,0.2mM
+C3,Cg,1mM
+D3,Cg,2mM
+E3,Cg,10mM
+F3,Cg,20mM
+G3,Cg,100mM
+H3,Cg,Ctrl
 A4,Cg,0Pi
 B4,Cg,0.2mM
 C4,Cg,1mM

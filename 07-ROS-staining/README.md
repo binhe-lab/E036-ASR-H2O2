@@ -12,6 +12,6 @@ _Assay protocol_
 4. resuspend cells into treatment medium (- Pi, 0.2mM H2O2, 1mM H2O2, 2mM H2O2, 10mM H2O2, etc.) and add 2′,7′-Dichlorofluorescin diacetate (Sigma, D6883) into the medium to a final concentration of 50uM
 5. incubate the culture for 50 minutes in dark at 30 Celcius degree
 6. Wash cell twice with H2O
-7. Dilute cells into H2O and run flow cytometry(FSC: 350l SSC:350; BL1: 460) with 30,000 events using the same hard gate for single cells to both species and each treatment
+7. Dilute cells into H2O and run flow cytometry (FSC: 350v; SSC:350v; BL1: 460v) with 30,000 events using the same hard gate for single cells to both species and each treatment
 
 
