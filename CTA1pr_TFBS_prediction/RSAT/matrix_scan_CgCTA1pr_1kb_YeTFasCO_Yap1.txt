@@ -1,0 +1,94 @@
+ matrix-scan  -v 1 -matrix_format tab -m $RSAT/public_html/tmp/www-data/2021/03/05/matrix-scan_2021-03-05.220130_zkD7s6.matrix -consensus_name -pseudo 1 -decimals 1 -2str -origin end -bgfile $RSAT/public_html/data/genomes/Candida_glabrata/oligo-frequencies/2nt_upstream-noorf_Candida_glabrata-ovlp-1str.freq -bg_pseudo 0.01 -return limits -return sites -return pval -lth score 1 -uth pval 1e-3 -i $RSAT/public_html/tmp/www-data/2021/03/05/tmp_sequence_2021-03-05.220130_hHg4ik.fasta -seq_format fasta -n score
+ Slow counting mode            
+ Input files
+	input	$RSAT/public_html/tmp/www-data/2021/03/05/tmp_sequence_2021-03-05.220130_hHg4ik.fasta
+	bg	$RSAT/public_html/data/genomes/Candida_glabrata/oligo-frequencies/2nt_upstream-noorf_Candida_glabrata-ovlp-1str.freq
+ Matrix files
+	matrix 1	$RSAT/public_html/tmp/www-data/2021/03/05/matrix-scan_2021-03-05.220130_zkD7s6.matrix
+ Sequence format      	fasta
+ Pseudo counts        	1
+ Background model
+	Method        	file
+	Markov order  	1
+	Strand        	sensitive
+	Background pseudo-frequency	0.01
+	Residue probabilities
+		a	0.32183
+		c	0.18541
+		g	0.17996
+		t	0.31280
+ Thresholds	lower	upper
+	pval  	NA	0.001
+	score 	1    	NA
+ Output columns
+	1	seq_id
+	2	ft_type
+	3	ft_name
+	4	strand
+	5	start
+	6	end
+	7	sequence
+	8	weight
+seq_id	ft_type	ft_name	strand	start	end	sequence	weight	Pval	ln_Pval	sig
+CgCTA1pr	limit	START_END	D	-1000	-1	.	0	0	0	0
+CgCTA1pr	site	tkaswaa	D	-985	-979	TGAGAAA	4.2	8.0e-04	-7.128	3.096
+CgCTA1pr	site	tgctgactaaw	R	-957	-947	TGATGACAAAA	4.2	8.4e-04	-7.083	3.076
+CgCTA1pr	site	tkaswaa	R	-956	-950	TGACAAA	4.1	8.0e-04	-7.128	3.096
+CgCTA1pr	site	ctkaCtaakcsg	R	-760	-749	ATTACTAAGAGT	5.3	1.2e-04	-9.064	3.937
+CgCTA1pr	site	gmtkactaatrs	R	-759	-748	AATTACTAAGAG	4.6	4.5e-04	-7.716	3.351
+CgCTA1pr	site	gmtkactaatrs	D	-758	-747	TCTTAGTAATTG	5.1	1.6e-04	-8.738	3.795
+CgCTA1pr	site	gcttaCtaakm	D	-758	-748	TCTTAGTAATT	4.3	7.2e-04	-7.241	3.145
+CgCTA1pr	site	gcttaCtaakm	R	-758	-748	AATTACTAAGA	4.3	7.2e-04	-7.241	3.145
+CgCTA1pr	site	ctkaCtaakcsg	D	-757	-746	CTTAGTAATTGC	4.3	8.5e-04	-7.072	3.071
+CgCTA1pr	site	tkaswaa	D	-756	-750	TTAGTAA	4.2	8.0e-04	-7.128	3.096
+CgCTA1pr	site	tkaswaa	R	-756	-750	TTACTAA	4.2	8.0e-04	-7.128	3.096
+CgCTA1pr	site	tkaCtaa	R	-756	-750	TTACTAA	5.2	2.7e-04	-8.210	3.566
+CgCTA1pr	site	tgctgactaaw	D	-669	-659	GGATGGCTAAT	4.1	9.9e-04	-6.917	3.004
+CgCTA1pr	site	gmtkactaatrs	D	-668	-657	GATGGCTAATTC	4.3	7.9e-04	-7.142	3.102
+CgCTA1pr	site	tgctgactaaw	D	-618	-608	TGTTGAATAAC	4.1	9.9e-04	-6.917	3.004
+CgCTA1pr	site	tkaswaa	R	-539	-533	TGAGAAA	4.2	8.0e-04	-7.128	3.096
+CgCTA1pr	site	gmtkactaatrs	R	-386	-375	GGTTACTAATTT	5.0	2.0e-04	-8.501	3.692
+CgCTA1pr	site	gcttaCtaakm	R	-385	-375	GGTTACTAATT	5.6	4.4e-05	-10.023	4.353
+CgCTA1pr	site	smtkaskmag	R	-384	-375	GGTTACTAAT	3.3	3.9e-04	-7.839	3.404
+CgCTA1pr	site	tgctgactaaw	R	-384	-374	GGGTTACTAAT	4.5	4.6e-04	-7.675	3.333
+CgCTA1pr	site	tkaswaa	D	-383	-377	TTAGTAA	4.2	8.0e-04	-7.128	3.096
+CgCTA1pr	site	tkaswaa	R	-383	-377	TTACTAA	4.2	8.0e-04	-7.128	3.096
+CgCTA1pr	site	tkaCtaa	R	-383	-377	TTACTAA	5.2	2.7e-04	-8.210	3.566
+CgCTA1pr	site	tkaCtaa	D	-286	-280	AGACTAA	4.1	1.0e-03	-6.873	2.985
+CgCTA1pr	site	tkaswaa	R	-248	-242	TGAGAAA	4.2	8.0e-04	-7.128	3.096
+CgCTA1pr	site	tyacstaa	R	-30	-23	TTATCTAA	4.2	6.2e-04	-7.389	3.209
+
+ Matrices
+	matrix	name                	ncol	nrow	pseudo	Wmin	Wmax	Wrange
+	1	smtkaskmag          	10	4	1	-4.100	4.100	8.200	a:0.322 c:0.185 g:0.180 t:0.313 
+	2	tgctgactaaw         	11	4	1	-6.200	7.200	13.400	a:0.322 c:0.185 g:0.180 t:0.313 
+	3	gmtkactaatrs        	12	4	1	-7.100	7.400	14.500	a:0.322 c:0.185 g:0.180 t:0.313 
+	4	tyacstaa            	8	4	1	-5.400	5.500	10.900	a:0.322 c:0.185 g:0.180 t:0.313 
+	5	gcttaCtaakm         	11	4	1	-6.100	7.100	13.200	a:0.322 c:0.185 g:0.180 t:0.313 
+	6	ctkaCtaakcsg        	12	4	1	-6.600	7.600	14.200	a:0.322 c:0.185 g:0.180 t:0.313 
+	7	tkaswaa             	7	4	1	-4.900	4.500	9.400	a:0.322 c:0.185 g:0.180 t:0.313 
+	8	sbkksmttaCGtaaksyssy	20	4	1	-9.000	10.400	19.400	a:0.322 c:0.185 g:0.180 t:0.313 
+	9	tkaCtaa             	7	4	1	-4.900	5.500	10.400	a:0.322 c:0.185 g:0.180 t:0.313 
+ Number of sequences scanned	1
+ Sum of sequence lengths	1000
+ N residues           	0
+ Matches per matrix
+	matrix	name                	matches	scored
+	1	smtkaskmag     	1	1982
+	2	tgctgactaaw    	4	1980
+	3	gmtkactaatrs   	4	1978
+	4	tyacstaa       	1	1986
+	5	gcttaCtaakm    	3	1980
+	6	ctkaCtaakcsg   	2	1978
+	7	tkaswaa        	8	1988
+	8	sbkksmttaCGtaaksyssy	0	1962
+	9	tkaCtaa        	3	1988
+		TOTAL          	26	17822
+ Host name	pedagogix
+ Job started	2021-03-05.220131
+ Job done	2021-03-05.220139
+ Seconds	8.03
+	user	8.03
+	system	0.05
+	cuser	0
+;	csystem	0.01

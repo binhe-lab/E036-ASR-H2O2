@@ -1,0 +1,84 @@
+matrix-scan  -v 1 -matrix_format tab -m $RSAT/public_html/tmp/www-data/2021/03/05/matrix-scan_2021-03-05.223620_eQ9Adj.matrix -consensus_name -pseudo 1 -decimals 1 -2str -origin end -bgfile $RSAT/public_html/data/genomes/Candida_glabrata/oligo-frequencies/2nt_upstream-noorf_Candida_glabrata-ovlp-1str.freq -bg_pseudo 0.01 -return limits -return sites -return pval -lth score 1 -uth pval 1e-3 -i $RSAT/public_html/tmp/www-data/2021/03/05/tmp_sequence_2021-03-05.223620_8ZgFbd.fasta -seq_format fasta -n score
+ Slow counting mode            
+ Input files
+	input	$RSAT/public_html/tmp/www-data/2021/03/05/tmp_sequence_2021-03-05.223620_8ZgFbd.fasta
+	bg	$RSAT/public_html/data/genomes/Candida_glabrata/oligo-frequencies/2nt_upstream-noorf_Candida_glabrata-ovlp-1str.freq
+ Matrix files
+	matrix 1	$RSAT/public_html/tmp/www-data/2021/03/05/matrix-scan_2021-03-05.223620_eQ9Adj.matrix
+ Sequence format      	fasta
+ Pseudo counts        	1
+ Background model
+	Method        	file
+	Markov order  	1
+	Strand        	sensitive
+	Background pseudo-frequency	0.01
+	Residue probabilities
+		a	0.32183
+		c	0.18541
+		g	0.17996
+		t	0.31280
+ Thresholds	lower	upper
+	pval  	NA	0.001
+	score 	1    	NA
+ Output columns
+	1	seq_id
+	2	ft_type
+	3	ft_name
+	4	strand
+	5	start
+	6	end
+	7	sequence
+	8	weight
+seq_id	ft_type	ft_name	strand	start	end	sequence	weight	Pval	ln_Pval	sig
+CgCTA1pr	limit	START_END	D	-1000	-1	.	0	0	0	0
+CgCTA1pr	site	sggcCbgGsCc	D	-781	-771	GGTTCTGGGCC	6.3	3.0e-05	-10.421	4.526
+CgCTA1pr	site	sggcCbgGsCc	R	-781	-771	GGCCCAGAACC	4.5	8.4e-04	-7.077	3.073
+CgCTA1pr	site	sggyCkvGvCcyy	D	-781	-769	GGTTCTGGGCCAT	5.5	1.4e-04	-8.889	3.861
+CgCTA1pr	site	bCyrgsCc	D	-778	-771	TCTGGGCC	5.7	1.6e-05	-11.051	4.799
+CgCTA1pr	site	ktaysGCCvs	R	-776	-767	GCATGGCCCA	3.7	8.2e-04	-7.111	3.088
+CgCTA1pr	site	GsCbsGsCs	R	-775	-767	GCATGGCCC	4.3	6.6e-04	-7.331	3.184
+CgCTA1pr	site	sggcCbgGsCc	D	-775	-765	GGGCCATGCCA	5.1	3.0e-04	-8.097	3.516
+CgCTA1pr	site	sggcCbgGsCc	R	-775	-765	TGGCATGGCCC	5.6	1.2e-04	-9.017	3.916
+CgCTA1pr	site	GsCbsGsCs	R	-774	-766	GGCATGGCC	4.3	6.6e-04	-7.331	3.184
+CgCTA1pr	site	sggcCbgGsCc	R	-774	-764	GTGGCATGGCC	4.5	8.4e-04	-7.077	3.073
+CgCTA1pr	site	GGCCrk	D	-774	-769	GGCCAT	4.5	5.4e-04	-7.519	3.265
+CgCTA1pr	site	GGsCCrGCCaaat	D	-774	-762	GGCCATGCCACAG	5.6	3.9e-04	-7.853	3.411
+CgCTA1pr	site	ktaysGCCvs	R	-678	-669	CCATGGCCCT	3.6	1.0e-03	-6.866	2.982
+CgCTA1pr	site	GGCCrk	R	-678	-673	GGCCCT	4.1	1.0e-03	-6.888	2.992
+CgCTA1pr	site	GGCCrk	D	-676	-671	GGCCAT	4.5	5.4e-04	-7.519	3.265
+CgCTA1pr	site	GGsCCrGCCaaat	D	-670	-658	GGGATGGCTAATT	5.1	7.3e-04	-7.221	3.136
+CgCTA1pr	site	GGCsGGC	D	-669	-663	GGATGGC	4.8	8.5e-04	-7.070	3.071
+CgCTA1pr	site	GGCsGGC	R	-634	-628	GGAAGGC	4.8	8.5e-04	-7.070	3.071
+
+ Matrices
+	matrix	name         	ncol	nrow	pseudo	Wmin	Wmax	Wrange
+	1	GsCbsGsCs    	9	4	1	-4.800	6.800	11.600	a:0.322 c:0.185 g:0.180 t:0.313 
+	2	sggcCbgGsCc  	11	4	1	-6.600	9.300	15.900	a:0.322 c:0.185 g:0.180 t:0.313 
+	3	bCyrgsCc     	8	4	1	-5.000	6.300	11.300	a:0.322 c:0.185 g:0.180 t:0.313 
+	4	ktaysGCCvs   	10	4	1	-3.900	4.900	8.800	a:0.322 c:0.185 g:0.180 t:0.313 
+	5	sggyCkvGvCcyy	13	4	1	-7.800	9.000	16.800	a:0.322 c:0.185 g:0.180 t:0.313 
+	6	GGCCrk       	6	4	1	-3.700	5.300	9.000	a:0.322 c:0.185 g:0.180 t:0.313 
+	7	GGsCCrGCCaaat	13	4	1	-9.100	12.400	21.500	a:0.322 c:0.185 g:0.180 t:0.313 
+	8	GGCsGGC      	7	4	1	-4.300	7.300	11.600	a:0.322 c:0.185 g:0.180 t:0.313 
+ Number of sequences scanned	1
+ Sum of sequence lengths	1000
+ N residues           	0
+ Matches per matrix
+	matrix	name         	matches	scored
+	1	GsCbsGsCs      	2	1984
+	2	sggcCbgGsCc    	5	1980
+	3	bCyrgsCc       	1	1986
+	4	ktaysGCCvs     	2	1982
+	5	sggyCkvGvCcyy  	1	1976
+	6	GGCCrk         	3	1990
+	7	GGsCCrGCCaaat  	2	1976
+	8	GGCsGGC        	2	1988
+		TOTAL          	18	15862
+ Host name	pedagogix
+ Job started	2021-03-05.223621
+ Job done	2021-03-05.223626
+ Seconds	5.33
+	user	5.33
+	system	0.05
+	cuser	0
+;	csystem	0.01

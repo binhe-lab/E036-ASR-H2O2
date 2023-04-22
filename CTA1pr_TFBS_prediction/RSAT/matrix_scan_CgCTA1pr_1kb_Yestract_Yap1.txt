@@ -1,0 +1,87 @@
+ matrix-scan  -v 1 -matrix_format transfac -m $RSAT/public_html/tmp/www-data/2021/03/08/matrix-scan_2021-03-08.005020_Q8Q2to.matrix -pseudo 1 -decimals 1 -2str -origin end -bginput -markov 1 -bg_pseudo 0.01 -return limits -return sites -return pval -lth score 1 -uth pval 1e-3 -i $RSAT/public_html/tmp/www-data/2021/03/08/tmp_sequence_2021-03-08.005020_0q78E6.fasta -seq_format fasta -n score
+ Slow counting mode            
+ Input files
+	input	$RSAT/public_html/tmp/www-data/2021/03/08/tmp_sequence_2021-03-08.005020_0q78E6.fasta
+ Matrix files
+	matrix 1	$RSAT/public_html/tmp/www-data/2021/03/08/matrix-scan_2021-03-08.005020_Q8Q2to.matrix
+ Sequence format      	fasta
+ Pseudo counts        	1
+ Background model
+	Method        	input
+	Markov order  	1
+	Strand        	undef
+	Background pseudo-frequency	0.01
+	Residue probabilities
+		a	0.30223
+		c	0.21397
+		g	0.14921
+		t	0.33459
+ Thresholds	lower	upper
+	pval  	NA	0.001
+	score 	1    	NA
+ Output columns
+	1	seq_id
+	2	ft_type
+	3	ft_name
+	4	strand
+	5	start
+	6	end
+	7	sequence
+	8	weight
+seq_id	ft_type	ft_name	strand	start	end	sequence	weight	Pval	ln_Pval	sig
+CgCTA1pr	limit	START_END	D	-1000	-1	.	0	0	0	0
+CgCTA1pr	site	Yap1p	R	-956	-950	TGACAAA	3.2	1.0e-03	-6.901	2.997
+CgCTA1pr	site	Yap1p	R	-956	-950	TGACAAA	8.3	1.1e-04	-9.081	3.944
+CgCTA1pr	site	Yap1p	R	-956	-948	GATGACAAA	6.8	5.9e-05	-9.738	4.229
+CgCTA1pr	site	Yap1p	R	-756	-750	TTACTAA	8.4	2.2e-04	-8.428	3.660
+CgCTA1pr	site	Yap1p	D	-665	-658	GGCTAATT	6.2	5.3e-04	-7.547	3.278
+CgCTA1pr	site	Yap1p	D	-664	-657	GCTAATTC	6.9	1.9e-04	-8.590	3.731
+CgCTA1pr	site	Yap1p	R	-614	-607	CGTTATTC	3.6	8.4e-04	-7.083	3.076
+CgCTA1pr	site	Yap1p	D	-585	-578	CGCTAATT	7.1	1.4e-04	-8.882	3.857
+CgCTA1pr	site	Yap1p	R	-578	-571	TCATCGAA	5.6	8.9e-04	-7.021	3.049
+CgCTA1pr	site	Yap1p	D	-575	-567	GATGAAGGA	5.2	9.5e-04	-6.958	3.022
+CgCTA1pr	site	Yap1p	R	-412	-405	GGTAATTA	8.2	7.5e-05	-9.502	4.127
+CgCTA1pr	site	Yap1p	R	-411	-404	AGGTAATT	8.3	5.8e-05	-9.761	4.239
+CgCTA1pr	site	Yap1p	R	-383	-377	TTACTAA	8.4	2.2e-04	-8.428	3.660
+CgCTA1pr	site	Yap1p	R	-311	-304	TGTAATTG	3.2	1.0e-03	-6.884	2.989
+CgCTA1pr	site	Yap1p	D	-308	-302	TTACAAA	7.7	3.3e-04	-8.008	3.478
+CgCTA1pr	site	Yap1p	D	-286	-280	AGACTAA	3.3	7.1e-04	-7.254	3.151
+CgCTA1pr	site	Yap1p	D	-57	-50	CGCTAATT	7.1	1.4e-04	-8.882	3.857
+CgCTA1pr	site	Yap1p	R	-30	-23	TTATCTAA	5.6	8.9e-04	-7.021	3.049
+
+ Matrices
+	matrix	name 	ncol	nrow	pseudo	Wmin	Wmax	Wrange
+	1	Yap1p	7	4	1	-32.400	8.400	40.800	a:0.302 c:0.214 g:0.149 t:0.335 
+	2	Yap1p	7	4	1	-32.400	9.600	42.000	a:0.302 c:0.214 g:0.149 t:0.335 
+	3	Yap1p	7	4	1	-32.400	9.200	41.600	a:0.302 c:0.214 g:0.149 t:0.335 
+	4	Yap1p	7	4	1	-32.400	8.600	41.000	a:0.302 c:0.214 g:0.149 t:0.335 
+	5	Yap1p	7	4	1	-32.400	8.800	41.200	a:0.302 c:0.214 g:0.149 t:0.335 
+	6	Yap1p	9	4	1	-21.600	7.900	29.500	a:0.302 c:0.214 g:0.149 t:0.335 
+	7	Yap1p	18	4	1	-54.000	16.300	70.300	a:0.302 c:0.214 g:0.149 t:0.335 
+	8	Yap1p	8	4	1	-25.000	7.600	32.600	a:0.302 c:0.214 g:0.149 t:0.335 
+	9	Yap1p	8	4	1	-29.100	8.600	37.700	a:0.302 c:0.214 g:0.149 t:0.335 
+	10	Yap1p	8	4	1	-33.000	8.900	41.900	a:0.302 c:0.214 g:0.149 t:0.335 
+ Number of sequences scanned	1
+ Sum of sequence lengths	1000
+ N residues           	0
+ Matches per matrix
+	matrix	name 	matches	scored
+	1	Yap1p          	2	1988
+	2	Yap1p          	0	1988
+	3	Yap1p          	2	1988
+	4	Yap1p          	2	1988
+	5	Yap1p          	0	1988
+	6	Yap1p          	2	1984
+	7	Yap1p          	0	1966
+	8	Yap1p          	2	1986
+	9	Yap1p          	4	1986
+	10	Yap1p          	4	1986
+		TOTAL          	18	19848
+ Host name	rsat-tagc
+ Job started	2021-03-08.005020
+ Job done	2021-03-08.005029
+ Seconds	7.78
+	user	7.78
+	system	0.05
+	cuser	0.64
+;	csystem	0.08
