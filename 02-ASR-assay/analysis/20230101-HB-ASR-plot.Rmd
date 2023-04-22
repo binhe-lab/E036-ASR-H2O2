@@ -614,7 +614,8 @@ _**Statistical tests**_
 1. Determine if the basal survival rates are different between species (Wilcoxon signed-rank test)
 1. Determine if the primary stress enhanced the survival in _each_ species (Wilcoxon signed-rank test)
 
-_Basal survival rate_
+_**Basal survival rate**_
+
 Across species, unpaired, rank-sum test.
 ```{r}
 tmp <- dat.f3a %>% 
@@ -627,6 +628,19 @@ tmp %>% group_by(Genotype) %>% summarize(mean = mean(r), sd = num(sd(r), digits 
 wilcox.test(r ~ Genotype, paired = FALSE, data = tmp)
 ```
 
+_**Survival rate with the primary stress**_
+
+Across species, unpaired, rank-sum test.
+```{r}
+tmp <- dat.f3a %>% 
+  filter(Primary == "-Pi") %>% 
+  select(Date, Genotype, r) %>% 
+  arrange(Genotype)
+
+tmp %>% group_by(Genotype) %>% summarize(mean = mean(r), sd = num(sd(r), digits = 3))
+
+wilcox.test(r ~ Genotype, paired = FALSE, data = tmp)
+```
 
 _Primary stress enhanced in wildtype_
 

@@ -114,3 +114,77 @@ FET.res <- sapply(treatments, function(x) my_fisher_test(sum.f5, x)) %>%
 FET.res %>% select(treatment, odds.ratio, p.value, p.adj) %>% arrange(desc(odds.ratio))
 ```
 
+## Rapamycin treatment
+
+_Goal_
+
+Evaluate the effect of rapamycin (TORC1 inhibition) on Msn4<sup>nuc</sup>
+
+### Data
+Jinye provided the total counts directly.
+
+| Species | Treatment | # Nuc | # Total |
+|:--------|:----------|:------|:--------|
+| S. cerevisiae | rapa | 19 | 131 |
+| S. cerevisiae | ctrl | 1 | 86 |
+| C. glabrata | rapa | 79 | 110 |
+| C. glabrata | ctrl | 3 | 164 |
+
+```{r}
+dat.rapa <- tribble(
+  ~species, ~treat, ~nuc, ~total,
+  "S. cerevisiae", "rapa", 19, 131,
+  "S. cerevisiae", "ctrl", 1, 86,
+  "C. glabrata", "rapa", 79, 110,
+  "C. glabrata", "ctrl", 3, 164
+) %>% 
+  mutate(cyto = total - nuc, perc = scales::percent(nuc/total))
+dat.rapa
+```
+
+### summary and stat test
+Conduct Fisher's exact test to determine if the difference between strains under -Pi or rich conditions are significant
+
+Fisher's exact test comparing rapamycin treated cells vs mock treated ones in _S. cerevisiae_ 
+
+```{r}
+tmp <- dat.rapa %>% 
+  filter(species == "S. cerevisiae") %>% 
+  select(treat, nuc, cyto) %>% 
+  column_to_rownames(var = "treat") %>% 
+  as.matrix()
+fisher.test(tmp)
+```
+
+Fisher's exact test comparing rapamycin treated cells vs mock treated ones in _C. glabrata_ 
+
+```{r}
+tmp <- dat.rapa %>% 
+  filter(species == "C. glabrata") %>% 
+  select(treat, nuc, cyto) %>% 
+  column_to_rownames(var = "treat") %>% 
+  as.matrix()
+fisher.test(tmp)
+```
+
+Fisher's exact test comparing rapamycin treated cells between the two species
+```{r}
+tmp <- dat.rapa %>% 
+  filter(treat == "rapa") %>% 
+  select(species, nuc, cyto) %>% 
+  column_to_rownames(var = "species") %>% 
+  as.matrix()
+fisher.test(tmp)
+```
+
+Fisher's exact test comparing mock treated cells between the two species
+```{r}
+tmp <- dat.rapa %>% 
+  filter(treat == "ctrl") %>% 
+  select(species, nuc, cyto) %>% 
+  column_to_rownames(var = "species") %>% 
+  as.matrix()
+fisher.test(tmp)
+```
+> The difference under 0Pi is significant, but not under rich media condition.
+

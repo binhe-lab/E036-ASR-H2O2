@@ -1750,7 +1750,7 @@ display: none;
 <h1 class="title toc-ignore">Msn4 nuclear localization under various
 stress and in two species</h1>
 <h4 class="author">Bin He</h4>
-<h4 class="date">2023-03-22 (updated 2023-03-22)</h4>
+<h4 class="date">2023-03-22 (updated 2023-04-11)</h4>
 
 </div>
 
@@ -1769,6 +1769,11 @@ stresses</a>
 <ul>
 <li><a href="#data-1" id="toc-data-1">data</a></li>
 <li><a href="#summary-and-stat-test-1" id="toc-summary-and-stat-test-1">summary and stat test</a></li>
+</ul></li>
+<li><a href="#rapamycin-treatment" id="toc-rapamycin-treatment">Rapamycin treatment</a>
+<ul>
+<li><a href="#data-2" id="toc-data-2">Data</a></li>
+<li><a href="#summary-and-stat-test-2" id="toc-summary-and-stat-test-2">summary and stat test</a></li>
 </ul></li>
 </ul>
 </div>
@@ -1836,6 +1841,9 @@ under different conditions.</p>
 </table>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0LmY3IDwtIHJlYWRfdHN2KFwiaW5wdXQvMjAyMjExMTctcmltMTUtbm9QaS1yYXcudHN2XCIsIGNvbF90eXBlcyA9IGNvbHMoKSlcbmBgYCJ9 -->
+<pre class="r"><code>dat.f7 &lt;- read_tsv(&quot;input/20221117-rim15-noPi-raw.tsv&quot;, col_types = cols())</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 </div>
@@ -2020,11 +2028,192 @@ FET.res %&gt;% select(treatment, odds.ratio, p.value, p.adj) %&gt;% arrange(desc
 <!-- rnb-frame-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+</div>
+</div>
+<div id="rapamycin-treatment" class="section level2">
+<h2>Rapamycin treatment</h2>
+<p><em>Goal</em></p>
+<p>Evaluate the effect of rapamycin (TORC1 inhibition) on
+Msn4<sup>nuc</sup></p>
+<div id="data-2" class="section level3">
+<h3>Data</h3>
+<p>Jinye provided the total counts directly.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Species</th>
+<th align="left">Treatment</th>
+<th align="left"># Nuc</th>
+<th align="left"># Total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">S. cerevisiae</td>
+<td align="left">rapa</td>
+<td align="left">19</td>
+<td align="left">131</td>
+</tr>
+<tr class="even">
+<td align="left">S. cerevisiae</td>
+<td align="left">ctrl</td>
+<td align="left">1</td>
+<td align="left">86</td>
+</tr>
+<tr class="odd">
+<td align="left">C. glabrata</td>
+<td align="left">rapa</td>
+<td align="left">79</td>
+<td align="left">110</td>
+</tr>
+<tr class="even">
+<td align="left">C. glabrata</td>
+<td align="left">ctrl</td>
+<td align="left">3</td>
+<td align="left">164</td>
+</tr>
+</tbody>
+</table>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0LnJhcGEgPC0gdHJpYmJsZShcbiAgfnNwZWNpZXMsIH50cmVhdCwgfm51YywgfnRvdGFsLFxuICBcIlMuIGNlcmV2aXNpYWVcIiwgXCJyYXBhXCIsIDE5LCAxMzEsXG4gIFwiUy4gY2VyZXZpc2lhZVwiLCBcImN0cmxcIiwgMSwgODYsXG4gIFwiQy4gZ2xhYnJhdGFcIiwgXCJyYXBhXCIsIDc5LCAxMTAsXG4gIFwiQy4gZ2xhYnJhdGFcIiwgXCJjdHJsXCIsIDMsIDE2NFxuKSAlPiUgXG4gIG11dGF0ZShjeXRvID0gdG90YWwgLSBudWMsIHBlcmMgPSBzY2FsZXM6OnBlcmNlbnQobnVjL3RvdGFsKSlcbmRhdC5yYXBhXG5gYGAifQ== -->
+<pre class="r"><code>dat.rapa &lt;- tribble(
+  ~species, ~treat, ~nuc, ~total,
+  &quot;S. cerevisiae&quot;, &quot;rapa&quot;, 19, 131,
+  &quot;S. cerevisiae&quot;, &quot;ctrl&quot;, 1, 86,
+  &quot;C. glabrata&quot;, &quot;rapa&quot;, 79, 110,
+  &quot;C. glabrata&quot;, &quot;ctrl&quot;, 3, 164
+) %&gt;% 
+  mutate(cyto = total - nuc, perc = scales::percent(nuc/total))
+dat.rapa</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbInRibF9kZiIsInRibCIsImRhdGEuZnJhbWUiXSwibnJvdyI6NCwibmNvbCI6Niwic3VtbWFyeSI6eyJBIHRpYmJsZSI6WyI0IMOXIDYiXX19LCJyZGYiOiJINHNJQUFBQUFBQUFBMzFTM1U3Q01CUXVZeDB5QXlIeEJiamhrb2FKUDl4Qm92RUJSQklTdmJCMkZSZG50M1RGbnpzZXpVZnlBUXp6YkczSldOUW1KK2VjNy95Zm51dkw1ZGhmK2dpaEpuSWRCelV4aUFndmJxNkdFd1FJS0Eza29uYkIzOEhwQ0FRUHFBZmtHa05uVHZxTVMvNGFaUkhsLzRHSEY2Uy9pdW1EcElyK0J1M25kU1ZOclp2TGxJei94QkhxRnZKc2pNbzMvZEo4TnYvVS9BRFpwLzN1N3pXKzJHaCthM2k0MmZlN00za1dNODJuUmcvNzFxL2FyeGVja05QUndHZzRJTUdaVmJ6emdFeU9LNmJKZUZCYkx4YjBoV2NtcFdmQVZwWnlGZ0ZzZkpUa1ZCbWxLZFpzaHllSzd0YkRQbFJpNVpSTFZpdlVsc2tic2NVNlFFNHhkWjduMy9XT1dFd3oyNUVGL1JBK2lqeEtpQWR0V3d0cEphbUtFZ0ZCVG5FcHVCYmNrRFdndHhaRkorR1FQYTNGOHpBWUZSVkt1MzRkSTdzVjJkTTFuZHprd25iSFhLd2lZVThOdzAxeHU1SXVqRnhPVEZJWkNidEFIOUNNVkZmbnN5UzJTRGtjMnY0QXJCTkphQ0VEQUFBPSJ9 -->
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["species"],"name":[1],"type":["chr"],"align":["left"]},{"label":["treat"],"name":[2],"type":["chr"],"align":["left"]},{"label":["nuc"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["total"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["cyto"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["perc"],"name":[6],"type":["chr"],"align":["left"]}],"data":[{"1":"S. cerevisiae","2":"rapa","3":"19","4":"131","5":"112","6":"14.50%"},{"1":"S. cerevisiae","2":"ctrl","3":"1","4":"86","5":"85","6":"1.16%"},{"1":"C. glabrata","2":"rapa","3":"79","4":"110","5":"31","6":"71.82%"},{"1":"C. glabrata","2":"ctrl","3":"3","4":"164","5":"161","6":"1.83%"}],"options":{"columns":{"min":{},"max":[10],"total":[6]},"rows":{"min":[10],"max":[10],"total":[4]},"pages":{}}}
+  </script>
+</div>
+<!-- rnb-frame-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="summary-and-stat-test-2" class="section level3">
+<h3>summary and stat test</h3>
+<p>Conduct Fisher’s exact test to determine if the difference between
+strains under -Pi or rich conditions are significant</p>
+<p>Fisher’s exact test comparing rapamycin treated cells vs mock treated
+ones in <em>S. cerevisiae</em></p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZmlzaGVyLnRlc3QodG1wKVxuXG5gYGAifQ== -->
+<pre class="r"><code>fisher.test(tmp)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiXG5cdEZpc2hlcidzIEV4YWN0IFRlc3QgZm9yIENvdW50IERhdGFcblxuZGF0YTogIHRtcFxucC12YWx1ZSA9IDAuMDAwNTA2NFxuYWx0ZXJuYXRpdmUgaHlwb3RoZXNpczogdHJ1ZSBvZGRzIHJhdGlvIGlzIG5vdCBlcXVhbCB0byAxXG45NSBwZXJjZW50IGNvbmZpZGVuY2UgaW50ZXJ2YWw6XG4gICAyLjE4NzkwMyA2MDQuNDA1MTgyXG5zYW1wbGUgZXN0aW1hdGVzOlxub2RkcyByYXRpbyBcbiAgMTQuMzEwOTUgXG4ifQ== -->
+<pre><code>
+    Fisher&#39;s Exact Test for Count Data
+
+data:  tmp
+p-value = 0.0005064
+alternative hypothesis: true odds ratio is not equal to 1
+95 percent confidence interval:
+   2.187903 604.405182
+sample estimates:
+odds ratio 
+  14.31095 </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Fisher’s exact test comparing rapamycin treated cells vs mock treated
+ones in <em>C. glabrata</em></p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudG1wIDwtIGRhdC5yYXBhICU+JSBcbiAgZmlsdGVyKHNwZWNpZXMgPT0gXCJDLiBnbGFicmF0YVwiKSAlPiUgXG4gIHNlbGVjdCh0cmVhdCwgbnVjLCBjeXRvKSAlPiUgXG4gIGNvbHVtbl90b19yb3duYW1lcyh2YXIgPSBcInRyZWF0XCIpICU+JSBcbiAgYXMubWF0cml4KClcbmZpc2hlci50ZXN0KHRtcClcbmBgYCJ9 -->
+<pre class="r"><code>tmp &lt;- dat.rapa %&gt;% 
+  filter(species == &quot;C. glabrata&quot;) %&gt;% 
+  select(treat, nuc, cyto) %&gt;% 
+  column_to_rownames(var = &quot;treat&quot;) %&gt;% 
+  as.matrix()
+fisher.test(tmp)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiXG5cdEZpc2hlcidzIEV4YWN0IFRlc3QgZm9yIENvdW50IERhdGFcblxuZGF0YTogIHRtcFxucC12YWx1ZSA8IDIuMmUtMTZcbmFsdGVybmF0aXZlIGh5cG90aGVzaXM6IHRydWUgb2RkcyByYXRpbyBpcyBub3QgZXF1YWwgdG8gMVxuOTUgcGVyY2VudCBjb25maWRlbmNlIGludGVydmFsOlxuICAzOS45ODE1MSA2OTguMDY0NTFcbnNhbXBsZSBlc3RpbWF0ZXM6XG5vZGRzIHJhdGlvIFxuICAxMzMuMDk2MSBcbiJ9 -->
+<pre><code>
+    Fisher&#39;s Exact Test for Count Data
+
+data:  tmp
+p-value &lt; 2.2e-16
+alternative hypothesis: true odds ratio is not equal to 1
+95 percent confidence interval:
+  39.98151 698.06451
+sample estimates:
+odds ratio 
+  133.0961 </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Fisher’s exact test comparing rapamycin treated cells between the two
+species</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudG1wIDwtIGRhdC5yYXBhICU+JSBcbiAgZmlsdGVyKHRyZWF0ID09IFwicmFwYVwiKSAlPiUgXG4gIHNlbGVjdChzcGVjaWVzLCBudWMsIGN5dG8pICU+JSBcbiAgY29sdW1uX3RvX3Jvd25hbWVzKHZhciA9IFwic3BlY2llc1wiKSAlPiUgXG4gIGFzLm1hdHJpeCgpXG5maXNoZXIudGVzdCh0bXApXG5gYGAifQ== -->
+<pre class="r"><code>tmp &lt;- dat.rapa %&gt;% 
+  filter(treat == &quot;rapa&quot;) %&gt;% 
+  select(species, nuc, cyto) %&gt;% 
+  column_to_rownames(var = &quot;species&quot;) %&gt;% 
+  as.matrix()
+fisher.test(tmp)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiXG5cdEZpc2hlcidzIEV4YWN0IFRlc3QgZm9yIENvdW50IERhdGFcblxuZGF0YTogIHRtcFxucC12YWx1ZSA8IDIuMmUtMTZcbmFsdGVybmF0aXZlIGh5cG90aGVzaXM6IHRydWUgb2RkcyByYXRpbyBpcyBub3QgZXF1YWwgdG8gMVxuOTUgcGVyY2VudCBjb25maWRlbmNlIGludGVydmFsOlxuIDAuMDMzMjQ0NSAwLjEzMTcyMDFcbnNhbXBsZSBlc3RpbWF0ZXM6XG5vZGRzIHJhdGlvIFxuMC4wNjc1NjY2MiBcbiJ9 -->
+<pre><code>
+    Fisher&#39;s Exact Test for Count Data
+
+data:  tmp
+p-value &lt; 2.2e-16
+alternative hypothesis: true odds ratio is not equal to 1
+95 percent confidence interval:
+ 0.0332445 0.1317201
+sample estimates:
+odds ratio 
+0.06756662 </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Fisher’s exact test comparing mock treated cells between the two
+species</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxudG1wIDwtIGRhdC5yYXBhICU+JSBcbiAgZmlsdGVyKHRyZWF0ID09IFwiY3RybFwiKSAlPiUgXG4gIHNlbGVjdChzcGVjaWVzLCBudWMsIGN5dG8pICU+JSBcbiAgY29sdW1uX3RvX3Jvd25hbWVzKHZhciA9IFwic3BlY2llc1wiKSAlPiUgXG4gIGFzLm1hdHJpeCgpXG5maXNoZXIudGVzdCh0bXApXG5gYGAifQ== -->
+<pre class="r"><code>tmp &lt;- dat.rapa %&gt;% 
+  filter(treat == &quot;ctrl&quot;) %&gt;% 
+  select(species, nuc, cyto) %&gt;% 
+  column_to_rownames(var = &quot;species&quot;) %&gt;% 
+  as.matrix()
+fisher.test(tmp)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiXG5cdEZpc2hlcidzIEV4YWN0IFRlc3QgZm9yIENvdW50IERhdGFcblxuZGF0YTogIHRtcFxucC12YWx1ZSA9IDFcbmFsdGVybmF0aXZlIGh5cG90aGVzaXM6IHRydWUgb2RkcyByYXRpbyBpcyBub3QgZXF1YWwgdG8gMVxuOTUgcGVyY2VudCBjb25maWRlbmNlIGludGVydmFsOlxuIDAuMDExODkzNjQgOC4wMTM4ODU4NFxuc2FtcGxlIGVzdGltYXRlczpcbm9kZHMgcmF0aW8gXG4gIDAuNjMyNDQzIFxuIn0= -->
+<pre><code>
+    Fisher&#39;s Exact Test for Count Data
+
+data:  tmp
+p-value = 1
+alternative hypothesis: true odds ratio is not equal to 1
+95 percent confidence interval:
+ 0.01189364 8.01388584
+sample estimates:
+odds ratio 
+  0.632443 </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<blockquote>
+<p>The difference under 0Pi is significant, but not under rich media
+condition.</p>
+</blockquote>
 <!-- rnb-text-end -->
 </div>
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiTXNuNCBudWNsZWFyIGxvY2FsaXphdGlvbiB1bmRlciB2YXJpb3VzIHN0cmVzcyBhbmQgaW4gdHdvIHNwZWNpZXMiCmF1dGhvcjogQmluIEhlCmRhdGU6ICIyMDIzLTAzLTIyICh1cGRhdGVkIGByIFN5cy5EYXRlKClgKSIKb3V0cHV0OgogIGh0bWxfbm90ZWJvb2s6CiAgICB0b2M6IHRydWUKICAgIHRvY19kZXB0aDogNAogICAgY29kZV9mb2xkaW5nOiBoaWRlCi0tLQoKYGBge3J9CnJlcXVpcmUodGlkeXZlcnNlKQpyZXF1aXJlKGNvd3Bsb3QpCmBgYAoKIyMgR29hbApVc2UgZmx1b3Jlc2NlbnQgbWljcm9zY29weSB0byB0cmFjayBNc240IChhbmQgTXNuMikgbnVjbGVhciBsb2NhbGl6YXRpb24gaW4gYm90aCBfUy4gY2VyZXZpc2lhZV8gYW5kIF9DLiBnbGFicmF0YV8gdW5kZXIgZGlmZmVyZW50IGNvbmRpdGlvbnMuCgojIyBfcmltMTXiiIZfIGVmZmVjdCBvbiBDZ01zbjQ8c3VwPm51Yzwvc3VwPgoKIyMjIGRhdGEKCnwgRGF0ZV9mcm9tIHwgRGF0ZV90byB8IFN0cmFpbnMgfCBFeHBlcmltZW50IHwKfDotLS0tLS0tLS0tfDotLS0tLS0tLS0tfDotLS0tLS0tLS0tfDotLS0tLS0tLS0tfAp8IDIwMjIvMTEvMTUgfCAyMDIyLzExLzE3IHwgd3QsIHJpbTE14oiGIHwgZGV0ZXJtaW5lIE1zbjQ8c3VwPm51Yzwvc3VwPiB1bmRlciAtUGkgfAoKYGBge3J9CmRhdC5mNyA8LSByZWFkX3RzdigiaW5wdXQvMjAyMjExMTctcmltMTUtbm9QaS1yYXcudHN2IiwgY29sX3R5cGVzID0gY29scygpKQpgYGAKCiMjIyBzdW1tYXJ5IGFuZCBzdGF0IHRlc3QKMS4gc3VtIHRoZSB0b3RhbCBudW1iZXIgb2YgbnVjIGFuZCBjeXRvIGNlbGxzIGZvciB0aGUgc2FtZSBzdHJhaW4gYWNyb3NzIHJlcGxpY2F0ZXMKMS4gY2FsY3VsYXRlIHRoZSBwZXJjZW50YWdlIG9mIE1zbjQ8c3VwPm51Yzwvc3VwPiBjZWxscyBpbiBlYWNoIGdlbm90eXBlCjEuIGNvbmR1Y3QgRmlzaGVyJ3MgZXhhY3QgdGVzdCB0byBkZXRlcm1pbmUgaWYgdGhlIGRpZmZlcmVuY2UgYmV0d2VlbiBzdHJhaW5zIHVuZGVyIC1QaSBvciByaWNoIGNvbmRpdGlvbnMgYXJlIHNpZ25pZmljYW50CmBgYHtyfQpzdW0uZjcgPC0gZGF0LmY3ICU+JSAKICBncm91cF9ieSh0cmVhdG1lbnQsIGdlbm90eXBlKSAlPiUgCiAgc3VtbWFyaXplKGFjcm9zcyhudWM6Y3l0bywgc3VtKSwgLmdyb3VwcyA9ICJkcm9wIikgJT4lIAogIG11dGF0ZShwZXJjZW50ID0gc2NhbGVzOjpwZXJjZW50KG51YyAvIChudWMrY3l0bykpKQpzdW0uZjcKYGBgCkZpc2hlcidzIGV4YWN0IHRlc3QgY29tcGFyaW5nIF9yaW0xNeKIhl8gdnMgd2lsZCB0eXBlIHVuZGVyIDBQaSBjb25kaXRpb24KYGBge3J9CnRtcCA8LSBzdW0uZjcgJT4lIAogIGZpbHRlcih0cmVhdG1lbnQgPT0gIjBQaSIpICU+JSAKICBzZWxlY3QoZ2Vub3R5cGUsIG51YywgY3l0bykgJT4lIAogIGNvbHVtbl90b19yb3duYW1lcyh2YXIgPSAiZ2Vub3R5cGUiKSAlPiUgCiAgYXMubWF0cml4KCkKZmlzaGVyLnRlc3QodG1wKQpgYGAKCgpGaXNoZXIncyBleGFjdCB0ZXN0IGNvbXBhcmluZyBfcmltMTXiiIZfIHZzIHdpbGQgdHlwZSB1bmRlciByaWNoIG1lZGlhIGNvbmRpdGlvbgpgYGB7cn0KdG1wIDwtIHN1bS5mNyAlPiUgCiAgZmlsdGVyKHRyZWF0bWVudCA9PSAiQ3RybCIpICU+JSAKICBzZWxlY3QoZ2Vub3R5cGUsIG51YywgY3l0bykgJT4lIAogIGNvbHVtbl90b19yb3duYW1lcyh2YXIgPSAiZ2Vub3R5cGUiKSAlPiUgCiAgYXMubWF0cml4KCkKZmlzaGVyLnRlc3QodG1wKQpgYGAKCj4gVGhlIGRpZmZlcmVuY2UgdW5kZXIgMFBpIGlzIHNpZ25pZmljYW50LCBidXQgbm90IHVuZGVyIHJpY2ggbWVkaWEgY29uZGl0aW9uLgoKCiMjIE1zbjQ8c3VwPm51Yzwvc3VwPiBpbiBfUy4gY2VyZXZpc2lhZV8gdnMgX0MuIGdsYWJyYXRhXyB1bmRlciBkaWZmZXJlbnQgc3RyZXNzZXMKCiMjIyBkYXRhCgpgYGB7cn0KZGF0LmY1IDwtIHJlYWRfdHN2KCJpbnB1dC8yMDIzMDMyMi13aWxkdHlwZS1tdWx0aXBsZS1jb25kaXRpb25zLXJhdy50c3YiLCBjb2xfdHlwZXMgPSBjb2xzKCkpCmRhdC5mNSAlPiUgZ3JvdXBfYnkoc3BlY2llcywgdHJlYXRtZW50KSAlPiUgCiAgc3VtbWFyaXplKG5fZGF5cyA9IGxlbmd0aCh1bmlxdWUoZGF0ZSkpLCAKICAgICAgICAgICAgbl9waWNzID0gbGVuZ3RoKHVuaXF1ZShwaWN0dXJlX25hbWUpKSwgCiAgICAgICAgICAgIHRvdGFsX2NlbGxzID0gc3VtKHRvdGFsX2ZsdW9yZXNjZW50X2NlbGwpLCAKICAgICAgICAgICAgLmdyb3VwcyA9ICJkcm9wIikgJT4lIAogIGFycmFuZ2UodHJlYXRtZW50LCBzcGVjaWVzKQpgYGAKCiMjIyBzdW1tYXJ5IGFuZCBzdGF0IHRlc3QKMS4gc3VtIHRoZSB0b3RhbCBudW1iZXIgb2YgbnVjIGFuZCBjeXRvIGNlbGxzIGZvciB0aGUgc2FtZSBzdHJhaW4gYWNyb3NzIHJlcGxpY2F0ZXMKMS4gY2FsY3VsYXRlIHRoZSBwZXJjZW50YWdlIG9mIE1zbjQ8c3VwPm51Yzwvc3VwPiBjZWxscyBpbiBlYWNoIGdlbm90eXBlCjEuIGNvbmR1Y3QgRmlzaGVyJ3MgZXhhY3QgdGVzdCB0byBkZXRlcm1pbmUgaWYgdGhlIGRpZmZlcmVuY2UgYmV0d2VlbiBzdHJhaW5zIHVuZGVyIC1QaSBvciByaWNoIGNvbmRpdGlvbnMgYXJlIHNpZ25pZmljYW50CmBgYHtyfQpzdW0uZjUgPC0gZGF0LmY1ICU+JSAKICBncm91cF9ieSh0cmVhdG1lbnQsIHNwZWNpZXMpICU+JSAKICBzdW1tYXJpemUoYWNyb3NzKG51YzpjeXRvLCBzdW0pLCAuZ3JvdXBzID0gImRyb3AiKSAlPiUgCiAgbXV0YXRlKHBlcmNlbnQgPSBzY2FsZXM6OnBlcmNlbnQobnVjIC8gKG51YytjeXRvKSkpCnN1bS5mNQpgYGAKRmlzaGVyJ3MgZXhhY3QgdGVzdCBjb21wYXJpbmcgX3JpbTE14oiGXyB2cyB3aWxkIHR5cGUgdW5kZXIgMFBpIGNvbmRpdGlvbgpgYGB7cn0KbXlfZmlzaGVyX3Rlc3QgPC0gZnVuY3Rpb24oZGF0YSwgdHJlYXQpewogICNzcHJpbnRmKCJUZXN0aW5nICVzIiwgdHJlYXQpCiAgdG1wIDwtIGRhdGEgJT4lIAogICAgZmlsdGVyKHRyZWF0bWVudCA9PSB0cmVhdCkgJT4lIAogICAgc2VsZWN0KHNwZWNpZXMsIG51YywgY3l0bykgJT4lIAogICAgY29sdW1uX3RvX3Jvd25hbWVzKHZhciA9ICJzcGVjaWVzIikgJT4lIAogICAgYXMubWF0cml4KCkKICBmaXNoZXIudGVzdCh0bXApCn0KYGBgCgpgYGB7cn0KdHJlYXRtZW50cyA8LSBzZXRkaWZmKHN1bS5mNSR0cmVhdG1lbnQsICJIMk8yIikKRkVULnJlcyA8LSBzYXBwbHkodHJlYXRtZW50cywgZnVuY3Rpb24oeCkgbXlfZmlzaGVyX3Rlc3Qoc3VtLmY1LCB4KSkgJT4lIAogIHQoKSAlPiUgYXMuZGF0YS5mcmFtZSgpICU+JSAKICByb3duYW1lc190b19jb2x1bW4odmFyID0gInRyZWF0bWVudCIpICU+JSAKICBhc190aWJibGUoKSAlPiUgCiAgc2VsZWN0KHRyZWF0bWVudCwgcC52YWx1ZSwgb2Rkcy5yYXRpbyA9IGVzdGltYXRlKSAlPiUgCiAgdW5uZXN0KHAudmFsdWU6b2Rkcy5yYXRpbykgJT4lIAogIG11dGF0ZShwLmFkaiA9IHAuYWRqdXN0KHAudmFsdWUsIG1ldGhvZCA9ICJib25mIikpCkZFVC5yZXMgJT4lIHNlbGVjdCh0cmVhdG1lbnQsIG9kZHMucmF0aW8sIHAudmFsdWUsIHAuYWRqKSAlPiUgYXJyYW5nZShkZXNjKG9kZHMucmF0aW8pKQpgYGAKCg==</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiTXNuNCBudWNsZWFyIGxvY2FsaXphdGlvbiB1bmRlciB2YXJpb3VzIHN0cmVzcyBhbmQgaW4gdHdvIHNwZWNpZXMiCmF1dGhvcjogQmluIEhlCmRhdGU6ICIyMDIzLTAzLTIyICh1cGRhdGVkIGByIFN5cy5EYXRlKClgKSIKb3V0cHV0OgogIGh0bWxfbm90ZWJvb2s6CiAgICB0b2M6IHRydWUKICAgIHRvY19kZXB0aDogNAogICAgY29kZV9mb2xkaW5nOiBoaWRlCi0tLQoKYGBge3J9CnJlcXVpcmUodGlkeXZlcnNlKQpyZXF1aXJlKGNvd3Bsb3QpCmBgYAoKIyMgR29hbApVc2UgZmx1b3Jlc2NlbnQgbWljcm9zY29weSB0byB0cmFjayBNc240IChhbmQgTXNuMikgbnVjbGVhciBsb2NhbGl6YXRpb24gaW4gYm90aCBfUy4gY2VyZXZpc2lhZV8gYW5kIF9DLiBnbGFicmF0YV8gdW5kZXIgZGlmZmVyZW50IGNvbmRpdGlvbnMuCgojIyBfcmltMTXiiIZfIGVmZmVjdCBvbiBDZ01zbjQ8c3VwPm51Yzwvc3VwPgoKIyMjIGRhdGEKCnwgRGF0ZV9mcm9tIHwgRGF0ZV90byB8IFN0cmFpbnMgfCBFeHBlcmltZW50IHwKfDotLS0tLS0tLS0tfDotLS0tLS0tLS0tfDotLS0tLS0tLS0tfDotLS0tLS0tLS0tfAp8IDIwMjIvMTEvMTUgfCAyMDIyLzExLzE3IHwgd3QsIHJpbTE14oiGIHwgZGV0ZXJtaW5lIE1zbjQ8c3VwPm51Yzwvc3VwPiB1bmRlciAtUGkgfAoKYGBge3J9CmRhdC5mNyA8LSByZWFkX3RzdigiaW5wdXQvMjAyMjExMTctcmltMTUtbm9QaS1yYXcudHN2IiwgY29sX3R5cGVzID0gY29scygpKQpgYGAKCiMjIyBzdW1tYXJ5IGFuZCBzdGF0IHRlc3QKMS4gc3VtIHRoZSB0b3RhbCBudW1iZXIgb2YgbnVjIGFuZCBjeXRvIGNlbGxzIGZvciB0aGUgc2FtZSBzdHJhaW4gYWNyb3NzIHJlcGxpY2F0ZXMKMS4gY2FsY3VsYXRlIHRoZSBwZXJjZW50YWdlIG9mIE1zbjQ8c3VwPm51Yzwvc3VwPiBjZWxscyBpbiBlYWNoIGdlbm90eXBlCjEuIGNvbmR1Y3QgRmlzaGVyJ3MgZXhhY3QgdGVzdCB0byBkZXRlcm1pbmUgaWYgdGhlIGRpZmZlcmVuY2UgYmV0d2VlbiBzdHJhaW5zIHVuZGVyIC1QaSBvciByaWNoIGNvbmRpdGlvbnMgYXJlIHNpZ25pZmljYW50CmBgYHtyfQpzdW0uZjcgPC0gZGF0LmY3ICU+JSAKICBncm91cF9ieSh0cmVhdG1lbnQsIGdlbm90eXBlKSAlPiUgCiAgc3VtbWFyaXplKGFjcm9zcyhudWM6Y3l0bywgc3VtKSwgLmdyb3VwcyA9ICJkcm9wIikgJT4lIAogIG11dGF0ZShwZXJjZW50ID0gc2NhbGVzOjpwZXJjZW50KG51YyAvIChudWMrY3l0bykpKQpzdW0uZjcKYGBgCkZpc2hlcidzIGV4YWN0IHRlc3QgY29tcGFyaW5nIF9yaW0xNeKIhl8gdnMgd2lsZCB0eXBlIHVuZGVyIDBQaSBjb25kaXRpb24KYGBge3J9CnRtcCA8LSBzdW0uZjcgJT4lIAogIGZpbHRlcih0cmVhdG1lbnQgPT0gIjBQaSIpICU+JSAKICBzZWxlY3QoZ2Vub3R5cGUsIG51YywgY3l0bykgJT4lIAogIGNvbHVtbl90b19yb3duYW1lcyh2YXIgPSAiZ2Vub3R5cGUiKSAlPiUgCiAgYXMubWF0cml4KCkKZmlzaGVyLnRlc3QodG1wKQpgYGAKCgpGaXNoZXIncyBleGFjdCB0ZXN0IGNvbXBhcmluZyBfcmltMTXiiIZfIHZzIHdpbGQgdHlwZSB1bmRlciByaWNoIG1lZGlhIGNvbmRpdGlvbgpgYGB7cn0KdG1wIDwtIHN1bS5mNyAlPiUgCiAgZmlsdGVyKHRyZWF0bWVudCA9PSAiQ3RybCIpICU+JSAKICBzZWxlY3QoZ2Vub3R5cGUsIG51YywgY3l0bykgJT4lIAogIGNvbHVtbl90b19yb3duYW1lcyh2YXIgPSAiZ2Vub3R5cGUiKSAlPiUgCiAgYXMubWF0cml4KCkKZmlzaGVyLnRlc3QodG1wKQpgYGAKCj4gVGhlIGRpZmZlcmVuY2UgdW5kZXIgMFBpIGlzIHNpZ25pZmljYW50LCBidXQgbm90IHVuZGVyIHJpY2ggbWVkaWEgY29uZGl0aW9uLgoKCiMjIE1zbjQ8c3VwPm51Yzwvc3VwPiBpbiBfUy4gY2VyZXZpc2lhZV8gdnMgX0MuIGdsYWJyYXRhXyB1bmRlciBkaWZmZXJlbnQgc3RyZXNzZXMKCiMjIyBkYXRhCgpgYGB7cn0KZGF0LmY1IDwtIHJlYWRfdHN2KCJpbnB1dC8yMDIzMDMyMi13aWxkdHlwZS1tdWx0aXBsZS1jb25kaXRpb25zLXJhdy50c3YiLCBjb2xfdHlwZXMgPSBjb2xzKCkpCmRhdC5mNSAlPiUgZ3JvdXBfYnkoc3BlY2llcywgdHJlYXRtZW50KSAlPiUgCiAgc3VtbWFyaXplKG5fZGF5cyA9IGxlbmd0aCh1bmlxdWUoZGF0ZSkpLCAKICAgICAgICAgICAgbl9waWNzID0gbGVuZ3RoKHVuaXF1ZShwaWN0dXJlX25hbWUpKSwgCiAgICAgICAgICAgIHRvdGFsX2NlbGxzID0gc3VtKHRvdGFsX2ZsdW9yZXNjZW50X2NlbGwpLCAKICAgICAgICAgICAgLmdyb3VwcyA9ICJkcm9wIikgJT4lIAogIGFycmFuZ2UodHJlYXRtZW50LCBzcGVjaWVzKQpgYGAKCiMjIyBzdW1tYXJ5IGFuZCBzdGF0IHRlc3QKMS4gc3VtIHRoZSB0b3RhbCBudW1iZXIgb2YgbnVjIGFuZCBjeXRvIGNlbGxzIGZvciB0aGUgc2FtZSBzdHJhaW4gYWNyb3NzIHJlcGxpY2F0ZXMKMS4gY2FsY3VsYXRlIHRoZSBwZXJjZW50YWdlIG9mIE1zbjQ8c3VwPm51Yzwvc3VwPiBjZWxscyBpbiBlYWNoIGdlbm90eXBlCjEuIGNvbmR1Y3QgRmlzaGVyJ3MgZXhhY3QgdGVzdCB0byBkZXRlcm1pbmUgaWYgdGhlIGRpZmZlcmVuY2UgYmV0d2VlbiBzdHJhaW5zIHVuZGVyIC1QaSBvciByaWNoIGNvbmRpdGlvbnMgYXJlIHNpZ25pZmljYW50CmBgYHtyfQpzdW0uZjUgPC0gZGF0LmY1ICU+JSAKICBncm91cF9ieSh0cmVhdG1lbnQsIHNwZWNpZXMpICU+JSAKICBzdW1tYXJpemUoYWNyb3NzKG51YzpjeXRvLCBzdW0pLCAuZ3JvdXBzID0gImRyb3AiKSAlPiUgCiAgbXV0YXRlKHBlcmNlbnQgPSBzY2FsZXM6OnBlcmNlbnQobnVjIC8gKG51YytjeXRvKSkpCnN1bS5mNQpgYGAKRmlzaGVyJ3MgZXhhY3QgdGVzdCBjb21wYXJpbmcgX3JpbTE14oiGXyB2cyB3aWxkIHR5cGUgdW5kZXIgMFBpIGNvbmRpdGlvbgpgYGB7cn0KbXlfZmlzaGVyX3Rlc3QgPC0gZnVuY3Rpb24oZGF0YSwgdHJlYXQpewogICNzcHJpbnRmKCJUZXN0aW5nICVzIiwgdHJlYXQpCiAgdG1wIDwtIGRhdGEgJT4lIAogICAgZmlsdGVyKHRyZWF0bWVudCA9PSB0cmVhdCkgJT4lIAogICAgc2VsZWN0KHNwZWNpZXMsIG51YywgY3l0bykgJT4lIAogICAgY29sdW1uX3RvX3Jvd25hbWVzKHZhciA9ICJzcGVjaWVzIikgJT4lIAogICAgYXMubWF0cml4KCkKICBmaXNoZXIudGVzdCh0bXApCn0KYGBgCgpgYGB7cn0KdHJlYXRtZW50cyA8LSBzZXRkaWZmKHN1bS5mNSR0cmVhdG1lbnQsICJIMk8yIikKRkVULnJlcyA8LSBzYXBwbHkodHJlYXRtZW50cywgZnVuY3Rpb24oeCkgbXlfZmlzaGVyX3Rlc3Qoc3VtLmY1LCB4KSkgJT4lIAogIHQoKSAlPiUgYXMuZGF0YS5mcmFtZSgpICU+JSAKICByb3duYW1lc190b19jb2x1bW4odmFyID0gInRyZWF0bWVudCIpICU+JSAKICBhc190aWJibGUoKSAlPiUgCiAgc2VsZWN0KHRyZWF0bWVudCwgcC52YWx1ZSwgb2Rkcy5yYXRpbyA9IGVzdGltYXRlKSAlPiUgCiAgdW5uZXN0KHAudmFsdWU6b2Rkcy5yYXRpbykgJT4lIAogIG11dGF0ZShwLmFkaiA9IHAuYWRqdXN0KHAudmFsdWUsIG1ldGhvZCA9ICJib25mIikpCkZFVC5yZXMgJT4lIHNlbGVjdCh0cmVhdG1lbnQsIG9kZHMucmF0aW8sIHAudmFsdWUsIHAuYWRqKSAlPiUgYXJyYW5nZShkZXNjKG9kZHMucmF0aW8pKQpgYGAKCiMjIFJhcGFteWNpbiB0cmVhdG1lbnQKCl9Hb2FsXwoKRXZhbHVhdGUgdGhlIGVmZmVjdCBvZiByYXBhbXljaW4gKFRPUkMxIGluaGliaXRpb24pIG9uIE1zbjQ8c3VwPm51Yzwvc3VwPgoKIyMjIERhdGEKSmlueWUgcHJvdmlkZWQgdGhlIHRvdGFsIGNvdW50cyBkaXJlY3RseS4KCnwgU3BlY2llcyB8IFRyZWF0bWVudCB8ICMgTnVjIHwgIyBUb3RhbCB8Cnw6LS0tLS0tLS18Oi0tLS0tLS0tLS18Oi0tLS0tLXw6LS0tLS0tLS18CnwgUy4gY2VyZXZpc2lhZSB8IHJhcGEgfCAxOSB8IDEzMSB8CnwgUy4gY2VyZXZpc2lhZSB8IGN0cmwgfCAxIHwgODYgfAp8IEMuIGdsYWJyYXRhIHwgcmFwYSB8IDc5IHwgMTEwIHwKfCBDLiBnbGFicmF0YSB8IGN0cmwgfCAzIHwgMTY0IHwKCmBgYHtyfQpkYXQucmFwYSA8LSB0cmliYmxlKAogIH5zcGVjaWVzLCB+dHJlYXQsIH5udWMsIH50b3RhbCwKICAiUy4gY2VyZXZpc2lhZSIsICJyYXBhIiwgMTksIDEzMSwKICAiUy4gY2VyZXZpc2lhZSIsICJjdHJsIiwgMSwgODYsCiAgIkMuIGdsYWJyYXRhIiwgInJhcGEiLCA3OSwgMTEwLAogICJDLiBnbGFicmF0YSIsICJjdHJsIiwgMywgMTY0CikgJT4lIAogIG11dGF0ZShjeXRvID0gdG90YWwgLSBudWMsIHBlcmMgPSBzY2FsZXM6OnBlcmNlbnQobnVjL3RvdGFsKSkKZGF0LnJhcGEKYGBgCgojIyMgc3VtbWFyeSBhbmQgc3RhdCB0ZXN0CkNvbmR1Y3QgRmlzaGVyJ3MgZXhhY3QgdGVzdCB0byBkZXRlcm1pbmUgaWYgdGhlIGRpZmZlcmVuY2UgYmV0d2VlbiBzdHJhaW5zIHVuZGVyIC1QaSBvciByaWNoIGNvbmRpdGlvbnMgYXJlIHNpZ25pZmljYW50CgpGaXNoZXIncyBleGFjdCB0ZXN0IGNvbXBhcmluZyByYXBhbXljaW4gdHJlYXRlZCBjZWxscyB2cyBtb2NrIHRyZWF0ZWQgb25lcyBpbiBfUy4gY2VyZXZpc2lhZV8gCgpgYGB7cn0KdG1wIDwtIGRhdC5yYXBhICU+JSAKICBmaWx0ZXIoc3BlY2llcyA9PSAiUy4gY2VyZXZpc2lhZSIpICU+JSAKICBzZWxlY3QodHJlYXQsIG51YywgY3l0bykgJT4lIAogIGNvbHVtbl90b19yb3duYW1lcyh2YXIgPSAidHJlYXQiKSAlPiUgCiAgYXMubWF0cml4KCkKZmlzaGVyLnRlc3QodG1wKQpgYGAKCkZpc2hlcidzIGV4YWN0IHRlc3QgY29tcGFyaW5nIHJhcGFteWNpbiB0cmVhdGVkIGNlbGxzIHZzIG1vY2sgdHJlYXRlZCBvbmVzIGluIF9DLiBnbGFicmF0YV8gCgpgYGB7cn0KdG1wIDwtIGRhdC5yYXBhICU+JSAKICBmaWx0ZXIoc3BlY2llcyA9PSAiQy4gZ2xhYnJhdGEiKSAlPiUgCiAgc2VsZWN0KHRyZWF0LCBudWMsIGN5dG8pICU+JSAKICBjb2x1bW5fdG9fcm93bmFtZXModmFyID0gInRyZWF0IikgJT4lIAogIGFzLm1hdHJpeCgpCmZpc2hlci50ZXN0KHRtcCkKYGBgCgpGaXNoZXIncyBleGFjdCB0ZXN0IGNvbXBhcmluZyByYXBhbXljaW4gdHJlYXRlZCBjZWxscyBiZXR3ZWVuIHRoZSB0d28gc3BlY2llcwpgYGB7cn0KdG1wIDwtIGRhdC5yYXBhICU+JSAKICBmaWx0ZXIodHJlYXQgPT0gInJhcGEiKSAlPiUgCiAgc2VsZWN0KHNwZWNpZXMsIG51YywgY3l0bykgJT4lIAogIGNvbHVtbl90b19yb3duYW1lcyh2YXIgPSAic3BlY2llcyIpICU+JSAKICBhcy5tYXRyaXgoKQpmaXNoZXIudGVzdCh0bXApCmBgYAoKRmlzaGVyJ3MgZXhhY3QgdGVzdCBjb21wYXJpbmcgbW9jayB0cmVhdGVkIGNlbGxzIGJldHdlZW4gdGhlIHR3byBzcGVjaWVzCmBgYHtyfQp0bXAgPC0gZGF0LnJhcGEgJT4lIAogIGZpbHRlcih0cmVhdCA9PSAiY3RybCIpICU+JSAKICBzZWxlY3Qoc3BlY2llcywgbnVjLCBjeXRvKSAlPiUgCiAgY29sdW1uX3RvX3Jvd25hbWVzKHZhciA9ICJzcGVjaWVzIikgJT4lIAogIGFzLm1hdHJpeCgpCmZpc2hlci50ZXN0KHRtcCkKYGBgCj4gVGhlIGRpZmZlcmVuY2UgdW5kZXIgMFBpIGlzIHNpZ25pZmljYW50LCBidXQgbm90IHVuZGVyIHJpY2ggbWVkaWEgY29uZGl0aW9uLgoK</div>
 
 
 
