@@ -1,0 +1,132 @@
+geneID,geneName,category,peak,figure
+A00605g,,cell cycle arrest in response to nitrogen starvation,0.5,fig1.sup2
+C01903g,,cell cycle arrest in response to nitrogen starvation,0.5,fig1.sup2
+F00495g,,cell cycle arrest in response to nitrogen starvation,0.5,fig1.sup2
+M09735g,MEC3,DNA damage checkpoint,0.5,fig1.sup2
+J08393g,,DNA damage checkpoint,0.5,fig1.sup2
+D03564g,,DNA damage checkpoint,0.5,fig1.sup2
+K02079g,GLC7,DNA damage checkpoint,4,fig1.sup2
+G07271g,,DNA damage checkpoint,2,fig1.sup2
+A04213g,,DNA damage checkpoint,2,fig1.sup2
+,AWP1,adhesins,0.5,fig1.sup3
+,AWP2,adhesins,0.5,fig1.sup3
+,AWP4,adhesins,0.5,fig1.sup3
+,AWP6,adhesins,0.5,fig1.sup3
+,AWP8,adhesins,0.5,fig1.sup3
+,AWP9,adhesins,0.5,fig1.sup3
+,AWP10,adhesins,0.5,fig1.sup3
+,AWP12,adhesins,0.5,fig1.sup3
+,AWP13,adhesins,0.5,fig1.sup3
+,EPA1,adhesins,0.5,fig1.sup3
+,EPA2,adhesins,0.5,fig1.sup3
+,EPA3,adhesins,0.5,fig1.sup3
+,EPA8,adhesins,0.5,fig1.sup3
+,EPA11,adhesins,0.5,fig1.sup3
+,EPA13,adhesins,0.5,fig1.sup3
+,EPA19,adhesins,0.5,fig1.sup3
+,EPA21,adhesins,0.5,fig1.sup3
+,EPA22,adhesins,0.5,fig1.sup3
+,PWP1,adhesins,0.5,fig1.sup3
+,PWP2,adhesins,0.5,fig1.sup3
+,PWP3,adhesins,0.5,fig1.sup3
+,PWP4,adhesins,0.5,fig1.sup3
+,PWP5,adhesins,0.5,fig1.sup3
+,PWP7,adhesins,0.5,fig1.sup3
+,KRE29,DNA repair,0.5,fig1.sup3
+,YKU70,DNA repair,0.5,fig1.sup3
+,YKU80,DNA repair,0.5,fig1.sup3
+H07161g,,DNA repair,0.5,fig1.sup3
+C02255g,,DNA repair,0.5,fig1.sup3
+L13002g,,DNA repair,0.5,fig1.sup3
+K12122g,,DNA repair,0.5,fig1.sup3
+F05753g,,DNA repair,0.5,fig1.sup3
+K06875g,,DNA repair,0.5,fig1.sup3
+G07084g,,DNA repair,0.5,fig1.sup3
+K11836g,,DNA repair,2,fig1.sup3
+K09746g,,DNA repair,0.5,fig1.sup3
+K12386g,,DNA repair,0.5,fig1.sup3
+A02651g,,DNA repair,0.5,fig1.sup3
+M03289g,,DNA repair,0.5,fig1.sup3
+F08613g,,DNA repair,0.5,fig1.sup3
+M09295g,,DNA repair,4,fig1.sup3
+H01067g,,DNA repair,0.5,fig1.sup3
+G07128g,,DNA repair,0.5,fig1.sup3
+M03267g,,DNA repair,0.5,fig1.sup3
+L07414g,,DNA repair,0.5,fig1.sup3
+H00759g,,DNA repair,0.5,fig1.sup3
+K04983g,,DNA repair,0.5,fig1.sup3
+B00330g,,DNA repair,2,fig1.sup3
+F06149g,,DNA repair,0.5,fig1.sup3
+C04411g,,DNA repair,2,fig1.sup3
+,CTA1,oxidative stress,0.5,fig1.sup3
+D04312g,,oxidative stress,0.5,fig1.sup3
+C02233g,,oxidative stress,0.5,fig1.sup3
+E04114g,,oxidative stress,0.5,fig1.sup3
+I00242g,,oxidative stress,0.5,fig1.sup3
+C04631g,,oxidative stress,0.5,fig1.sup3
+J05456g,,oxidative stress,0.5,fig1.sup3
+J03608g,,oxidative stress,2,fig1.sup3
+F00297g,,oxidative stress,2,fig1.sup3
+M13541g,,oxidative stress,2,fig1.sup3
+A04433g,,oxidative stress,4,fig1.sup3
+C03850g,,oxidative stress,4,fig1.sup3
+,MSN2,oxidative stress,4,fig1.sup3
+,YBP1,oxidative stress,4,fig1.sup3
+,MSN4,oxidative stress,4,fig1.sup3
+H09944g,,oxidative stress,4,fig1.sup3
+I00264g,,oxidative stress,4,fig1.sup3
+L05258g,,oxidative stress,4,fig1.sup3
+,ATG17,autophagy,0.5,fig1.sup3
+M03157g,,autophagy,0.5,fig1.sup3
+C04631g,,autophagy,0.5,fig1.sup3
+J08228g,,autophagy,8,fig1.sup3
+,VPS30,autophagy,0.5,fig1.sup3
+G01760g,,autophagy,0.5,fig1.sup3
+B01705g,,autophagy,0.5,fig1.sup3
+,ATG14,autophagy,8,fig1.sup3
+H08261g,,autophagy,0.5,fig1.sup3
+I03652g,,autophagy,0.5,fig1.sup3
+J04642g,,autophagy,0.5,fig1.sup3
+M02013g,,autophagy,0.5,fig1.sup3
+I05808g,,autophagy,8,fig1.sup3
+B02860g,,autophagy,2,fig1.sup3
+K11682g,,autophagy,4,fig1.sup3
+L03289g,,autophagy,4,fig1.sup3
+H00704g,,autophagy,8,fig1.sup3
+,ACO1,TCA cycle,2,fig1.sup3
+,ACO2,TCA cycle,2,fig1.sup3
+A01045g,,TCA cycle,2,fig1.sup3
+A04697g,,TCA cycle,2,fig1.sup3
+C03223g,,TCA cycle,2,fig1.sup3
+D01958g,,TCA cycle,2,fig1.sup3
+E01287g,,TCA cycle,2,fig1.sup3
+E01705g,,TCA cycle,2,fig1.sup3
+E03850g,,TCA cycle,4,fig1.sup3
+G08712g,,TCA cycle,2,fig1.sup3
+H03993g,,TCA cycle,2,fig1.sup3
+,IDH1,TCA cycle,2,fig1.sup3
+,IDH2,TCA cycle,2,fig1.sup3
+,LSC2,TCA cycle,4,fig1.sup3
+,MDH1,TCA cycle,2,fig1.sup3
+A00363g,,amino acid biosynthesis,2,fig1.sup3
+A02574g,,amino acid biosynthesis,2,fig1.sup3
+C01243g,,amino acid biosynthesis,2,fig1.sup3
+D04356g,,amino acid biosynthesis,2,fig1.sup3
+F01749g,,amino acid biosynthesis,2,fig1.sup3
+F06875g,,amino acid biosynthesis,2,fig1.sup3
+G06732g,,amino acid biosynthesis,2,fig1.sup3
+J06402g,,amino acid biosynthesis,2,fig1.sup3
+A03014g,,iron homeostasis,0.5,fig1.sup3
+J04048g,,iron homeostasis,0.5,fig1.sup3
+D02112g,,iron homeostasis,0.5,fig1.sup3
+J09790g,,iron homeostasis,2,fig1.sup3
+M02629g,,iron homeostasis,2,fig1.sup3
+K08250g,,iron homeostasis,2,fig1.sup3
+L05742g,,iron homeostasis,4,fig1.sup3
+J07980g,,iron homeostasis,6,fig1.sup3
+,SMF3,iron homeostasis,4,fig1.sup3
+,AFT1,iron homeostasis,6,fig1.sup3
+,CTH2,iron homeostasis,8,fig1.sup3
+,HMX1,iron homeostasis,8,fig1.sup3
+,FET3,iron homeostasis,8,fig1.sup3
+,CCC1,iron homeostasis,8,fig1.sup3
