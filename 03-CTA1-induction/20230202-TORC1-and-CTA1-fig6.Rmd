@@ -114,12 +114,16 @@ data %>%
 ggsave("output/20230208-rapa-pi-induce.png", width = 5, height = 4)
 ```
 
-Subtract the rich media background from the treated samples
+Subtract the rich media background from the treated samples and leave out -Pi. The reason I left out -Pi here is because our main focus in this plot is the rapamycin treated sample. Also, Rapa treated and mock control samples share similar curves while -Pi looked distinct.
 ```{r}
-treat_colors <- c( "#9900FF", viridis::viridis(5, begin = 0.3, end = 0.9, direction = -1))
-treat_levels <- c("-Pi", paste(c(50, 62.5, 100, 125, 150), "Rapa", sep = "_"))
+treat_colors <- c(viridis::viridis(5, begin = 0.3, end = 0.9, direction = -1))
+treat_levels <- c(50, 62.5, 100, 125, 150)
 names(treat_colors) <- treat_levels                       
 data %>%
+  # leave out -Pi
+  filter(treat != "-Pi") %>% 
+  # remove "_Rapa" from levels
+  mutate(treat = gsub("_Rapa", "", treat)) %>% 
   # subtract the Rich condition as background
   group_by(time) %>% 
   mutate(new_median = (median - mean(median[treat == "Rich"]))/1000) %>%
@@ -128,8 +132,8 @@ data %>%
   # reorder the levels
   mutate(treat = factor(treat, levels = treat_levels)) %>% 
   ggplot(aes(x = time, y = new_median, color = treat, group = treat)) + p.timecourse +
-  scale_color_manual("Treatment", values= treat_colors) +
-  scale_y_continuous(limits = c(NA, 20))
+  scale_color_manual("Rapamycin\n(ng/mL)", values= treat_colors) +
+  scale_y_continuous(limits = c(NA, 7.5))
 ggsave("output/20230208-rapa-pi-induce-bg-subtracted.png", width = 5, height = 4)
 ```
 
