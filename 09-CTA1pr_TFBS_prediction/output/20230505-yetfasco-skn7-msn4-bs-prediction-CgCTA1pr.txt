@@ -1,0 +1,6 @@
+start	end	strand	% of Max Score	Hit Seq	Logo	Motif
+224	229	-	76.9	GGCCCA		SKN7 motif #583
+226	231	+	91.9	GGCCAT		SKN7 motif #583
+322	327	-	82.6	GGCCCT		SKN7 motif #583
+324	329	+	91.9	GGCCAT		SKN7 motif #583
+624	628	+	100.0	CCCCT		MSN4 motif #518
