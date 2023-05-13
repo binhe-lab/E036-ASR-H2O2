@@ -17,7 +17,50 @@ library(ggtext)
 library(cowplot)
 ```
 
-# Cta1-GFP protein levels
+## Goal
+
+## Data
+Import data
+```{r}
+files <- dir("input/sch9-3E_gz_merge", pattern = "merge-*") # get the file names of the merged
+files <- file.path("input/sch9-3E_gz_merge", files)         # this appends the directory to the file names
+names(files) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl", "Rep3-0Pi-Ctrl")
+
+tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
+
+# import and process the data to the format we want
+dat.ord <- map_dfr(files, ~read_csv(., na = c("", "NA", "N/A"), col_types = cols()), .id = "Replicate") %>% 
+  #bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group)
+```
+
+Subset the dataset and merge with the genotype information
+```{r}
+# get genotype info
+tr_files <- dir("input/sch9-3E_treatment", pattern = "d0*")
+tr_files <- file.path("input/sch9-3E_treatment", tr_files)
+names(tr_files) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl", "Rep3-0Pi-Ctrl")
+
+
+treat.fil <- tr_files %>% 
+  map_dfr(~read_csv(., na = c("","NA","N/A"), col_types = cols()), 
+          .id = "Replicate") %>% 
+  filter(!is.na(`group_name`)) %>% 
+  select(Replicate, genotype = `group_name`, Sample, treat)
+
+# combine genotype and treat variables into the flow data
+data <- left_join(dat.ord, treat.fil, by = c("Replicate", "Sample"))
+```
+
+Data structure
+```{r}
+with(data, table(treat, genotype))
+```
+
 ## Common plotting functions
 **Update 2022-11-08** 
 This list is used as a shared plotting set up.
@@ -43,51 +86,7 @@ p.timecourse <- list(
 )
 ```
 
-## TF deletion mutants compared with wild type
-### Prepare data
-Import data
-```{r}
-files <- dir("input/sch9-3E_gz_merge", pattern = "merge-*") # get the file names of the merged
-files <- file.path("input/sch9-3E_gz_merge", files)         # this appends the directory to the file names
-
-
-
-names(files) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl", "Rep3-0Pi-Ctrl")
-
-
-tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
-
-# import and process the data to the format we want
-dat.ord <- map_dfr(files, ~read_csv(., na = c("", "NA", "N/A"), col_types = cols()), .id = "Replicate") %>% 
-  #bind_rows(.id = "Replicate") %>% 
-  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
-  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
-         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
-  mutate(Group = ordered(Group, levels = tp)) %>% 
-  arrange(Group)
-```
-
-Subset the dataset and merge with the genotype information
-```{r}
-# get genotype info
-tr_files <- dir("input/sch9-3E_treatment", pattern = "d0*")
-tr_files <- file.path("input/sch9-3E_treatment", tr_files)
-names(tr_files) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl", "Rep3-0Pi-Ctrl")
-
-
-treat.fil <- tr_files %>% 
-  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
-  bind_rows(.id = "Replicate") %>% 
-  filter(!is.na(`group_name`)) %>% 
-  select(Replicate, genotype = `group_name`, Sample, treat)
-
-# combine genotype and treat variables into the flow data
-data <- left_join(dat.ord, treat.fil, by = c("Replicate", "Sample"))
-
-
-```
-
-### CTA1 induction during -Pi [Main figure for sch9]
+## CTA1 induction during -Pi [Main figure for sch9]
 Get the subset of no Pi data
 ```{r}
 pi.dat <- data %>% 
