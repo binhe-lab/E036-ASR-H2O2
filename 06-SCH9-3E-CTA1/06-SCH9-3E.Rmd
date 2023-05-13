@@ -86,41 +86,44 @@ p.timecourse <- list(
 )
 ```
 
-## CTA1 induction during -Pi [Main figure for sch9]
+## CTA1 induction in Sch9 mutants
+### Sch9-3E
+Here we interogate the 3E mutant, which is predicted to be phosphorylated by TORC1 directly.
+
+#### under -Pi
 Get the subset of no Pi data
 ```{r}
+# recode the genotype
+levels <- c(WT = "wt", `sch9::SCH9-Nat` = "wt_CgSCH9-Nat", `sch9::SCH9-3E-Nat` = "CgSCH9_3E-Nat")
+
 pi.dat <- data %>% 
   filter(treat == "0Pi", genotype %in% c("wt", "wt_CgSCH9-Nat", "CgSCH9_3E-Nat")) %>%  
   select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
-  mutate(Genotype = fct_recode(genotype, WT = "wt", `CgSCH9-Nat-` = "wt_CgSCH9-Nat", `CgSCH9-3E-` = "CgSCH9_3E-Nat")) %>% 
+  mutate(Genotype = fct_recode(genotype, !!!levels)) %>% 
   mutate(new_median =median/1000) %>% 
   mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
   arrange(new_time, genotype, replicate)
 ```
 
-*need to check the skn7 and yap1 data, I got them switched somehow*
-
-#### Full time course
-
 ```{r}
 genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2)] 
-names(genotype_color) <- c("WT", "CgSCH9-Nat-", "CgSCH9-3E-")
+names(genotype_color) <- names(levels)
 
 pi.dat %>%
   filter(!is.na(new_median)) %>% 
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
-  scale_color_manual(values= genotype_color, limits = names(genotype_color))
+  scale_color_manual(values= genotype_color, limits = names(genotype_color)) +
+  scale_y_continuous(limits = c(NA, 22))
+
 ggsave("output/20230512-CgSCH9-phosphomimetic-mutant-timecourse-noPi.png", width = 4.2, height = 4)
 ```
 
-```
-Code below are commented out and will be moved to a separate Rmd for Rim15 specifically.
-```
-Statistical test
+**_Statistical test_**
+
+1. Basal level
 ```{r}
 # filter the data and set the basal level
-genotype_order <- c("WT", "CgSCH9-Nat-", "CgSCH9-3E-")
-
+genotype_order <- names(levels)
 
 tmp <- pi.dat %>% 
   filter(new_time == 0, !is.na(new_median)) %>% 
@@ -129,30 +132,63 @@ lm(new_median ~ Genotype, data = tmp) %>%
   summary()
   #TukeyHSD()
 ```
+2. At 120 minutes
+```{r}
+tmp <- pi.dat %>% 
+  filter(new_time == 120, !is.na(new_median)) %>% 
+  mutate(Genotype = factor(Genotype, levels = genotype_order))
+lm(new_median ~ Genotype, data = tmp) %>% 
+  summary()
+```
+#### under mock treatment.
+
 Get the subset of Ctrl data
 ```{r}
 ctrl.dat <- data %>% 
-  filter(treat == "ctrl", genotype %in% c("wt", "wt_CgSCH9-Nat", "CgSCH9_3E-Nat")) %>%  
+  filter(treat == "ctrl", genotype %in% levels) %>%  
   select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
-  mutate(Genotype = fct_recode(genotype, WT = "wt", `CgSCH9-Nat-` = "wt_CgSCH9-Nat", `CgSCH9-3E-` = "CgSCH9_3E-Nat")) %>% 
+  mutate(Genotype = fct_recode(genotype, !!!levels)) %>% 
   mutate(new_median =median/1000) %>% 
   mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
   arrange(new_time, genotype, replicate)
 ```
 
-*need to check the skn7 and yap1 data, I got them switched somehow*
-
-#### Full time course
-
 ```{r}
 genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2)] 
-names(genotype_color) <- c("WT", "CgSCH9-Nat-", "CgSCH9-3E-")
+names(genotype_color) <- names(levels)
 
 ctrl.dat %>%
   filter(!is.na(new_median)) %>% 
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
-  scale_color_manual(values= genotype_color, limits = names(genotype_color))
+  scale_color_manual(values= genotype_color, limits = names(genotype_color)) +
+  scale_y_continuous(limits = c(NA, 22))
 ggsave("output/20230512-CgSCH9-phosphomimetic-mutant-timecourse-ctrl.png", width = 4.2, height = 4)
 ```
+### Sch9-2E
+In _S. cerevisiae_, Pho80/85 was shown to directly phosphorylate Sch9 and thereby regulate its lysosome localization. Here, Jinye interogate a phosphomimetic mutant in _C. glabrata_ and its interaction with _pho80∆_ and _pho81∆_ mutants.
+```{r}
+levels <- c(WT = "wt", `sch9::SCH9-Nat` = "wt_CgSCH9-Nat", `sch9::SCH9-3E-Nat` = "CgSCH9_3E-Nat", `pho80∆` = "pho80_ko", `pho80∆ sch9::SCH9-2E` = "pho80_ko_Sch9_2E", `pho81∆` = "pho81_ko", `pho81∆ sch9::SCH9-2E` = "pho81_ko_Sch9_2E")
+
+pi.dat.ext <- data %>% 
+  filter(treat == "0Pi") %>%  
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  mutate(Genotype = fct_recode(genotype,  !!!levels)) %>% 
+  mutate(new_median =median/1000) %>% 
+  mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
+  arrange(new_time, genotype, replicate)
+```
+
+Plot the time course
+```{r}
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 6, 1, 5, 4, 2)] 
+names(genotype_color) <- names(levels)
+
+pi.dat.ext %>%
+  filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= genotype_color, limits = names(genotype_color))
+#ggsave("output/20230512-CgSCH9-phosphomimetic-mutant-timecourse-noPi.png", width = 4.2, height = 4)
+```
+
 > All comparisons except for rom2- vs WT are statistically significant at 0.05 level after Bonferroni correction (threshold: 0.05/5 = 0.01)
 
