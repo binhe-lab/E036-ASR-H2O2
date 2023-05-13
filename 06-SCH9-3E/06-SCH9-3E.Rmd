@@ -1,0 +1,159 @@
+---
+title: "CTA1 induction in wt, sch9 phosphomimetic mutants, T to E (Figure 7)"
+author: "JY"
+date: "2023-05-12 (updated `r Sys.Date()`)"
+output: 
+  html_notebook:
+    code_folding: hide
+    toc: true
+    toc_float: true
+---
+
+```{r}
+library(tidyverse)
+library(ggtext)
+#library(mgcv)
+#library(broom)
+library(cowplot)
+```
+
+# Cta1-GFP protein levels
+## Common plotting functions
+**Update 2022-11-08** 
+This list is used as a shared plotting set up.
+```{r}
+p.timecourse <- list(
+  stat_summary(fun = "mean", geom = "point", size = 3),
+  stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
+  stat_smooth(aes(size = Genotype == "WT"), method = "loess", 
+              formula = 'y~x', se = FALSE),
+  scale_x_continuous(breaks = seq(0,240,30)),
+  scale_size_manual(values = c(0.8, 1.5), guide = "none"),
+  labs(x = "Time (min)", y = "Cta1-GFP protein level (a.u.)"),
+  theme_cowplot(line_size = 0.7, font_size = 14),
+  theme(legend.position=c(0.05,0.75), 
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        legend.text = element_text(face = 3), 
+        legend.title = element_text(),
+        axis.title = element_text(size = rel(1)), 
+        #axis.title.x = element_blank(),
+        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
+  )
+)
+```
+
+## TF deletion mutants compared with wild type
+### Prepare data
+Import data
+```{r}
+files <- dir("input/sch9-3E_gz_merge", pattern = "merge-*") # get the file names of the merged
+files <- file.path("input/sch9-3E_gz_merge", files)         # this appends the directory to the file names
+
+
+
+names(files) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl", "Rep3-0Pi-Ctrl")
+
+
+tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
+
+# import and process the data to the format we want
+dat.ord <- map_dfr(files, ~read_csv(., na = c("", "NA", "N/A"), col_types = cols()), .id = "Replicate") %>% 
+  #bind_rows(.id = "Replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate(Group = ordered(Group, levels = tp)) %>% 
+  arrange(Group)
+```
+
+Subset the dataset and merge with the genotype information
+```{r}
+# get genotype info
+tr_files <- dir("input/sch9-3E_treatment", pattern = "d0*")
+tr_files <- file.path("input/sch9-3E_treatment", tr_files)
+names(tr_files) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl", "Rep3-0Pi-Ctrl")
+
+
+treat.fil <- tr_files %>% 
+  map(~read_csv(., na = c("","NA","N/A"), col_types = cols())) %>% 
+  bind_rows(.id = "Replicate") %>% 
+  filter(!is.na(`group_name`)) %>% 
+  select(Replicate, genotype = `group_name`, Sample, treat)
+
+# combine genotype and treat variables into the flow data
+data <- left_join(dat.ord, treat.fil, by = c("Replicate", "Sample"))
+
+
+```
+
+### CTA1 induction during -Pi [Main figure for sch9]
+Get the subset of no Pi data
+```{r}
+pi.dat <- data %>% 
+  filter(treat == "0Pi", genotype %in% c("wt", "wt_CgSCH9-Nat", "CgSCH9_3E-Nat")) %>%  
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  mutate(Genotype = fct_recode(genotype, WT = "wt", `CgSCH9-Nat-` = "wt_CgSCH9-Nat", `CgSCH9-3E-` = "CgSCH9_3E-Nat")) %>% 
+  mutate(new_median =median/1000) %>% 
+  mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
+  arrange(new_time, genotype, replicate)
+```
+
+*need to check the skn7 and yap1 data, I got them switched somehow*
+
+#### Full time course
+
+```{r}
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2)] 
+names(genotype_color) <- c("WT", "CgSCH9-Nat-", "CgSCH9-3E-")
+
+pi.dat %>%
+  filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= genotype_color, limits = names(genotype_color))
+ggsave("output/20230512-CgSCH9-phosphomimetic-mutant-timecourse-noPi.png", width = 4.2, height = 4)
+```
+
+```
+Code below are commented out and will be moved to a separate Rmd for Rim15 specifically.
+```
+Statistical test
+```{r}
+# filter the data and set the basal level
+genotype_order <- c("WT", "CgSCH9-Nat-", "CgSCH9-3E-")
+
+
+tmp <- pi.dat %>% 
+  filter(new_time == 0, !is.na(new_median)) %>% 
+  mutate(Genotype = factor(Genotype, levels = genotype_order))
+lm(new_median ~ Genotype, data = tmp) %>% 
+  summary()
+  #TukeyHSD()
+```
+Get the subset of Ctrl data
+```{r}
+ctrl.dat <- data %>% 
+  filter(treat == "ctrl", genotype %in% c("wt", "wt_CgSCH9-Nat", "CgSCH9_3E-Nat")) %>%  
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  mutate(Genotype = fct_recode(genotype, WT = "wt", `CgSCH9-Nat-` = "wt_CgSCH9-Nat", `CgSCH9-3E-` = "CgSCH9_3E-Nat")) %>% 
+  mutate(new_median =median/1000) %>% 
+  mutate(new_time = as.numeric(gsub("min","",Time)))%>% 
+  arrange(new_time, genotype, replicate)
+```
+
+*need to check the skn7 and yap1 data, I got them switched somehow*
+
+#### Full time course
+
+```{r}
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2)] 
+names(genotype_color) <- c("WT", "CgSCH9-Nat-", "CgSCH9-3E-")
+
+ctrl.dat %>%
+  filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= genotype_color, limits = names(genotype_color))
+ggsave("output/20230512-CgSCH9-phosphomimetic-mutant-timecourse-ctrl.png", width = 4.2, height = 4)
+```
+> All comparisons except for rom2- vs WT are statistically significant at 0.05 level after Bonferroni correction (threshold: 0.05/5 = 0.01)
+
