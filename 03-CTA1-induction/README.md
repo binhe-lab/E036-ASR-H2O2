@@ -1,6 +1,6 @@
----
-title: Phosphate starvation induced acquired resistance for hydrogen peroxide stress in _C. glabrata_
-author: Bin He, Jinye Liang
----
+We created a strain with a genomic integration of a GFP after the C-terminus of the endogenous Cta1 protein. Using this recombinant protein as a reporter for phosphate starvation-induced ASR, we examined how various perturbations affected the ASR. The analyses were organized by the type of perturbations and figures
 
-We discovered that a relatively short period (45 min) of phosphate starvation increases the resistance of _C. glabrata_ cells to severe (100 mM) hydrogen peroxide by three fold. This acquired resistance effect is stronger with increasing length of phosphate starvation. In the related baker's yeast _S. cerevisiae_, 45 min of phosphate starvation didn't trigger a protective effect for a lethal dose (10 mM) of hydrogen perxoide. Longer (>90 min) treatment of phosphate starvation did induce mild protection for a lethal dose of H2O2. The cross-stress protection effect is much less than in _C. glabrata_.
+- `20221223-CTA1-Pi-vs-H2O2-fig3.Rmd`: wild type strain under either phosphate starvation or H2O2 stress
+- `20221025-tf-promoter-mutants-fig4.Rmd`: examining TF mutants
+- `20230202-TORC1-and-CTA1-fig6.Rmd`: rapamycin treatment and rim15-
+- Note that Sch9 mutant CTA1 data and analysis are in its own folder `../06-SCH9-3E-CTA1/`
