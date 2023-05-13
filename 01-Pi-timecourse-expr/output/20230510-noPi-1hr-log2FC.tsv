@@ -1,0 +1,175 @@
+category	species	ScerName	ID	log2FC
+antioxidant	S. cerevisiae	PRX1	YBL064C	0.511962264
+antioxidant	S. cerevisiae	PRX1	YBL064C	0.397435131
+antioxidant	S. cerevisiae	PRX1	YBL064C	1.0205610870000001
+antioxidant	S. cerevisiae	TRX3	YCR083W	0.00599655
+antioxidant	S. cerevisiae	TRX3	YCR083W	0.298481926
+antioxidant	S. cerevisiae	TRX3	YCR083W	0.185535168
+antioxidant	S. cerevisiae	CTA1	YDR256C	0.062409439000000004
+antioxidant	S. cerevisiae	CTA1	YDR256C	4.2734900000000004e-4
+antioxidant	S. cerevisiae	CTA1	YDR256C	0.22672881900000003
+antioxidant	S. cerevisiae	TRR1	YDR353W	-8.861580000000001e-4
+antioxidant	S. cerevisiae	TRR1	YDR353W	0.044696812
+antioxidant	S. cerevisiae	TRR1	YDR353W	0.07440300400000001
+antioxidant	S. cerevisiae	SOD2	YHR008C	-0.177370773
+antioxidant	S. cerevisiae	SOD2	YHR008C	0.013211064000000002
+antioxidant	S. cerevisiae	SOD2	YHR008C	-0.242614337
+antioxidant	S. cerevisiae	GSH1	YJL101C	0.5783826240000001
+antioxidant	S. cerevisiae	GSH1	YJL101C	0.660514276
+antioxidant	S. cerevisiae	GSH1	YJL101C	0.49681502200000005
+antioxidant	S. cerevisiae	SOD1	YJR104C	0.031276614
+antioxidant	S. cerevisiae	SOD1	YJR104C	-0.007655542
+antioxidant	S. cerevisiae	SOD1	YJR104C	0.123616636
+antioxidant	S. cerevisiae	CCP1	YKR066C	-0.168837553
+antioxidant	S. cerevisiae	CCP1	YKR066C	-0.36052444
+antioxidant	S. cerevisiae	CCP1	YKR066C	-0.530374342
+antioxidant	S. cerevisiae	AHP1	YLR109W	1.184741041
+antioxidant	S. cerevisiae	AHP1	YLR109W	1.1120129680000002
+antioxidant	S. cerevisiae	AHP1	YLR109W	1.2452254340000002
+antioxidant	S. cerevisiae	TSA1	YML028W	0.08233353900000001
+antioxidant	S. cerevisiae	TSA1	YML028W	0.07343334900000001
+antioxidant	S. cerevisiae	TSA1	YML028W	0.472914237
+antioxidant	S. cerevisiae	GRE2	YOL151W	0.351298598
+antioxidant	S. cerevisiae	GRE2	YOL151W	0.27175291900000004
+antioxidant	S. cerevisiae	GRE2	YOL151W	0.40869922900000005
+antioxidant	S. cerevisiae	GLR1	YPL091W	0.320706133
+antioxidant	S. cerevisiae	GLR1	YPL091W	0.335784943
+antioxidant	S. cerevisiae	GLR1	YPL091W	0.23097916300000002
+antioxidant	C. glabrata	TRR1	CAGL0A02530g	0.0644453103841105
+antioxidant	C. glabrata	TRR1	CAGL0A02530g	-0.09438014235784031
+antioxidant	C. glabrata	TRR1	CAGL0A02530g	0.08180010083370526
+antioxidant	C. glabrata	PRX1	CAGL0A04433g	2.0698317915406443
+antioxidant	C. glabrata	PRX1	CAGL0A04433g	2.0848618863864408
+antioxidant	C. glabrata	PRX1	CAGL0A04433g	2.1704416052048705
+antioxidant	C. glabrata	SOD1	CAGL0C04741g	2.515880534245543
+antioxidant	C. glabrata	SOD1	CAGL0C04741g	3.5261213323353076
+antioxidant	C. glabrata	SOD1	CAGL0C04741g	3.6982103248024636
+antioxidant	C. glabrata	TRX3	CAGL0E00583g	1.3772566781878197
+antioxidant	C. glabrata	TRX3	CAGL0E00583g	1.2453697684070528
+antioxidant	C. glabrata	TRX3	CAGL0E00583g	1.2737394670753952
+antioxidant	C. glabrata	SOD2	CAGL0E04356g	2.1785488867578735
+antioxidant	C. glabrata	SOD2	CAGL0E04356g	2.4584796558991595
+antioxidant	C. glabrata	SOD2	CAGL0E04356g	2.5563779177347126
+antioxidant	C. glabrata	GRE2	CAGL0E05280g	0.8792563428433056
+antioxidant	C. glabrata	GRE2	CAGL0E05280g	1.2551380518902615
+antioxidant	C. glabrata	GRE2	CAGL0E05280g	1.0096138872901363
+antioxidant	C. glabrata	TSA1	CAGL0G07271g	-0.05703128668602453
+antioxidant	C. glabrata	TSA1	CAGL0G07271g	0.42183857737780706
+antioxidant	C. glabrata	TSA1	CAGL0G07271g	0.6122138827168602
+antioxidant	C. glabrata	GLR1	CAGL0H05665g	1.4854224602987092
+antioxidant	C. glabrata	GLR1	CAGL0H05665g	1.3997653931065557
+antioxidant	C. glabrata	GLR1	CAGL0H05665g	1.4030776540241945
+antioxidant	C. glabrata	CCP1	CAGL0K08184g	0.9006359560905963
+antioxidant	C. glabrata	CCP1	CAGL0K08184g	0.8441539291791518
+antioxidant	C. glabrata	CCP1	CAGL0K08184g	0.9075929182852658
+antioxidant	C. glabrata	CTA1	CAGL0K10868g	4.38446011614044
+antioxidant	C. glabrata	CTA1	CAGL0K10868g	4.227000742726849
+antioxidant	C. glabrata	CTA1	CAGL0K10868g	4.189611281281918
+antioxidant	C. glabrata	GSH1	CAGL0L03630g	1.4666575340092285
+antioxidant	C. glabrata	GSH1	CAGL0L03630g	1.553083822585795
+antioxidant	C. glabrata	GSH1	CAGL0L03630g	1.5053209243591956
+antioxidant	C. glabrata	AHP1	CAGL0M11704g	0.0072637029509081685
+antioxidant	C. glabrata	AHP1	CAGL0M11704g	1.0523586377669023
+antioxidant	C. glabrata	AHP1	CAGL0M11704g	1.2558392264993259
+protein degradation	S. cerevisiae	RPN11	YFR004W	0.295848595
+protein degradation	S. cerevisiae	RPN11	YFR004W	0.285730985
+protein degradation	S. cerevisiae	RPN11	YFR004W	0.6249856420000001
+protein degradation	S. cerevisiae	PUP2	YGR253C	0.11852686500000001
+protein degradation	S. cerevisiae	PUP2	YGR253C	0.16542235800000002
+protein degradation	S. cerevisiae	PUP2	YGR253C	0.759593308
+protein degradation	S. cerevisiae	RPT1	YKL145W	0.355473313
+protein degradation	S. cerevisiae	RPT1	YKL145W	0.197990767
+protein degradation	S. cerevisiae	RPT1	YKL145W	0.378194026
+protein degradation	S. cerevisiae	UBA1	YKL210W	0.301406883
+protein degradation	S. cerevisiae	UBA1	YKL210W	0.207636584
+protein degradation	S. cerevisiae	UBA1	YKL210W	0.16713671200000002
+protein degradation	S. cerevisiae	TFS1	YLR178C	0.6343333050000001
+protein degradation	S. cerevisiae	TFS1	YLR178C	0.394703018
+protein degradation	S. cerevisiae	TFS1	YLR178C	0.865274
+protein degradation	S. cerevisiae	PRE5	YMR314W	0.193174229
+protein degradation	S. cerevisiae	PRE5	YMR314W	0.300520603
+protein degradation	S. cerevisiae	PRE5	YMR314W	0.358886066
+protein degradation	S. cerevisiae	PEP4	YPL154C	0.37974956200000004
+protein degradation	S. cerevisiae	PEP4	YPL154C	0.45866979300000005
+protein degradation	S. cerevisiae	PEP4	YPL154C	0.39733563600000005
+protein degradation	C. glabrata	TFS1	CAGL0B01100g	0.9487130238988017
+protein degradation	C. glabrata	TFS1	CAGL0B01100g	1.653326206510127
+protein degradation	C. glabrata	TFS1	CAGL0B01100g	1.7056602681629531
+protein degradation	C. glabrata	RPT1	CAGL0E06490g	0.2754129252694284
+protein degradation	C. glabrata	RPT1	CAGL0E06490g	0.24039053039557778
+protein degradation	C. glabrata	RPT1	CAGL0E06490g	0.14360272481098235
+protein degradation	C. glabrata	PUP2	CAGL0I02442g	0.31881294816159134
+protein degradation	C. glabrata	PUP2	CAGL0I02442g	0.26094345534993124
+protein degradation	C. glabrata	PUP2	CAGL0I02442g	0.3731688543985854
+protein degradation	C. glabrata	UBA1	CAGL0K00319g	0.7297861661859919
+protein degradation	C. glabrata	UBA1	CAGL0K00319g	0.6350391301983809
+protein degradation	C. glabrata	UBA1	CAGL0K00319g	0.6809468055887553
+protein degradation	C. glabrata	RPN11	CAGL0L09152g	0.45332459581209683
+protein degradation	C. glabrata	RPN11	CAGL0L09152g	0.336387625378304
+protein degradation	C. glabrata	RPN11	CAGL0L09152g	0.4147650084198986
+protein degradation	C. glabrata	PEP4	CAGL0M02211g	2.7850660595812116
+protein degradation	C. glabrata	PEP4	CAGL0M02211g	2.72994773706273
+protein degradation	C. glabrata	PEP4	CAGL0M02211g	2.788379015458137
+protein degradation	C. glabrata	PRE5	CAGL0M14003g	0.6839038872708887
+protein degradation	C. glabrata	PRE5	CAGL0M14003g	0.5716558681651538
+protein degradation	C. glabrata	PRE5	CAGL0M14003g	0.6351825333649366
+chaperon	S. cerevisiae	HSP42	YDR171W	1.175424175
+chaperon	S. cerevisiae	HSP42	YDR171W	0.870466615
+chaperon	S. cerevisiae	HSP42	YDR171W	1.267160904
+chaperon	S. cerevisiae	HSP78	YDR258C	0.7867208950000001
+chaperon	S. cerevisiae	HSP78	YDR258C	0.50757215
+chaperon	S. cerevisiae	HSP78	YDR258C	0.8648491370000001
+chaperon	S. cerevisiae	HSP12	YFL014W	0.655418866
+chaperon	S. cerevisiae	HSP12	YFL014W	0.6582148999999999
+chaperon	S. cerevisiae	HSP12	YFL014W	0.6750391440000001
+chaperon	S. cerevisiae	SBA1	YKL117W	0.09459310400000001
+chaperon	S. cerevisiae	SBA1	YKL117W	-0.032185247
+chaperon	S. cerevisiae	SBA1	YKL117W	0.458017569
+chaperon	S. cerevisiae	HSP104	YLL026W	1.242212939
+chaperon	S. cerevisiae	HSP104	YLL026W	1.006524463
+chaperon	S. cerevisiae	HSP104	YLL026W	1.253553879
+chaperon	S. cerevisiae	HSP60	YLR259C	-0.024431384
+chaperon	S. cerevisiae	HSP60	YLR259C	-0.179006207
+chaperon	S. cerevisiae	HSP60	YLR259C	-0.57437338
+chaperon	C. glabrata	HSP42	CAGL0E00803g	4.445366527492578
+chaperon	C. glabrata	HSP42	CAGL0E00803g	4.799054546355065
+chaperon	C. glabrata	HSP42	CAGL0E00803g	4.922192890874087
+chaperon	C. glabrata	HSP104	CAGL0G03883g	4.352625701673396
+chaperon	C. glabrata	HSP104	CAGL0G03883g	4.396205384533181
+chaperon	C. glabrata	HSP104	CAGL0G03883g	4.429392992647069
+chaperon	C. glabrata	HSP12	CAGL0J04202g	7.923687883896406
+chaperon	C. glabrata	HSP12	CAGL0J04202g	7.934701051111636
+chaperon	C. glabrata	HSP12	CAGL0J04202g	8.01506989277984
+chaperon	C. glabrata	HSP60	CAGL0K05973g	0.5851375442988402
+chaperon	C. glabrata	HSP60	CAGL0K05973g	0.5318445974073231
+chaperon	C. glabrata	HSP60	CAGL0K05973g	0.5675695745414622
+chaperon	C. glabrata	SBA1	CAGL0K11572g	0.4420496867913428
+chaperon	C. glabrata	SBA1	CAGL0K11572g	0.6292078924445317
+chaperon	C. glabrata	SBA1	CAGL0K11572g	0.7307525597567057
+chaperon	C. glabrata	HSP78	CAGL0M08822g	3.1021634172457198
+chaperon	C. glabrata	HSP78	CAGL0M08822g	3.2046395036584343
+chaperon	C. glabrata	HSP78	CAGL0M08822g	3.1959999039915896
+TF	S. cerevisiae	SKN7	YHR206W	0.074599448
+TF	S. cerevisiae	SKN7	YHR206W	-0.019139269
+TF	S. cerevisiae	SKN7	YHR206W	-0.49104058500000003
+TF	S. cerevisiae	MSN4	YKL062W	-0.25216304100000003
+TF	S. cerevisiae	MSN4	YKL062W	-0.11183905200000001
+TF	S. cerevisiae	MSN4	YKL062W	0.206569096
+TF	S. cerevisiae	YAP1	YML007W	0.458088337
+TF	S. cerevisiae	YAP1	YML007W	0.448566426
+TF	S. cerevisiae	YAP1	YML007W	0.577454802
+TF	S. cerevisiae	MSN2	YMR037C	0.33487019300000004
+TF	S. cerevisiae	MSN2	YMR037C	0.209582454
+TF	S. cerevisiae	MSN2	YMR037C	0.106810682
+TF	C. glabrata	MSN2	CAGL0F05995g	0.282926353817059
+TF	C. glabrata	MSN2	CAGL0F05995g	0.2595720040230338
+TF	C. glabrata	MSN2	CAGL0F05995g	0.13818043065271635
+TF	C. glabrata	SKN7	CAGL0F09097g	-0.7235606591453463
+TF	C. glabrata	SKN7	CAGL0F09097g	-0.8196780909399859
+TF	C. glabrata	SKN7	CAGL0F09097g	-0.9284012465707621
+TF	C. glabrata	YAP1	CAGL0H04631g	0.6865181696936
+TF	C. glabrata	YAP1	CAGL0H04631g	0.5813177908138334
+TF	C. glabrata	YAP1	CAGL0H04631g	0.6003157180954286
+TF	C. glabrata	MSN4	CAGL0M13189g	4.617300579538906
+TF	C. glabrata	MSN4	CAGL0M13189g	4.644487337022094
+TF	C. glabrata	MSN4	CAGL0M13189g	4.473349295415328

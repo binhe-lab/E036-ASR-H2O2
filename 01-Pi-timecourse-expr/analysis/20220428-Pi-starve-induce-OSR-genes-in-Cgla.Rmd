@@ -373,6 +373,12 @@ Get the dataset for plotting
 dat <- lapply(geneList, myCompare)
 ```
 
+Save the data as a tsv
+```{r}
+dat %>% bind_rows(.id = "category") %>% 
+  write_tsv("../output/20230510-noPi-1hr-log2FC.tsv")
+```
+
 Make individual plots
 ```{r}
 par.fill = c("S. cerevisiae" = "white", "C. glabrata" = "gray40")
