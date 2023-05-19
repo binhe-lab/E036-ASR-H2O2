@@ -17,7 +17,6 @@ library(ggtext)
 library(cowplot)
 ```
 
-# Cta1-GFP protein levels
 ## Common plotting functions
 **Update 2022-11-08** 
 This list is used as a shared plotting set up.
@@ -910,76 +909,3 @@ pi.OL.tp %>%
            
 ```
 
-## Rim15∆
-### Prepare data
-```{r}
-files.r15 <- dir("input/rim15_gz_merge", pattern = "merge-*", full.names = TRUE) # get the file names of the merged
-names(files.r15) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl", "Rep3-0Pi-Ctrl") # correspond to treatment files
-
-tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
-
-# import and process the data to the format we want
-dat.ord.r15 <-  map_dfr(files.r15, ~read_csv(., na = c("", "NA", "N/A"), col_types = cols()), .id = "Replicate") %>% 
-  #bind_rows(.id = "Replicate") %>% 
-  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
-  select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
-         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
-  mutate(Group = ordered(Group, levels = tp)) %>% 
-  arrange(Group)
-#write_csv(dat.ord, file = "input/rim15_gz_merge/2021014-1019-rim15-KO-flow-data.csv")
-```
-
-
-```{r}
-# get genotype info
-tr_files.r15 <- dir("input/rim15_treatment", pattern = "d0*", full.names = TRUE)
-#tr_files.r15 <- file.path("input/rim15_treatment", tr_files.r15)
-names(tr_files.r15) <- c("Rep1-0Pi-Ctrl","Rep2-0Pi-Ctrl", "Rep3-0Pi-Ctrl")
-
-
-treat.fil.r15 <-  map_dfr(tr_files.r15, ~read_csv(., na = c("","NA","N/A"), col_types = cols()), .id = "Replicate") %>% 
-  #bind_rows(.id = "Replicate") %>% 
-  filter(!is.na(`group_name`)) %>% 
-  select(Replicate, genotype = `group_name`, Sample, treat)
-
-# combine genotype and treat variables into the flow data
-data.r15 <- left_join(dat.ord.r15, treat.fil.r15, by = c("Replicate", "Sample"))
-#sum(is.na(data$Group))
-
-#write_csv(data, file = "gz_merge/20210724-0805-treat-gt-Rim15-KO-flow-data.csv.gz")
-
-# select out 0Pi data
-pi.dat.r15 <- data.r15 %>% 
-  filter(treat == "0Pi" & genotype %in% c("wt","msn4_nat_ko","rim15_ko","msn4rim15_ko")) %>%  
-  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
-  mutate(Genotype = fct_recode(genotype, WT = "wt", `msn4-` = "msn4_nat_ko", `rim15-` = "rim15_ko", `msn4- rim15-` = "msn4rim15_ko"),
-         new_median = median/1000,
-         new_time = as.numeric(gsub("min","",Time))) %>% 
-  #mutate(Genotype = gsub("_nat","",Genotype)) %>% 
-  arrange(new_time, genotype, replicate) 
-```
-
-### Bin's version
-
-```{r}
-genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 3, 7, 5, 2, 1)] 
-names(genotype_color) <- c("WT", "msn4-", "rim15-", "msn4- rim15-")
-
-pi.dat.r15 %>%
-  filter(!is.na(new_median)) %>% 
-  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
-  scale_color_manual(values= genotype_color) +
-  scale_
-  theme_cowplot(font_size = 16, line_size = 0.7) +
-  theme(legend.position=c(0.05,0.75),
-        #legend.box.background = element_rect(color = "black"),
-        #legend.box.margin = margin(3,3,3,3),
-        legend.text = element_text(face = 3), 
-        legend.title = element_text(),
-        axis.title = element_text(size = rel(1)), 
-        axis.title.x = element_blank(),
-        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
-  )
-
-ggsave("output/20221118-rim15-deletion-timecourse.png", width = 4.5, height = 4)
-```

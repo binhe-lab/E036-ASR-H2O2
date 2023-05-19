@@ -1,0 +1,113 @@
+---
+title: "Effect of rim15∆ effects on CTA1 induction (Figure 6)"
+author: "HB"
+date: "2023-05-17 (updated `r Sys.Date()`)"
+output: 
+  html_notebook:
+    code_folding: hide
+    toc: true
+    toc_float: true
+---
+
+```{r}
+library(tidyverse)
+library(ggtext)
+library(cowplot)
+```
+
+## Goal
+We hypothesize that Rim15 is upstream of Msn4 and contributes to _CTA1_ induction during -Pi. Our approach is to delete _RIM15_ and compare Cta1-GFP induction in this background with that under a wild type background.
+
+## Data import and prep
+```{r}
+tp <- c("0",  "30", "60", "90", "120", "150",  "180", "210", "240") # ordered time points
+
+raw <- dir("input/rim15_gz_merge", pattern = "merge", full.names = TRUE) %>% 
+  map_dfr(read_csv, col_types = cols(), na = c("", "NA", "N/A"), .id = "replicate") %>% 
+  filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
+  select(replicate, plate = Plate, Group, well = Sample, 
+         count = Count, median = `X Median`,  peak = `X Peak`, 
+         sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
+  mutate(Time = ordered(Group, levels = paste0(tp, "min"), labels = tp),
+         time = as.numeric(gsub("min", "", Group)),
+         Group = NULL) %>% 
+  arrange(time)
+```
+
+merge with sample metadata
+```{r}
+sample <- dir("input/rim15_treatment", pattern = "^d", full.names = TRUE) %>% 
+  map_dfr(read_csv, na = c("","NA","N/A"), col_types = cols(), .id = "replicate") %>% 
+  filter(!is.na(group_name)) %>% 
+  select(replicate, genotype = group_name, well = Sample, treat) %>% 
+  mutate(treat = fct_recode(treat, `-Pi` = "0Pi", mock = "ctrl"))
+
+# combine genotype and treat variables into the flow data
+data <- left_join(raw, sample, by = c("replicate", "well")) %>% 
+  separate(well, into = c("row", "column"), sep = 1)
+
+# any unannotated rows?
+data %>% filter(is.na(genotype) | is.na(treat))
+```
+
+filter for 0Pi data
+```{r}
+levels = c(WT = "wt", `msn4-` = "msn4_nat_ko", `rim15-` = "rim15_ko", `msn4- rim15-` = "msn4rim15_ko")
+pi.dat <- data %>% 
+  filter(treat == "-Pi" & genotype %in% c("wt","msn4_nat_ko","rim15_ko","msn4rim15_ko")) %>%  
+  select(Time, plate, replicate, genotype, median) %>%
+  mutate(Genotype = fct_recode(genotype, !!!levels),
+         new_median = median/1000,
+         new_time = as.numeric(gsub("min","",Time))) %>% 
+  #mutate(Genotype = gsub("_nat","",Genotype)) %>% 
+  arrange(new_time, genotype, replicate) 
+```
+
+## Plotting
+
+### Common plotting functions
+**Update 2022-11-08** 
+This list is used as a shared plotting set up.
+```{r}
+p.timecourse <- list(
+  stat_summary(fun = "mean", geom = "point", size = 3),
+  stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
+  stat_smooth(method = "loess", formula = 'y~x', se = FALSE),
+  scale_x_continuous(breaks = seq(0,240,30)),
+  #scale_size_manual(values = c(0.8, 1.5), guide = "none"),
+  labs(x = "Time (min)", y = "Cta1-GFP protein level (a.u.)"),
+  theme_cowplot(line_size = 0.7, font_size = 14),
+  theme(legend.position=c(0.05,0.72), 
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        legend.text = element_text(face = 3), 
+        legend.title = element_text(),
+        axis.title = element_text(size = rel(1)), 
+        #axis.title.x = element_blank(),
+        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
+  )
+)
+```
+
+### Plot
+```{r}
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 3, 7, 5, 2, 1)] 
+names(genotype_color) <- c("WT", "msn4-", "rim15-", "msn4- rim15-")
+
+pi.dat %>%
+  filter(!is.na(new_median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= genotype_color) +
+  xlab("Phosphate starvation, time (min)") +
+  theme(legend.position=c(0.05,0.75),
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        legend.text = element_text(face = 3), 
+        legend.title = element_text(),
+        axis.title = element_text(size = rel(1)), 
+        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
+  )
+
+ggsave("output/20221118-rim15-deletion-timecourse.png", width = 4.5, height = 4)
+```
+

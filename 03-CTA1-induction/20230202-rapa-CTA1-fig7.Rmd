@@ -1,5 +1,5 @@
 ---
-title: "Inhibition of TORC1 and deletion of Rim15 effects on CTA1 induction (Figure 6, 7)"
+title: "Inhibition of TORC1 by rapamycin, effect on CTA1 induction (Figure 7)"
 author: "HB"
 date: "2023-01-02 (updated `r Sys.Date()`)"
 output: 
@@ -15,7 +15,6 @@ library(ggtext)
 library(cowplot)
 ```
 
-# TORC inhibition
 ## Goal
 Here, we aim at establishing the regulatory connections between phosphate starvation and TORC1, and how it affects downstream _CTA1_ induction. Specifically, we wish to determine how various treatments known to inhibit or perturb TORC1 affect _CTA1_ induction.
 
@@ -116,7 +115,7 @@ ggsave("output/20230208-rapa-pi-induce.png", width = 5, height = 4)
 
 Subtract the rich media background from the treated samples and leave out -Pi. The reason I left out -Pi here is because our main focus in this plot is the rapamycin treated sample. Also, Rapa treated and mock control samples share similar curves while -Pi looked distinct.
 ```{r}
-treat_colors <- c(viridis::viridis(5, begin = 0.3, end = 0.9, direction = -1))
+treat_colors <- c(viridis::viridis(5, begin = 0.2, end = 0.9, direction = 1))
 treat_levels <- c(50, 62.5, 100, 125, 150)
 names(treat_colors) <- treat_levels                       
 data %>%
@@ -133,7 +132,7 @@ data %>%
   mutate(treat = factor(treat, levels = treat_levels)) %>% 
   ggplot(aes(x = time, y = new_median, color = treat, group = treat)) + p.timecourse +
   scale_color_manual("Rapamycin\n(ng/mL)", values= treat_colors) +
-  scale_y_continuous(limits = c(NA, 7.5))
-ggsave("output/20230208-rapa-pi-induce-bg-subtracted.png", width = 5, height = 4)
+  xlab("Rapamycin treatment, time (min)")
+ggsave("output/20230208-rapa-pi-induce-bg-subtracted.png", width = 4.5, height = 4)
 ```
 
