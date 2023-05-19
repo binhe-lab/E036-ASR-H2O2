@@ -106,16 +106,17 @@ pi.dat <- data %>%
 ```
 
 ```{r}
-genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 2)] 
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 7, 6)] 
 names(genotype_color) <- names(levels)
 
 pi.dat %>%
   filter(!is.na(new_median)) %>% 
   ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
   scale_color_manual(values= genotype_color, limits = names(genotype_color)) +
-  scale_y_continuous(limits = c(NA, 22))
+  xlab("Phosphate starvation, time (min)")
+  #scale_y_continuous(limits = c(NA, 22))
 
-ggsave("output/20230512-CgSCH9-phosphomimetic-mutant-timecourse-noPi.png", width = 4.2, height = 4)
+ggsave("output/20230512-CgSCH9-phosphomimetic-mutant-timecourse-noPi.png", width = 4.5, height = 4)
 ```
 
 **_Statistical test_**
