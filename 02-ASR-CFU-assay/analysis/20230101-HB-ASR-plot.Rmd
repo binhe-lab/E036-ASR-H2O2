@@ -24,7 +24,7 @@ set.seed(12345)
 Plotting ASR data for Fig. 1, S1, ...
 
 ### Data
-Jinye's table goes here
+A large set of data were collected and organized by JY and HB into two files, as shown below. Later, we will import more recent datasets. The data formats are not the most consistent. However, we have tried to annotate the headers so as to make the output understandable.
 
 Read in data
 ```{r}
@@ -51,6 +51,8 @@ p.survival <- list(
   stat_summary(fun = mean, fun.max = mean, fun.min = mean,
                geom = "crossbar", color = "red", width = 0.5),
   facet_wrap(~Species, scales = "free_x", labeller = as_labeller(species.label)),
+  scale_y_continuous(labels = scales::percent),
+  ylab("% survival"),
   theme_cowplot(line_size = 0.7, font_size = 14),
   theme(strip.text = element_text(size = rel(1), face = 3))
 )
@@ -125,7 +127,10 @@ dat.f1 <- tmp %>%
   separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
   group_by(Date, Species, Repl, Primary) %>% 
   # calculate % survival
-  mutate(r = num(scaled / scaled[Secondary == "M"], digits = 3)) %>% 
+  mutate(
+    scaled_M = scaled[Secondary == "M"],
+    r = num(scaled / scaled[Secondary == "M"], digits = 3)
+  ) %>% 
   # remove the secondary mock as the information are all used
   filter(Secondary != "M") %>% 
   # 5/30/20 replicate 2 is excluded
@@ -140,8 +145,8 @@ _**Plotting**_
 dat.f1 %>% 
   mutate(Primary = recode(Primary, M = "Mock", P = "-Pi")) %>% 
   ggplot(aes(x = Primary, y = r)) + p.survival +
-  scale_y_continuous(labels = scales::percent) +
-  xlab("Primary stress (45 min)") + ylab("% survival")
+  #scale_y_continuous(labels = scales::percent) +
+  xlab("Primary stress (45 min)")# + ylab("% survival")
 
 ggsave("../output/20230228-fig1d-asr-noPi-compare.png", width = 3.5, height = 3)
 ```
@@ -164,7 +169,9 @@ with(tmp, t.test(as.numeric(Cg), as.numeric(Sc), paired = FALSE))
 
 with(tmp, wilcox.test(Cg, Sc, paired = FALSE))
 ```
-_Primary stress enhanced in Cg_
+> basal survival rates are not significantly between species
+
+_Primary stress enhanced survival (ASR) in Cg_
 
 The comparison between r and r' is paired. We will use a signed-rank test.
 ```{r}
@@ -273,6 +280,7 @@ tmp %>% group_by(Species) %>% summarize(mean = mean(r))
 
 wilcox.test(r ~ Species, data = tmp, paired = FALSE)
 ```
+> no significant differences at 10 vs 100 mM
 
 ## S1B: ASR at different H2O2
 _**Goal**_
@@ -452,7 +460,7 @@ dat.s2 %>%
   mutate(len_1 = factor(gsub(" ?min", "", Len_1), levels = c("45", "90", "135"))) %>% 
   group_by(Species, len_1) %>% 
   summarize(n = n(), ASR = mean(ASR_score), sd_asr = sd(ASR_score), .groups = "drop") %>% 
-  mutate(across(where(is.double), round, digits = 2))
+  mutate(across(where(is.double), num, sigfig = 3))
 ```
 
 Because of the small sample size (3) for 90 and 135 minutes, Wilcoxon signed-rank test doesn't have power to detect significant differences at any conventional size of the test (lower p-value for a sample size 3 is 0.25). Using t-test below, knowing that the normal assumption is likely not met. Overall, we should focus on the trend and not the statistical significance in this result.
@@ -531,7 +539,8 @@ dat.f3 <- tmp %>%
   separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
   group_by(Date, Strain, Primary) %>% 
   # calculate % survival
-  mutate(r = num(scaled / scaled[Secondary == "M"], digits = 3)) %>% 
+  mutate(scaled_M = scaled[Secondary == "M"],
+         r = num(scaled / scaled[Secondary == "M"], digits = 3)) %>% 
   # remove the secondary mock as the information are all used
   filter(Secondary != "M")
 dat.f3
@@ -576,7 +585,7 @@ dat.f3a <- dat.f3 %>%
   filter(Group == "High") %>% 
   select(-Group) %>% 
   ungroup()
-write_tsv(dat.f3a, file = "../input/20230302-fig-3d-data-hb.tsv")
+write_tsv(dat.f3a, file = "../input/20230520-fig-3d-data-hb.tsv")
 ```
 
 #### Plot
@@ -611,12 +620,12 @@ ggsave("../output/20230301-fig3d-asr-cta1.png", width = 3.5, height = 3.5)
 _**Statistical tests**_
 
 #### Statistical test
-1. Determine if the basal survival rates are different between species (Wilcoxon signed-rank test)
-1. Determine if the primary stress enhanced the survival in _each_ species (Wilcoxon signed-rank test)
+1. Determine if the basal survival rates are different between wt and cta1∆ (Wilcoxon signed-rank test)
+1. Determine if the primary stress enhanced the survival in _each_ genotype (Wilcoxon signed-rank test)
 
 _**Basal survival rate**_
 
-Across species, unpaired, rank-sum test.
+Between wt and cta1∆, unpaired, rank-sum test.
 ```{r}
 tmp <- dat.f3a %>% 
   filter(Primary == "Mock") %>% 
@@ -628,9 +637,11 @@ tmp %>% group_by(Genotype) %>% summarize(mean = mean(r), sd = num(sd(r), digits 
 wilcox.test(r ~ Genotype, paired = FALSE, data = tmp)
 ```
 
+> basal survival rates not significantly different between genotypes at the chosen [H2O2]
+
 _**Survival rate with the primary stress**_
 
-Across species, unpaired, rank-sum test.
+Between wt and cta1∆, unpaired, rank-sum test.
 ```{r}
 tmp <- dat.f3a %>% 
   filter(Primary == "-Pi") %>% 
@@ -641,6 +652,7 @@ tmp %>% group_by(Genotype) %>% summarize(mean = mean(r), sd = num(sd(r), digits 
 
 wilcox.test(r ~ Genotype, paired = FALSE, data = tmp)
 ```
+> survival rates with primary stress significantly different between wt and cta1∆
 
 _Primary stress enhanced in wildtype_
 
@@ -661,7 +673,7 @@ with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
 with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
 ```
 
-_Primary stress no effect in cta1Δ_
+_Primary stress effect in cta1Δ_
 
 Paired, signed-rank test
 ```{r}
@@ -679,6 +691,7 @@ with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative
 with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
 with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
 ```
+> There is a statistically significant ASR effect in cta1∆, but the effect is very mild
 
 ### 80 vs 2.2 mM
 Corresponding results for 80 mM vs 2.2 mM
@@ -726,11 +739,11 @@ ggsave("../output/20230301-s3b-asr-cta1.png", width = 3.5, height = 3.5)
 _**Statistical tests**_
 
 #### Statistical test
-1. Determine if the basal survival rates are different between species (Wilcoxon signed-rank test)
-1. Determine if the primary stress enhanced the survival in _each_ species (Wilcoxon signed-rank test)
+1. Determine if the basal survival rates are different between wt and _cta1∆_ (Wilcoxon signed-rank test)
+1. Determine if the primary stress enhanced the survival in _each_ genotype (Wilcoxon signed-rank test)
 
 _Basal survival rate_
-Across species, unpaired, rank-sum test.
+Between genotypes, unpaired, rank-sum test.
 ```{r}
 tmp <- dat.s3b %>% 
   filter(Primary == "Mock") %>% 
@@ -739,7 +752,7 @@ tmp <- dat.s3b %>%
 tmp %>% group_by(Genotype) %>% summarize(mean = mean(r), sd = num(sd(r), digits = 3))
 wilcox.test(r ~ Genotype, paired = FALSE, data = tmp)
 ```
-
+> the basal survival rate is slightly higher in _cta1∆_. the difference is not statistically significant at a conventional 0.05 level.
 
 _Primary stress enhanced in wildtype_
 
@@ -760,7 +773,7 @@ with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
 with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
 ```
 
-_Primary stress no effect in cta1Δ_
+_Primary stress effect in cta1Δ_
 
 Paired, signed-rank test
 ```{r}
@@ -778,11 +791,16 @@ with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative
 with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
 with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
 ```
+> no significant effect of ASR in _cta1∆_ at this [H2O2] concentration.
 
-## Fig6: ASR by rapamycin
+## Fig7_1: ASR in wt with rapamycin
 _**Goal**_
 
-- Test the hypothesis that direct inhibition of TORC1 can provide ASR in _C. glabrata_. We will also test _S. cerevisiae_ to determine if the negative regulation by TORC1 on stress response genes behind the ASR is conserved.
+Test the hypothesis that direct inhibition of TORC1 can provide ASR in _C. glabrata_. We will also test _S. cerevisiae_ to determine if the negative regulation by TORC1 on stress response genes behind the ASR is conserved.
+
+_**Rationale**_
+
+If TORC1 inhibition by phosphate limitation directly contributes to the ASR, we should be able to mimic the effect by artificially inhibiting TORC1 with the drug rapamycin. The prediction is that rapamycin treatment should induce Cta1-GFP and provide ASR.
 
 _**Data**_
 
@@ -810,11 +828,22 @@ _**Note**_
 Jinye used lower H2O2 concentration compared with preivous ASR experiments (100 mM for Cg and 10 mM for Sc) because the primary stresses tested here, i.e., rapamycin and nitrogen starvation, reduced survival while phosphate starvation used in previous ASR experiments didn't. In order to maintain a similar CFU at the end, a lower H2O2 concentration was applied.
 
 ```{r}
-dat.6 <- read_csv("../input/20230205-Sc-Cg-rapamycin-nitrogen-ASR-raw.csv", col_types = cols(), comment = "#") %>% 
+tmp <- read_csv("../input/20230205-Sc-Cg-rapamycin-nitrogen-ASR-raw.csv", col_types = cols(), comment = "#") %>% 
   mutate(Date = gsub("d(\\d\\d)(\\d\\d)(\\d\\d)", "\\1/\\2/\\3", Date))
 
+dat.f7a <- tmp %>% 
+  rename(Primary = `1st_Stress`) %>% 
+  group_by(Date, Strain, Primary) %>% 
+  mutate(
+    scaled = Dilutions * Count * 1e-2,
+    r = scaled / scaled[H2O2 == "Mock"]
+  ) %>% 
+  # confirmed that my calculation (r) equals JY's MO/MM and PO/PM
+  # preserve her ASR_Score calculation for now
+  select(-`MO/MM`, -`PO/PM`, -ASR_Score, ASR_Score)
+
 # data sanity check, quick view
-sapply(select(dat.6, Species, Strain, Genotype), unique)
+sapply(select(dat.f7a, Species, Strain, Genotype), unique)
 ```
 
 _**Plotting**_
@@ -823,20 +852,20 @@ _**Plotting**_
 Jinye mentioned that unlike phosphate starvation, rapamycin and nitrogen starvation reduce survival by themselves. To see this myself, I'm plotting the CFU after just the primary 
 
 ```{r}
-tmp <- dat.6 %>% 
+tmp <- dat.f7a %>% 
   filter(H2O2 == "Mock") %>% 
   group_by(Date, Species) %>% 
   mutate(
     # arbitrarily decide any CFU counts < 3 are not included due to high CV
     Count = ifelse(Count < 3, NA, Count),
     scaled = Count * Dilutions * 1e-2,
-    r = scaled / scaled[`1st_Stress` == "Mock"]
+    r = scaled / scaled[Primary == "Mock"]
   ) %>% 
   ungroup() %>% 
-  filter(`1st_Stress` != "Mock") %>% 
-  select(Date, Species, Strain, Primary = `1st_Stress`, Count, r)
+  filter(Primary != "Mock") %>% 
+  select(Date, Species, Strain, Primary, Count, r)
 
-dat.Prim <-  raw %>%
+dat.prim <-  raw %>%
   separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
   # use the S2 dataset to examine the effect of phosphate starvation on survival
   filter(Date %in% use.s1b, Secondary == "M") %>% 
@@ -858,7 +887,7 @@ dat.Prim <-  raw %>%
 ```
 
 ```{r}
-ggplot(dat.Prim, aes(x = Primary, y = r)) + p.asr +
+ggplot(dat.prim, aes(x = Primary, y = r)) + p.asr +
   scale_y_continuous(breaks = seq(0.2, 1.2, by = 0.2), labels = scales::percent) +
   xlab("Primary stress (45 min)") + ylab("Survival %")
 ggsave("../output/20230211-primary-stress-effect-on-survival.png")
@@ -869,7 +898,7 @@ _**Statistical tests**_
 Use the [nest-map-unnest workflow](https://broom.tidymodels.org/articles/broom_and_dplyr.html)
 
 ```{r}
-dat.Prim %>% 
+dat.prim %>% 
   select(Species, Primary, r) %>% 
   nest(data = r) %>% 
   mutate(
@@ -887,79 +916,93 @@ dat.Prim %>%
 Jinye used two sets of H2O2 concentrations in this experiment, i.e., 40/4 mM and 60/6 mM for _C. glabrata_ and _S. cerevisiae_, respectively. 
 
 ```{r}
-with(dat.6, table(Date, paste(Species, H2O2, sep = ":")))
+with(dat.f7a, table(Date, paste(Species, H2O2, sep = ":")))
 ```
 
 First, we will test if the survival under these H2O2 concentrations are comparable across species, by analyzing the basal survival rate r
 
 Statistical test for differences in basal survival between species at 60 or 6 mM. A Wilcoxon signed-rank test is used here since the two groups are dependent (=grouped) by the day of the experiment. One replicate was run per day. Using a paired-test ensures that day-to-day variation is accounted for.
 ```{r}
-tmp <- dat.6 %>% 
+tmp <- dat.f7a %>% 
   filter(H2O2 %in% c("60mM", "6mM"), Group == "MO", 
          !(Date %in% c("01/12/23", "01/18/23", "02/02/23")))# %>% 
-tmp %>% group_by(Species) %>% summarize(mean = mean(`MO/MM`))
-wilcox.test(`MO/MM` ~ Species, data = tmp, paired = TRUE)
+tmp %>% group_by(Species) %>% summarize(mean = mean(r))
+wilcox.test(r ~ Species, data = tmp, paired = TRUE)
 ```
 
 Statistical test for differences in basal survival between species at 40 or 4 mM.
 ```{r}
-tmp <- dat.6 %>% 
+tmp <- dat.f7a %>% 
   filter(H2O2 %in% c("40mM", "4mM"), Group == "MO", !(Date %in% c("02/02/23")))
-tmp %>% group_by(Species) %>% summarize(mean = mean(`MO/MM`))
-wilcox.test(`MO/MM` ~ Species, data = tmp, paired = TRUE)
+tmp %>% group_by(Species) %>% summarize(mean = mean(r))
+wilcox.test(r ~ Species, data = tmp, paired = TRUE)
 ```
+> yes, the survival rates are comparable between species at the two pairs of chosen [H2O2]
 
 Statistical test for differences in basal survival between the high and low H2O2 concentrations (60/6 vs 40/4 mM), species combined.
 ```{r}
-tmp <- filter(dat.6, Group == "MO") %>% 
+tmp <- filter(dat.f7a, Group == "MO") %>% 
   mutate(secondary = factor(H2O2, levels = c("60mM", "6mM", "40mM", "4mM"),
                             labels = c("high", "high", "low", "low")))
 tmp %>% 
   group_by(secondary, Species) %>% 
-  summarize(mean = num(mean(`MO/MM`), digits = 3), .groups = "drop")
-wilcox.test(`MO/MM` ~ secondary, data = tmp, paired = FALSE)
-anova(lm(`MO/MM` ~ Species + secondary, data = tmp))
+  summarize(mean = num(mean(r), digits = 3), .groups = "drop")
+wilcox.test(r ~ secondary, data = tmp, paired = FALSE)
+anova(lm(r ~ Species + secondary, data = tmp))
 ```
 
-> We can conclude that there is no significant difference in survival when comparing 40 mM vs 4 mM for _C. glabrata_ vs _S. cerevisiae_. Similarly, there is no significant difference in survival when 60 mM and 6 mM were used to treat the two species, respectively. However, the survival rate is significantly lower under the higher set of concentrations (60 and 6 mM) compared with the lower ones (40 and 4 mM)
+> We can conclude that there is no significant difference in survival when comparing 40 mM vs 4 mM for _C. glabrata_ vs _S. cerevisiae_. Similarly, there is no significant difference in survival when 60 mM and 6 mM were used to treat the two species, respectively.
+> However, the survival rate is significantly lower under the higher set of concentrations (60 and 6 mM) compared with the lower ones (40 and 4 mM)
 
 ### Rapamycin ASR
-Will use JY's pre-calculated ASR values. We will first plot the 40/4 mM and 60/6 mM data separately. Then, we will combine them. A final conclusion will be drawn.
+We will first plot the 40/4 mM and 60/6 mM data separately. Then, we will combine them. A final conclusion will be drawn.
 ```{r}
 # we will not use the days of experiments where only one species was assayed
-dat.6p <- filter(dat.6, H2O2 != "Mock") %>% # remove the XM groups
-  rename(primary = `1st_Stress`, r = `MO/MM`, rP = `PO/PM`) %>% 
-  group_by(Date, Strain, H2O2) %>% # form groups to apply the same MO/MM
+dat.7ap <- dat.f7a %>% 
   mutate(
-    r = r[primary == "Mock"], # MO/MM for each group
-    secondary =  factor(H2O2, levels = c("40mM", "4mM", "60mM", "6mM"),
+    Secondary =  factor(H2O2, levels = c("40mM", "4mM", "60mM", "6mM"),
                         labels = c("40/4mM", "40/4mM", "60/6mM", "60/6mM"))
   ) %>% 
-  ungroup() %>%
-  filter(!is.na(rP))
+  filter(H2O2 != "Mock", Primary %in% c("125", "Mock")) %>% 
+  mutate(Primary = factor(Primary, levels = c("Mock", "125")))
 ```
 
 my calculation is the same as JY's
-```{r}
-with(dat.6p, sum(round(rP/r, 5) != round(ASR_Score, 5)))
+```
+with(dat.7ap, sum(round(rP/r, 5) != round(ASR_Score, 5)))
 ```
 
 #### Plot
 ```{r}
-dat.6p %>% 
-  filter(primary != "0Ni") %>% 
-  ggplot(aes(x = primary, y = ASR_Score)) + p.asr +
-  labs(x = "Rapamycin (ng/mL)", y = "ASR Score (r'/r)")
-ggsave("../output/20230221-rapamycin-ASR.png", width = 4, height = 4)
+dat.7ap %>% filter(Secondary == "60/6mM") %>% 
+  mutate(Primary = recode(Primary, "125" = "125 ng/mL")) %>% 
+  ggplot(aes(x = Primary, y = r)) + p.survival[-1] +
+  geom_line(aes(group = paste0(Date, Secondary)), linetype = 2, linewidth = 0.3) + 
+  geom_point(shape = 1, stroke = 1, size = 1) +
+  #labs(y = "% survival") + 
+  theme(axis.title.x = element_blank(), strip.background = element_blank())
+ggsave("../output/20230520-rapamycin-ASR.png", width = 4.5, height = 2.2)
 ```
   
 #### Statistical test
 
 Summary statistics
 ```{r}
-dat.6p %>% 
-  #filter(secondary == "60/6mM") %>% 
-  group_by(Species, primary) %>% 
+dat.7as <- dat.7ap %>% 
+  group_by(Date, Species, Strain, H2O2) %>% 
+  mutate(rM = r[Primary == "Mock"], asr = r/rM) %>%
+  filter(Primary != "Mock") %>% 
+  rename(rP = "r", r = "rM") %>% 
+  relocate(c(r, asr), .after = "rP") %>% 
+  ungroup()
+
+dat.7as %>% select(-Genotype, -Group, -Dilutions, -Count, -scaled) %>% 
+  mutate(across(where(is.double), round, digits = 2))
+```
+
+```{r}
+dat.7as %>% 
+  group_by(Secondary, Species) %>% 
   summarize(
     # smean.cl.boot returns a named vector. t() %>% as_tibble() turns it
     # into a one-row tibble, stored as a list column. unnest() then flattens
@@ -972,16 +1015,15 @@ dat.6p %>%
 
 Wilcoxon signed-rank test comparing r' and r (paired data)
 ```{r}
-dat.6p %>% 
-  filter(primary != "0Ni") %>% 
-  select(Species, primary, r, rP) %>% 
+dat.7as %>% 
+  select(Species, Secondary, r, rP) %>% 
   nest(data = c(r, rP)) %>% 
   mutate(
     test = map(data, ~ wilcox.test(.x$rP, .x$r, paired = TRUE, alternative = "g")),
     tidied = map(test, tidy)
   ) %>% 
   unnest(tidied) %>% 
-  select(Species, primary, T = statistic, p.value, method, alternative) %>% 
+  select(Species, Secondary, T = statistic, p.value, alternative) %>% 
   mutate(p.bonf = p.adjust(p.value, method = "bonf"),
          p.holm = p.adjust(p.value, method = "holm"),
          p.hoch = p.adjust(p.value, method = "hoch"),
@@ -990,18 +1032,224 @@ dat.6p %>%
 
 Paired t-tests comparing r' and r
 ```{r}
-dat.6p %>% 
-  #filter(primary != "0Ni") %>% 
-  select(Species, primary, r, rP) %>% 
+dat.7as %>% 
+  select(Species, Secondary, r, rP) %>% 
   nest(data = c(r, rP)) %>% 
   mutate(
     test = map(data, ~ t.test(.x$rP, .x$r, paired = TRUE, alternative = "g")),
     tidied = map(test, tidy)
   ) %>% 
   unnest(tidied) %>% 
-  select(Species, primary, p.value, method, alternative) %>% 
+  select(Species, Secondary, p.value, alternative) %>% 
+  mutate(P.adj = p.adjust(p.value, method = "BH"),
+         across(where(is.numeric), round, digits = 3))
+```
+
+> In conclusion, we found significant ASR effect at 125 ng/mL rapamycin treatment in _C. glabrata_ using either a Wilcoxon signed-rank test (nonparametric) or a paired t test, both using a 0.05 rejection threhold. The same test approached the 0.05 significance threshold in _S. cerevisiae_
+
+## Fig7_2: ASR in Sch9-3E mutant
+_**Goal**_
+
+Test if Sch9-3E mutant results in reduced ASR.
+
+_**Rationale**_
+
+It is known in _S. cerevisiae_ that TORC1-inhibition leads to the derepression of Msn2/4-mediated stress response via the TORC1-Sch9-Rim15 pathway. Specifically, Sch9 is a key proximal effector of TORC1, which phosphorylates the former. Phosphorylated Sch9 then phosphorylates Rim15, causing it to be retained in the cytoplasm and unable to activate Msn2/4 in the nucleus. Jinye created a phosphomimetic mutant of Sch9 (aka Sch9-3E) that is predicted to be constitutively active with respect to TORC1 signaling. Therefore, this mutant is expected to always repress the Rim15-Msn4 downstream effectors even when TORC1 itself is inhibited.
+
+_**Data**_
+
+Species       Genotype             H2O2  
+--------      ------------------   --------------------------
+C. glabrata   sch9::SCH9-wt-Nat    0, 20, 40, 60, 80, 100 mM 
+C. glabrata   sch9::SCH9-3E-Nat    0, 20, 40, 60, 80, 100 mM
+
+ASR experiments were repeated four times for the two strains on four consecutive days, from 05/14-05/17 of 2023.
+
+### Read in data
+Reformat JY's data into a tidy format
+```{r}
+tmp <- read_csv("../input/20230515-CgSCH9-3E-data-jy.csv", col_types = cols(), comment = "#") %>% 
+  mutate(Date = gsub("d(\\d\\d)(\\d\\d)(\\d\\d)", "\\1/\\2/\\3", Date),
+         H2O2 = gsub("mM", " mM", H2O2),
+         Len_1 = recode(Len_1, `2hr` = "2 hr", `45min` = "45 min"),
+         Len_2 = recode(Len_2, `2hr` = "2 hr")) %>% 
+  select(-`MO/MM_percent`, -`PO/PM_percent`)
+
+# data sanity check, quick view
+sapply(select(tmp, Species, Strain, Genotype, Len_1, Len_2, H2O2), unique)
+
+dat.f7b <- tmp %>% 
+  pivot_longer(c(Count_MO_MM, Count_PO_PM), names_to = "Primary", values_to = "Count") %>% 
+  mutate(Primary = fct_recode(Primary, "Mock" = "Count_MO_MM", "-Pi" = "Count_PO_PM"),
+         Genotype = fct_recode(Genotype, `sch9::Sch9-3E-Nat` = "sch9_3E_Nat",
+                               `sch9::Sch9-WT-Nat` = "sch9_Nat_wt"),
+         scaled = Count * Dilutions * 1e-3) %>% 
+  group_by(Date, Strain, Genotype, Primary) %>% 
+  mutate(r = num(scaled / scaled[H2O2 == "Mock"], digits = 3)) %>% 
+  select(Date, Species, Strain, Genotype, Primary, H2O2, Dilutions, Count, scaled, r) %>% 
+  arrange(Date, Genotype, Primary)
+```
+
+Write the table to a file for future references
+```{r}
+write_tsv(dat.f7b, file = "../input/20230520-fig-7-Sch9-3E-data-hb.tsv")
+```
+
+### Calibrate secondary stress strength
+Jinye tested a series of H2O2 concentrations in this experiment, i.e., 20, 40, 60, 80 and 100 mM. The goal here is to visualize the survival rates between the two genotypes and decide which pair to use for ASR comparisons.
+
+```{r}
+dat.f7b %>% 
+  filter(Primary == "Mock", H2O2 != "Mock") %>% 
+  mutate(H2O2 = gsub(" mM", "", H2O2),
+         H2O2 = factor(H2O2) %>% fct_reorder(as.numeric(H2O2))) %>% 
+  ggplot(aes(x = H2O2, y = r, group = Genotype)) + 
+  geom_bar(aes(fill = Genotype), stat = "summary", fun = "mean",
+           position = position_dodge(0.9)) +
+  geom_point(position = position_dodge(0.9), size = 1, color = "gray30") +
+  scale_fill_brewer(palette = "Set2", direction = -1) +
+  xlab(bquote(H[2]*O[2]~(mM))) + ylab("Survival rate") +
+  theme_cowplot()
+```
+> Somewhat to my surprise, the constitutively active Sch9-3E allele resulted in better survival without primary stress
+
+For our purpose, let's compare 40 mM and 60 mM for the wt to 100 mM for the Sch9-3E mutant.
+
+A Wilcoxon signed-rank test is used here since the two groups are dependent (=grouped) by the day of the experiment. One replicate was run per day. Using a paired-test ensures that day-to-day variation is accounted for.
+```{r}
+x1 = filter(dat.f7b, Genotype == "sch9::Sch9-WT-Nat", H2O2 == "40 mM") %>% pull(r) %>% as.double()
+x2 = filter(dat.f7b, Genotype == "sch9::Sch9-WT-Nat", H2O2 == "60 mM") %>% pull(r) %>% as.double()
+y = filter(dat.f7b, Genotype == "sch9::Sch9-3E-Nat", H2O2 == "100 mM") %>% pull(r) %>% as.double()
+cbind("wt 40mM" = x1, "wt 60mM" = x2, "3E 100mM" = y)
+
+cat("\n")
+# Wilcoxon signed-rank tests
+cat("<wt 40mM> vs <wt 60mM>")
+wilcox.test(x1, x2, paired = TRUE)
+cat("<wt 40mM> vs <3E 100mM>")
+wilcox.test(x1, y, paired = TRUE)
+cat("<wt 60mM> vs <3E 100mM>")
+wilcox.test(x2, y, paired = TRUE)
+
+cat("\n")
+# paired t-test
+cat("<wt 40mM> vs <wt 80mM>")
+t.test(x1, x2, paired = TRUE)
+cat("<wt 40mM> vs <3E 100mM>")
+t.test(x1, y, paired = TRUE)
+cat("<wt 60mM> vs <3E 100mM>")
+t.test(x2, y, paired = TRUE)
+```
+> For the wt strain, 40 mM clearly resulted in better survival than 60 mM, as expected.
+> When comparing between wt and 3E mutant, 40 mM for wt and 100 mM for 3E have mean survival rates that are closer. Paired statistical tests yield P-values greater than 0.1 for both the 40mM and 60mM of wt compared with 100mM for the 3E mutant.
+
+### EDA: dat-to-day variation
+From the plot for the basal survival rate above, there appears to be a lot of day-to-day variation. Here we visualize this variation more clearly
+```{r}
+dat.f7b %>% 
+  filter(H2O2 != "Mock") %>% 
+  mutate(H2O2 = gsub(" mM", "", H2O2),
+         H2O2 = factor(H2O2) %>% fct_reorder(as.numeric(H2O2))) %>% 
+  ggplot(aes(x = H2O2, y = r)) + 
+  geom_point(aes(color = Genotype, shape = Date, group = Genotype), 
+             size = 2, position = position_dodge(.5)) + 
+  xlab(bquote(H[2]*O[2]~(mM))) + ylab("Survival rate") +
+  scale_color_brewer(palette = "Set2", direction = -1) +
+  facet_wrap(~Primary, nrow = 2) + theme_cowplot() +
+  background_grid(major = "y")
+```
+
+### ASR-score comparison
+Will use JY's pre-calculated ASR values. We will first plot the 40/4 mM and 60/6 mM data separately. Then, we will combine them. A final conclusion will be drawn.
+```{r}
+dat.7bp <- ungroup(dat.f7b) %>% 
+  filter(H2O2 != "Mock") %>% 
+  mutate(
+    H2O2 = gsub(" mM", "", H2O2),
+    H2O2 = factor(H2O2) %>% fct_reorder(as.numeric(H2O2)),
+    group = paste(str_sub(Genotype, 12, 13), H2O2, sep = "_")
+  ) %>% 
+  filter(H2O2 != "Mock", group %in% c("3E_100", "WT_60", "WT_40")) %>% 
+  select(-Dilutions, -Count, -Species)
+
+dat.7bs <- dat.7bp %>%
+  group_by(Date, Strain, Genotype, H2O2) %>% # form groups to apply the same MO/MM
+  mutate(
+    rM = r[Primary == "Mock"], # MO/MM for each group
+    ASR_Score = r/rM
+  ) %>% ungroup() %>%
+  rename(rP = "r", r = "rM") %>% 
+  filter(Primary != "Mock") %>% 
+  relocate(c(r, ASR_Score), .after = "rP")
+```
+
+#### Plot
+```{r}
+dat.7bp %>% 
+  # only examine wt_40 vs 3E_100
+  filter(group != "WT_60") %>% 
+  mutate(Genotype = recode(Genotype, "sch9::Sch9-3E-Nat" = "CgSch9-3E-Nat",
+                           "sch9::Sch9-WT-Nat" = "CgSch9-WT-Nat")) %>% 
+  ggplot(aes(x = Primary, y = r)) + p.survival[-1] +
+  geom_line(aes(group = Date), linetype = 2, linewidth = 0.3) + 
+  geom_point(shape = 1, stroke = 1, size = 1) +
+  #ylim(NA, 0.5) +
+  #labs(y = "ASR Score (r'/r)") + 
+  facet_wrap(~Genotype) +
+  theme(axis.title.x = element_blank(), strip.background = element_blank(),
+        strip.text = element_text(size = rel(0.9)))
+ggsave("../output/20230520-Sch9-3E-vs-wt-ASR.png", width = 4.5, height = 2.2)
+```
+  
+#### Statistical test
+
+Summary statistics
+```{r}
+dat.7bs %>% 
+  #filter(secondary == "60/6mM") %>% 
+  group_by(Genotype, group) %>% 
+  summarize(
+    # smean.cl.boot returns a named vector. t() %>% as_tibble() turns it
+    # into a one-row tibble, stored as a list column. unnest() then flattens
+    # the list-column back out into regular columns
+    test = Hmisc::smean.cl.boot(as.double(ASR_Score)) %>% t() %>% as_tibble()
+  ) %>% 
+  unnest(test) %>% 
+  mutate(across(where(is.numeric), round, digits = 2))
+```
+
+Wilcoxon signed-rank test comparing r' and r (paired data)
+```{r}
+dat.7bs %>% 
+  select(Genotype, group, r, rP) %>% 
+  nest(data = c(r, rP)) %>% 
+  mutate(
+    test = map(data, ~ wilcox.test(.x$rP, .x$r, paired = TRUE, alternative = "g")),
+    tidied = map(test, tidy)
+  ) %>% 
+  unnest(tidied) %>% 
+  select(Genotype, group, T = statistic, p.value, alternative) %>% 
+  mutate(p.bonf = p.adjust(p.value, method = "bonf"),
+         p.holm = p.adjust(p.value, method = "holm"),
+         p.hoch = p.adjust(p.value, method = "hoch"),
+         across(starts_with("p."), round, digits = 5))
+```
+
+Paired t-tests comparing r' and r
+```{r}
+dat.7bs %>% 
+  #filter(primary != "0Ni") %>% 
+  select(Genotype, group, r, rP) %>% 
+  nest(data = c(r, rP)) %>% 
+  mutate(
+    test = map(data, ~ t.test(.x$rP, .x$r, paired = TRUE, alternative = "g")),
+    tidied = map(test, tidy)
+  ) %>% 
+  unnest(tidied) %>% 
+  select(Genotype, group, p.value, alternative) %>% 
   mutate(P.adj = p.adjust(p.value, method = "BH"),
          across(where(is.numeric), round, digits = 3))
 ```
 
 > In conclusion, we found significant ASR effect at 125 ng/mL rapamycin treatment in _C. glabrata_ using either a Wilcoxon signed-rank test (nonparametric) or a paired t test, both using a 0.05 rejection threhold. We couldn't reject the null hypothesis of no survival difference between rapamycin treated vs untreated samples for the 62.5 ng/mL concentration, and also not for the higher dose in _S. cerevisiae_
+
