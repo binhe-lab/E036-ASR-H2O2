@@ -1,4 +1,4 @@
-Date	Species	Strain	Genotype	Len_1	Len_2	H2O2	Dilutions	Count_MO_MM	Count_PO_PM	MO/MM	PO/PM	MO/MM_percent	PO/PM_percent	ASR_score	Experimenter
+Date	Strain	Species	Genotype	Len_1	Len_2	H2O2	Dilutions	Count_MO_MM	Count_PO_PM	MO/MM	PO/PM	MO/MM_percent	PO/PM_percent	ASR_score	Experimenter
 d051423	yH692	Cg	sch9_Nat_wt	45min	2hr	Mock	1000	632	410	1	1	100	100	1	JL
 d051423	yH692	Cg	sch9_Nat_wt	45min	2hr	20mM	250	767	633	0.3034018987	0.3859756098	30.34018987	38.59756098	1.272159507	JL
 d051423	yH692	Cg	sch9_Nat_wt	45min	2hr	40mM	250	673	671	0.2662183544	0.4091463415	26.62183544	40.91463415	1.536882543	JL
