@@ -143,10 +143,24 @@ _**Plotting**_
 #### Plot
 ```{r}
 dat.f1 %>% 
-  mutate(Primary = recode(Primary, M = "Mock", P = "-Pi")) %>% 
-  ggplot(aes(x = Primary, y = r)) + p.survival +
-  #scale_y_continuous(labels = scales::percent) +
-  xlab("Primary stress (45 min)")# + ylab("% survival")
+  mutate(Primary = recode(Primary, M = "Mock", P = "-Pi"),
+         Primary = factor(Primary, levels = c("Mock", "-Pi"))) %>% 
+  ggplot(aes(x = Primary, y = r)) +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_jitter(0.1)) +
+  p.survival[-1] +
+  scale_shape_manual(name = "", values = c(1, 16),
+                    labels = c("r = MO/MM", "r' = PO/PM")) +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        legend.position = "top",
+        legend.justification = "center",
+        legend.box.margin = margin(0, 0, -10, 0, "pt"),
+        legend.text = element_text(size = rel(0.9)),
+        legend.title = element_text(size = rel(0.9)))
+#  xlab("Primary stress (45 min)")# + ylab("% survival")
 
 ggsave("../output/20230228-fig1d-asr-noPi-compare.png", width = 3.5, height = 3)
 ```
@@ -590,6 +604,26 @@ write_tsv(dat.f3a, file = "../input/20230520-fig-3d-data-hb.tsv")
 
 #### Plot
 ```{r}
+p <- dat.f3a %>% 
+  mutate(Genotype = fct_recode(Genotype, "WT" = "wildtype")) %>% 
+  ggplot(aes(x = Primary, y = r)) +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2,
+             position = position_jitter(0.1)) +
+  scale_shape_manual(name = "", values = c(1, 16), guide = "none") +
+  #scale_fill_manual(name = bquote(H[2]*O[2]), values = c("white", "gray80")) +
+  p.survival[-1] +
+  facet_wrap(~Genotype + H2O2, nrow = 1) +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        axis.title.x = element_blank(), 
+        strip.background = element_blank()
+        )
+p
+
+ggsave("../output/20230301-fig3d-asr-cta1.png", width = 3.3, height = 3)
+```
+
+```
 p <- ggplot(dat.f3a, aes(x = H2O2, y = r)) +
   geom_point(aes(shape = Primary), stroke = 0.9, size = 2.5, 
              position = position_jitterdodge(jitter.width = 0.3, dodge.width = 0.9)) +
@@ -601,7 +635,7 @@ p <- ggplot(dat.f3a, aes(x = H2O2, y = r)) +
   scale_y_continuous(labels = scales::percent) +
   xlab(bquote(H[2]*O[2]~(mM))) + ylab("% survival") +
   theme_cowplot(line_size = 1.2) +
-  panel_border(color = "black", size = 1) +
+  panel_border(color = "black", size = 1.5) +
   theme(strip.text = element_text(size = rel(1)),
         strip.background = element_blank(),
         #strip.placement = "inside",
@@ -792,6 +826,242 @@ with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
 with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
 ```
 > no significant effect of ASR in _cta1∆_ at this [H2O2] concentration.
+
+## Fig6: ASR in rim15∆ vs wt
+_**Goal**_
+
+Determine if Rim15 is part of the signaling network behind the ASR.
+
+_**Rationale**_
+
+Rim15 is the yeast homolog of the Greatwall kinase, regulating multiple downstream processes and is itself regulated by at least three major kinase complexes. This puts it at a crossroad of signal integration. One of the upstream kinases regulating Rim15 is TORC1, which we later found to be connected with the ASR.
+
+_**Data**_
+
+Species       Strain           Genotype     H2O2         
+--------      -------------    ----------   ------------
+C. glabrata   yH001, yH002     wildtype     80, 100 mM 
+C. glabrata   yH609, yH610     _rim15∆_     60,  80 mM 
+
+Eight replicates (at two [H2O2]), two each from 06/28, 06/29 and 07/13, plus one each from 07/02 and 07/04 of 2022. The data from 7/4 should be excluded because Jinye noted media contamination on that day.
+
+### Data reformatting
+Reformat JY's data into a tidy format. Note that the following data file contains the same information as in the `raw` object imported at the beginning of this rmarkdown. The file below, however, contains experimental notes, including 7/4/22 data having media contamination issues.
+```{r}
+tmp <- read_tsv("../input/20230522-rim15-data-jy.tsv", col_types = cols(), comment = "#") %>% 
+  mutate(Date = gsub("(\\d\\d)(\\d\\d)(\\d\\d)", "\\1/\\2/\\3", Date)) %>% 
+  select(-`MO/MM_percent`, -`PO/PM_percent`)
+
+# data sanity check, quick view
+sapply(select(tmp, Date, Species, Strain, Genotype, Len_1, Len_2, H2O2), unique)
+
+dat.f6b <- tmp %>% 
+  pivot_longer(c(Count_MO_MM, Count_PO_PM), names_to = "Primary", values_to = "Count") %>% 
+  mutate(Primary = fct_recode(Primary, "Mock" = "Count_MO_MM", "-Pi" = "Count_PO_PM"),
+         scaled = Count * Dilutions * 1e-3) %>% 
+  group_by(Date, Strain, Genotype, Primary) %>%
+  mutate(scaled_M = scaled[H2O2 == "0 mM"],
+         r = scaled / scaled_M) %>%
+  ungroup() %>% 
+  select(Date, Species, Strain, Genotype, Primary, H2O2, Dilutions, 
+         Count, scaled, scaled_M, r, Prism_data_point, Note) %>% 
+  arrange(Date, Genotype, Primary)
+```
+Save the data for future references
+```{r}
+write_tsv(dat.f6b, file = "../input/20230523-fig-6-data-hb.tsv")
+```
+
+Below the same data is extracted from the large dataset. The count information should be the same.
+```
+use.f6 <- paste0(c("06/28", "06/29", "07/02", "07/13"), "/22")
+tmp <-  raw %>%
+  filter(Date %in% use.f6) %>% 
+  mutate(
+    scaled = Count * Dilutions * 1e-2
+  ) %>% 
+  # remove uninformative columns. only one H2O2 conc used for each species
+  select(-Len_1, -Len_2, -Experimenter)
+# Assume the replicates were paired in the order they appear in the table,
+# i.e., the first row in the MO, MM, PO, PM groups belong to the same biological 
+# replicate, we can derive three ASR_scores for each date x species x Len_1
+
+dat.f6 <- tmp %>% 
+  # group by primary to calculate r (MO/MM) or r' (PO/PM)
+  separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
+  group_by(Date, Strain, Primary) %>% 
+  # calculate % survival
+  mutate(scaled_M = scaled[Secondary == "M"],
+         r = scaled / scaled[Secondary == "M"]) %>% 
+  # remove the secondary mock as the information are all used
+  filter(Secondary != "M")
+dat.f6
+```
+
+### Plot (all data)
+Annotate the data. For 7/2 and 7/4 data, only use yH001 for the wt, so we end up with the same number of replicates for both strains.
+```{r}
+dat.f6p <- dat.f6b %>% 
+  filter(H2O2 != "0 mM", 
+         !(Date == "07/02/22" & Strain == "yH002"), Date != "07/04/22") %>% 
+  mutate(
+    Genotype = factor(Genotype, levels = c("wt", "rim15Δ")),
+    group = paste(Genotype, gsub(" ", "", H2O2), sep = "_"),
+    Secondary = factor(group, 
+                       levels = c("wt_100mM", "wt_80mM", "rim15Δ_80mM", "rim15Δ_60mM"),
+                       labels = c("High", "Medium", "High", "Medium"))
+  )
+with(dat.f6p, table(Date, group))
+```
+
+```{r}
+dat.f6p %>%
+  ggplot(aes(x = H2O2, y = r)) + #p.survival[-3] +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Secondary + Genotype, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(labels = scales::percent) +
+  xlab(bquote(H[2]*O[2]~(mM))) + ylab("% survival") +
+  theme_bw(base_size = 14, base_line_size = 1) +
+  panel_border(color = "black", size = 1) +
+  theme(strip.text = element_text(size = rel(1), face = 3),
+        strip.background = element_blank())
+```
+
+### Basal survival rates
+
+Statistical test for differences in basal survival between genotypes. I first applied the Kruskal-Wallis test, which is an extension of the Mann-Whitney's U test for multiple groups and is equivalent to ANOVA but applied on ranks. I used this test to determine if there is evidence for differences in the basal survival rates among the four groups (2 genotypes x 2 [H2O2]).
+
+```{r}
+tmp <- dat.f6p %>% filter(Primary == "Mock")
+tmp %>% group_by(group) %>% 
+  summarize(
+    test = Hmisc::smean.cl.normal(r) %>% t() %>% as_tibble()
+  ) %>% 
+  unnest(test) %>% 
+  mutate(across(where(is.double), round, digits = 3))
+kruskal.test(r ~ group, data = tmp)
+```
+> There are differences among the four groups. Inspecting the statistical summary, we can see that the high and low concentrations used for each genotype seem to match each other well.
+> Therefore, we will next use A Wilcoxon rank-sum test to compare the two genotypes at either the high or the low dose
+
+Statistical test for differences in basal survival between genotypes at 100 / 80 mM.
+```{r}
+tmp <- dat.f6p %>% 
+  filter(group %in% c("wt_100mM", "rim15Δ_80mM"), Primary == "Mock")
+wilcox.test(r ~ group, data = tmp, paired = FALSE)
+```
+
+Statistical test for differences in basal survival between genotypes at 80/60 mM.
+```{r}
+tmp <- dat.f6p %>% 
+  filter(group %in% c("wt_80mM", "rim15Δ_60mM"), Primary == "Mock")
+wilcox.test(r ~ group, data = tmp, paired = FALSE)
+```
+> yes, the survival rates are comparable between species at the two pairs of chosen [H2O2]
+> We can conclude that there is no significant difference in survival when comparing 100 mM vs 80 mM for wt and rim15∆. Similarly, there is no significant difference in survival when 80 mM and 60 mM were used to treat the two strains, respectively.
+
+### 100 vs 80 mM
+#### Plot
+```{r}
+dat.f6p %>% filter(Secondary == "High") %>% 
+  mutate(Genotype = fct_recode(Genotype, `WT` = "wt")) %>% 
+  ggplot(aes(x = Primary, y = r)) + 
+  #geom_line(aes(group = paste0(Date, Strain, Secondary)),
+  #          linetype = 2, linewidth = 0.1) + 
+  geom_point(aes(shape = Primary), stroke = 1, size = 2,
+             position = position_jitter(0.05)) +
+  scale_shape_manual(values = c(1, 16), guide = "none") +
+  p.survival[-1] +
+  facet_wrap(~Genotype + H2O2, nrow = 1) +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        legend.position = "top",
+        legend.justification = "center",
+        legend.text = element_text(size = rel(0.9)),
+        legend.title = element_text(size = rel(0.9)))
+ggsave("../output/20230522-rim15-vs-wt-ASR.png", width = 3.6, height = 3.4)
+```
+
+#### Statistical test
+1. Determine if the basal survival rates are different between wt and cta1∆ (Wilcoxon signed-rank test)
+1. Determine if the primary stress enhanced the survival in _each_ genotype (Wilcoxon signed-rank test)
+
+_**Basal survival rate**_
+
+Repeating the test above:
+
+Statistical test for differences in basal survival between genotypes at 100 / 80 mM.
+```{r}
+tmp <- dat.f6p %>% 
+  filter(Secondary == "High", Primary == "Mock")
+wilcox.test(r ~ Genotype, data = tmp, paired = FALSE)
+```
+
+_ASR in wildtype_
+
+Comparison between r and r', paired, signed-rank test.
+```{r}
+tmp <- dat.f6p %>% filter(Secondary == "High") %>%  
+  filter(Genotype == "wt") %>% 
+  pivot_wider(id_cols = c(Date, Strain, H2O2), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+
+_ASR in rim15Δ_
+
+Paired, signed-rank test
+```{r}
+tmp <- dat.f6p %>% filter(Secondary == "High") %>%
+  filter(Genotype == "rim15Δ") %>% 
+  pivot_wider(id_cols = c(Date, Strain, H2O2), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+
+_ASR effect size between wt and rim15∆_
+
+Use the survival rate with primary stress (r') as the random variable.
+```{r}
+tmp <- dat.f6p %>% 
+  filter(Secondary == "High", Primary == "-Pi")
+wilcox.test(r ~ Genotype, data = tmp, paired = FALSE)
+```
+
+Use the ASR score as the random variable.
+```{r}
+tmp <- dat.f6p %>% filter(Secondary == "High") %>%
+  pivot_wider(id_cols = c(Genotype, Date, Strain, Secondary), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
+wilcox.test(ASR ~ Genotype, data = tmp, paired = TRUE, alternative = "g")
+```
+
+### 80 vs 60 mM
+Corresponding results for 80 mM vs 60 mM
 
 ## Fig7_1: ASR in wt with rapamycin
 _**Goal**_
