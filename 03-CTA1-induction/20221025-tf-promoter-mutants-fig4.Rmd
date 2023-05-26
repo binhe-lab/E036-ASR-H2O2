@@ -401,7 +401,7 @@ plot_grid(p.base, NULL, p.induce, nrow = 1, rel_widths = c(1.5, 0.1, 1.5), align
 ggsave("output/20221221-CTA1-trans-delete-base-vs-induce.png", width = 10, height = 5)
 ```
 
-To test for the effect on induction, we can compare the levels at 180 min
+To test for the effect on induction, we can compare the levels at 120 min
 ```{r}
 pi.dat %>% 
   filter(!is.na(new_median)) %>% 
@@ -409,7 +409,7 @@ pi.dat %>%
   mutate(delta = new_median - mean(new_median[new_time == 0])) %>% 
   filter(new_time == 120, !is.na(new_median)) %>% 
   mutate(Genotype = factor(Genotype, levels = genotype_order)) %>% 
-  lm(new_median ~ Genotype, data = .) %>% 
+  lm(delta ~ Genotype, data = .) %>% 
   summary()
 ```
 
