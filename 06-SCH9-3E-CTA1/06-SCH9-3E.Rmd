@@ -94,7 +94,7 @@ Here we interogate the 3E mutant, which is predicted to be phosphorylated by TOR
 Get the subset of no Pi data
 ```{r}
 # recode the genotype
-levels <- c(WT = "wt", `sch9::SCH9-Nat` = "wt_CgSCH9-Nat", `sch9::SCH9-3E-Nat` = "CgSCH9_3E-Nat")
+levels <- c(WT = "wt", `sch9::Sch9-WT-Nat` = "wt_CgSCH9-Nat", `sch9::Sch9-3E-Nat` = "CgSCH9_3E-Nat")
 
 pi.dat <- data %>% 
   filter(treat == "0Pi", genotype %in% c("wt", "wt_CgSCH9-Nat", "CgSCH9_3E-Nat")) %>%  
@@ -168,7 +168,7 @@ ggsave("output/20230512-CgSCH9-phosphomimetic-mutant-timecourse-ctrl.png", width
 ### Sch9-2E
 In _S. cerevisiae_, Pho80/85 was shown to directly phosphorylate Sch9 and thereby regulate its lysosome localization. Here, Jinye interogate a phosphomimetic mutant in _C. glabrata_ and its interaction with _pho80∆_ and _pho81∆_ mutants.
 ```{r}
-levels <- c(WT = "wt", `sch9::SCH9-Nat` = "wt_CgSCH9-Nat", `sch9::SCH9-3E-Nat` = "CgSCH9_3E-Nat", `pho80∆` = "pho80_ko", `pho80∆ sch9::SCH9-2E` = "pho80_ko_Sch9_2E", `pho81∆` = "pho81_ko", `pho81∆ sch9::SCH9-2E` = "pho81_ko_Sch9_2E")
+levels <- c(WT = "wt", `sch9::Sch9-WT-Nat` = "wt_CgSCH9-Nat", `sch9::Sch9-3E-Nat` = "CgSCH9_3E-Nat", `pho80∆` = "pho80_ko", `pho80∆ sch9::Sch9-2E` = "pho80_ko_Sch9_2E", `pho81∆` = "pho81_ko", `pho81∆ sch9::Sch9-2E` = "pho81_ko_Sch9_2E")
 
 pi.dat.ext <- data %>% 
   filter(treat == "0Pi") %>%  
