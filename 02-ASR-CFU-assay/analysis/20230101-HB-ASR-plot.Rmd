@@ -827,6 +827,355 @@ with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
 ```
 > no significant effect of ASR in _cta1∆_ at this [H2O2] concentration.
 
+## Fig3-S1: CTA1 complementation
+_**Goal**_
+
+- Validate that _cta1∆_ result is due to the intended deletion
+
+_**Experiment**_
+
+- Jinye constructed a _CTA1_ complementation strain by putting the gene's CDS back to its endogenous locus. 
+- Hanxi performed ASR to compare the ASR effect size of the complementation, the deletion and the wild type.
+
+_**Data**_
+
+Species       Strain          Genotype      H2O2         
+--------      -------------   -----------   --------------
+C. glabrata   yH181             wildtype    60, 80, 100 mM 
+C. glabrata   yH271              _cta1∆_    2., 2.5, 3. mM 
+C. glabrata   yH285           cta1::CTA1.   60, 80, 100 mM
+
+Six replicates, between 7/31/23 - 8/4/23
+
+_**Analysis**_
+
+### Read and format data
+```{r}
+tmp <- read_tsv("../input/20230806-fig-3sup-cta1-comp-data-ht.tsv",
+                col_types = cols(), comment = "#") %>% 
+  mutate(
+    scaled = Count * Dilutions * 1e-2
+  )
+
+dat.f3s <- tmp %>% 
+  # remove uninformative columns. only one H2O2 conc used for each species
+  select(-Len_1, -Len_2, -Species) %>% 
+  # group by experiment and H2O2 to calculate r (MO/MM) or r' (PO/PM)
+  separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
+  group_by(Index, Strain, Primary) %>% 
+  # calculate % survival
+  mutate(scaled_M = scaled[Secondary == "M"],
+         r = num(scaled / scaled[Secondary == "M"], digits = 3)) %>% 
+  # remove the secondary mock as the information are all used
+  filter(Secondary != "M")
+dat.f3s
+```
+### Plot (exclude 60 mM/2 mM)
+```{r}
+dat.f3s %>% 
+  # leave out the lowest concentration in each group
+  filter(!H2O2 %in% c("2 mM", "60 mM")) %>% 
+  mutate(
+    Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+    Genotype = factor(Genotype, levels = c("wt", "Cgcta1::CgCTA1", "cta1::URA3"),
+                      labels = c("wildtype", "cta1::CTA1", "cta1Δ"))
+  ) %>%
+  ggplot(aes(x = H2O2, y = r)) + #p.survival[-3] +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_dodge(0.7)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.7),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Genotype, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(labels = scales::percent) +
+  xlab("Primary stress (45 min)") + ylab("% survival") +
+  theme_bw(base_size = 14, base_line_size = 1) +
+  panel_border(color = "black", size = 1) +
+  theme(strip.text = element_text(size = rel(1), face = 3),
+        strip.background = element_blank(),
+        legend.position = c(0.9, 0.8),
+        legend.background = element_blank())
+```
+
+### 80 v 100 v 3 mM
+By trial and error, I found 80 mM for the wildtype, 100 mM for the complement strain and 3 mM for the deletion had relatively similar basal survival rates.
+```{r}
+dat.f3s1 <- dat.f3s %>% 
+  mutate(Group = paste(Genotype, H2O2, sep = "_")) %>% 
+  #filter(H2O2 %in% c("100 mM", "3 mM")) %>% 
+  filter(Group %in% c("wt_80 mM", "Cgcta1::CgCTA1_100 mM", "cta1::URA3_3 mM")) %>% 
+  select(-Group) %>% 
+  mutate(
+    Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+    Genotype = factor(Genotype, levels = c("wt", "Cgcta1::CgCTA1", "cta1::URA3"),
+                      labels = c("wildtype", "cta1::CTA1", "cta1Δ")))
+#write_tsv(dat.f3a, file = "../input/20230520-fig-3d-data-hb.tsv")
+```
+
+#### Plot
+```{r}
+p <- dat.f3s1 %>% 
+  mutate(Genotype = fct_recode(Genotype, "WT" = "wildtype")) %>% 
+  ggplot(aes(x = Primary, y = r)) +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2,
+             position = position_jitter(0.1)) +
+  scale_shape_manual(name = "", values = c(1, 16), guide = "none") +
+  #scale_fill_manual(name = bquote(H[2]*O[2]), values = c("white", "gray80")) +
+  p.survival[-1] +
+  facet_wrap(~Genotype + H2O2, nrow = 1) +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        axis.title.x = element_blank(), 
+        strip.background = element_blank()
+        )
+p
+
+ggsave("../output/20230806-fig3sup-asr-cta1-comp-1.png", width = 5, height = 3)
+```
+
+
+#### Statistical test
+1. Determine if the basal survival rates are different between genotypes (Wilcoxon signed-rank test)
+1. Determine if the primary stress enhanced the survival in _each_ genotype (Wilcoxon signed-rank test)
+
+_**Basal survival rate**_
+
+Because we have three groups here, my strategy is to first perform an ANOVA-like, but rank-based, Krusal-Wallis test, where the null hypothesis is that all three groups' distribution has the same "location" (=mean). I also performed a pairwise Wilcoxson rank sum test, although that is not necessary if the first test is deemed insignificant.
+```{r}
+tmp <- dat.f3s1 %>% 
+  filter(Primary == "Mock") %>% 
+  select(Index, Genotype, r) %>% 
+  mutate(r = as.double(r)) %>% 
+  arrange(Genotype)
+
+tmp %>% group_by(Genotype) %>% summarize(mean = mean(r), sd = num(sd(r), digits = 3))
+
+kruskal.test(r ~ Genotype, data = tmp)
+pairwise.wilcox.test(x = tmp$r, g = tmp$Genotype)
+```
+
+> basal survival rates not significantly different between genotypes at the chosen [H2O2], as shown by both the (ANOVA-equivalent, rank-based) Kruskal-Wallis test and the (t-test equivalent) pairwise Wilcoxson rank-sum test (unpaired). P-values from the latter were adjusted for multiple comparison using Holm's method (uniformly more powerful than Bonferroni)
+
+_**Survival rate with the primary stress**_
+
+Same strategy as above
+```{r}
+tmp <- dat.f3s1 %>% 
+  filter(Primary == "-Pi") %>% 
+  select(Index, Genotype, r) %>% 
+  arrange(Genotype)
+
+tmp %>% group_by(Genotype) %>% summarize(mean = mean(r), sd = num(sd(r), digits = 3))
+
+kruskal.test(as.double(r) ~ Genotype, data = tmp)
+pairwise.wilcox.test(x = tmp$r, g = tmp$Genotype, paired = FALSE)
+```
+> survival rates with primary stress significantly different between cta1∆ vs either the wildtype or the complement, while no difference was detected between the latter two.
+
+_**Primary stress enhanced in wildtype**_
+
+Here, I first calculate the ASR score and its summary statistics. To determine if the effect is significant, I perform three types of tests:
+- T-test, most powerful but requiring the data to be normally distributed, which ours doesn't.
+- Wilcoxson signed-rank test, paired
+- Wilcoxson rank-sum test (=Mann-Whitney's U test), unpaired
+
+In the paper, we report the P-values of the Wilcoxson signed-rank test
+
+Comparison between r and r', paired, signed-rank test.
+```{r}
+tmp <- dat.f3s1 %>% 
+  filter(Genotype == "wildtype") %>% 
+  pivot_wider(id_cols = c(Index, Strain), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+
+_Primary stress enhanced in CTA1 complement_
+
+Comparison between r and r', paired, signed-rank test.
+```{r}
+tmp <- dat.f3s1 %>% 
+  filter(Genotype == "cta1::CTA1") %>% 
+  pivot_wider(id_cols = c(Index, Strain), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+
+_**Primary stress effect in cta1Δ**_
+
+Paired, signed-rank test
+```{r}
+tmp <- dat.f3s1 %>% 
+  filter(Genotype == "cta1Δ") %>% 
+  pivot_wider(id_cols = c(Index, Strain), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+
+> There is a statistically significant ASR effect in cta1∆, but the effect is very mild
+
+### 60 v 80 v 2.5 mM
+A second set of concentrations
+```{r}
+dat.f3s2 <- dat.f3s %>% 
+  mutate(Group = paste(Genotype, H2O2, sep = "_")) %>% 
+  #filter(H2O2 %in% c("100 mM", "3 mM")) %>% 
+  filter(Group %in% c("wt_60 mM", "Cgcta1::CgCTA1_80 mM", "cta1::URA3_2.5 mM")) %>% 
+  select(-Group) %>% 
+  mutate(
+    Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+    Genotype = factor(Genotype, levels = c("wt", "Cgcta1::CgCTA1", "cta1::URA3"),
+                      labels = c("wildtype", "cta1::CTA1", "cta1Δ")))
+#write_tsv(dat.f3a, file = "../input/20230520-fig-3d-data-hb.tsv")
+```
+
+#### Plot
+```{r}
+p <- dat.f3s2 %>% 
+  mutate(Genotype = fct_recode(Genotype, "WT" = "wildtype")) %>% 
+  ggplot(aes(x = Primary, y = r)) +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2,
+             position = position_jitter(0.1)) +
+  scale_shape_manual(name = "", values = c(1, 16), guide = "none") +
+  #scale_fill_manual(name = bquote(H[2]*O[2]), values = c("white", "gray80")) +
+  p.survival[-1] +
+  facet_wrap(~Genotype + H2O2, nrow = 1) +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        axis.title.x = element_blank(), 
+        strip.background = element_blank()
+        )
+p
+
+ggsave("../output/20230806-fig3sup-asr-cta1-comp-2.png", width = 5, height = 3)
+```
+
+_**Statistical tests**_
+
+#### Statistical test
+1. Determine if the basal survival rates are different between genotypes (Wilcoxon signed-rank test)
+1. Determine if the primary stress enhanced the survival in _each_ genotype (Wilcoxon signed-rank test)
+
+_**Basal survival rate**_
+
+Between wt and cta1∆, unpaired, rank-sum test.
+```{r}
+tmp <- dat.f3s2 %>% 
+  filter(Primary == "Mock") %>% 
+  select(Index, Genotype, r) %>% 
+  mutate(r = as.double(r)) %>% 
+  arrange(Genotype)
+
+tmp %>% group_by(Genotype) %>% summarize(mean = mean(r), sd = num(sd(r), digits = 3))
+
+kruskal.test(r ~ Genotype, data = tmp)
+pairwise.wilcox.test(x = tmp$r, g = tmp$Genotype)
+```
+
+> basal survival rates not significantly different between genotypes at the chosen [H2O2]
+
+_**Survival rate with the primary stress**_
+
+Between genotypes, unpaired, rank-sum test.
+```{r}
+tmp <- dat.f3s2 %>% 
+  filter(Primary == "-Pi") %>% 
+  select(Index, Genotype, r) %>% 
+  arrange(Genotype)
+
+tmp %>% group_by(Genotype) %>% summarize(mean = mean(r), sd = num(sd(r), digits = 3))
+
+pairwise.wilcox.test(x = tmp$r, g = tmp$Genotype, paired = FALSE)
+```
+> survival rates with primary stress significantly different between cta1∆ vs either the wildtype or the complement. No significant difference between the latter two.
+
+_**Primary stress enhanced in wildtype**_
+
+Comparison between r and r', paired, signed-rank test.
+```{r}
+tmp <- dat.f3s2 %>% 
+  filter(Genotype == "wildtype") %>% 
+  pivot_wider(id_cols = c(Index, Strain), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+
+_**Primary stress enhanced in CTA1 complement**_
+
+Comparison between r and r', paired, signed-rank test.
+```{r}
+tmp <- dat.f3s2 %>% 
+  filter(Genotype == "cta1::CTA1") %>% 
+  pivot_wider(id_cols = c(Index, Strain), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+
+_**Primary stress effect in cta1Δ**_
+
+Paired, signed-rank test
+```{r}
+tmp <- dat.f3s2 %>% 
+  filter(Genotype == "cta1Δ") %>% 
+  pivot_wider(id_cols = c(Index, Strain), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+with(tmp, wilcox.test(`-Pi`, Mock, paired = FALSE, alternative = "g"))
+```
+> ASR effect not significant in cta1∆.
+
+
 ## Fig6: ASR in rim15∆ vs wt
 _**Goal**_
 
