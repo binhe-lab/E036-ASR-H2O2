@@ -24,3 +24,5 @@ Input data of Cta1-GFP time course for different genotypes under different condi
 | s7y1_csv_merge| | skn7 and yap1 single and double deletion variants untreated or treated with - Pi (raw data, csv files) |
 | s7y1_gz_merge| | skn7 and yap1 single and double deletion variants untreated or treated with - Pi (raw data, zipped files) |
 | s7y1_treatment| | skn7 and yap1 single and double deletion variants untreated or treated with - Pi (treatment annotation, csv files) |
+| CTA1-mRNA-qPCR | | qPCR validation of _CTA1_ mRNA induction |
+| MET3pr-CTA1 | 2023.08 | CgMET3pr-CTA1-GFP induction |

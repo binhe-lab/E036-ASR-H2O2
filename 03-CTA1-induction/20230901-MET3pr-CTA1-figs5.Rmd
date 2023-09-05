@@ -1,0 +1,120 @@
+---
+title: "MET3pr-CTA1 induction, validate (Fig. S5)"
+author: "Bin - strain, analysis - Lindsey, flow;"
+date: "2023-09-01 (updated `r Sys.Date()`)"
+output: 
+  html_notebook:
+    code_folding: hide
+    toc: true
+    toc_float: true
+---
+
+```{r}
+library(tidyverse)
+library(ggtext)
+library(cowplot)
+```
+
+## Goal
+Validate _MET3pr-CTA1_ induction under -Met -Cys media condition
+
+## Data import and prep
+```{r}
+tp <- c("0",  "30", "45", "60", "90", "120") # ordered time points
+
+raw <- read_tsv("input/MET3pr-CTA1/20230901-METpr-CTA1-induction-lfs.tsv",
+                col_types = cols(), na = c("", "NA", "N/A"), comment = "#") %>% 
+  mutate(Time = ordered(time, levels = tp))
+```
+
+merge with sample metadata
+```{r}
+sample <- tribble(
+  ~strain, ~genotype,
+  "yH298", "CTA1pr-CTA1",
+  "yH299", "CTA1pr-CTA1",
+  "yH001", "WT noGFP",
+  "yH181", "WT noGFP",
+  "yH347", "cta1pr∆-CTA1",
+  "met3-1", "MET3pr-CTA1",
+  "met3-2", "MET3pr-CTA1",
+  "met3-3", "MET3pr-CTA1",
+  "met3-4", "MET3pr-CTA1"
+)
+
+gt <- c("WT noGFP", "cta1pr∆-CTA1", "CTA1pr-CTA1", "MET3pr-CTA1")
+
+# combine genotype and treat variables into the flow data
+dat <- left_join(raw, sample, by = c("strain")) %>% 
+  mutate(genotype = factor(genotype, levels = gt),
+         treatment = factor(treatment, levels = c("Pi", "mock", "met"),
+                            labels = c("-Pi", "Rich", "-MC")))
+
+# experiment structure
+dat %>% 
+  filter(time == 0) %>% 
+  group_by(genotype, treatment, day) %>% 
+  summarize(nEx = n()) %>% 
+  pivot_wider(names_from = day, values_from = nEx, names_prefix = "D")
+```
+
+
+## Plotting
+### Select data for plotting
+For the figure, we will show the _CTA1pr-CTA1-GFP_ and _MET3pr-CTA1-GFP_ strains under either their inducing condition or mock treatment. We will use Day 1 data as the representative
+```{r}
+dat.plot <- dat %>% 
+  mutate(group = paste(genotype, treatment, sep = " : ")) %>% 
+  filter(group %in% c("CTA1pr-CTA1 : -Pi", #"CTA1pr-CTA1 : Rich",
+                      "MET3pr-CTA1 : -MC"))#, "MET3pr-CTA1 : Rich"))
+```
+
+### Common plotting functions
+**Update 2022-11-08** 
+This list is used as a shared plotting set up.
+```{r}
+p.timecourse <- list(
+  stat_summary(fun = "mean", geom = "point", size = 3),
+  stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
+  stat_smooth(method = "loess", formula = 'y~x', se = FALSE),
+  scale_x_continuous(breaks = seq(0,240,30)),
+  #scale_size_manual(values = c(0.8, 1.5), guide = "none"),
+  labs(x = "Time (min)", y = "Cta1-GFP protein level (a.u.)"),
+  theme_cowplot(line_size = 0.7, font_size = 14),
+  theme(legend.position=c(0.05,0.72), 
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        legend.text = element_text(face = 3), 
+        legend.title = element_text(),
+        axis.title = element_text(size = rel(1)), 
+        #axis.title.x = element_blank(),
+        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
+  )
+)
+```
+
+### Plot
+```{r}
+dat.plot %>%
+  mutate(median = median / 1000) %>% 
+  ggplot(aes(x = time, y = median, color = group)) +# p.timecourse +
+  stat_summary(fun = "mean", geom = "point") +
+  stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3) +
+  stat_smooth(method = "loess", formula = 'y~x', se = FALSE) +
+  scale_x_continuous(breaks = c(0,30,45,60,90,120)) +
+  scale_color_manual("Strain:treatment", values = c("#9966DD", "#5DC863")) +
+  labs(x = "Time (min)", y = "Cta1-GFP protein level (a.u.)") +
+  theme_cowplot(line_size = 0.7, font_size = 14) +
+  theme(legend.position=c(0.05,0.85), 
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        legend.text = element_text(face = 3), 
+        legend.title = element_text(),
+        axis.title = element_text(size = rel(1)), 
+        #axis.title.x = element_blank(),
+        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
+  )
+
+ggsave("output/20230904-MET3pr-CTA1-induction-timecourse.png", width = 3.5, height = 4)
+```
+
