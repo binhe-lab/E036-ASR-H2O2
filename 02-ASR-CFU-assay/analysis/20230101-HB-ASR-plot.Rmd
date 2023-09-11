@@ -517,6 +517,209 @@ p
 ggsave("../output/20230103-ASR-score-across-noPi-length-sep-panel.png", width = 6, height = 3)
 ```
 
+## S3a: tBOOH
+_**Goal**_
+
+- Determine if phosphate starvation also provides ASR for other oxidants than H2O2
+
+_**Experiment**_
+
+- Hanxi tested tert-butyl hydroperoxide (tBOOH) and menadione sodium bisulfite (MSB), following the same procedure as Jinye did for H2O2
+
+_**Data**_
+
+**Main dataset**: 
+
+Species       Oxidant     Concentration           #Reps   Dates
+-----------   --------    --------------------    -----   ----------
+C. glabrata   tBOOH       0, 1, 1.5, 2 mM         6       8/23-8/31
+C. glabrata   MSB         0, 300, 350, 400 mM     6       9/3-9/8
+
+_**Analysis**_
+
+### Read and format data
+```{r}
+tmp <- read_tsv("../input/20230901-tBOOH-ASR-CFU-ht.tsv",
+                col_types = cols(), comment = "#") %>% 
+  mutate(
+    scaled = Count * Dilutions * 1e-2
+  )
+
+dat.s3a <- tmp %>% 
+  # remove the phosphate starvation experiments - they were included as positive
+  # controls, but because there is only one replicate and the secondary stress
+  # was applied for 3 instead of 2 hours, CFU is extremely low and not conclusive
+  filter(Len_2 != "3 hr") %>% 
+  # remove uninformative / nonvariable columns 
+  select(-Len_1, -Len_2, -Species, -Strain) %>% 
+  # group by experiment and [tBOOh] to calculate r (MO/MM) or r' (PO/PM)
+  separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
+  group_by(Date, Primary) %>% 
+  # calculate % survival
+  mutate(scaled_M = scaled[Secondary == "M"],
+         r = num(scaled / scaled[Secondary == "M"], digits = 3)) %>% 
+  # remove the secondary mock as the information are all used
+  filter(Secondary != "M") %>% 
+  mutate(
+    Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+    tBOOH = factor(tBOOH, levels = c("0.5 mM", "1 mM", "1.5 mM", "2 mM"))
+  )
+dat.s3a
+```
+
+### Plot (all data)
+```{r}
+dat.s3a %>% 
+  # leave out the lowest concentration in each group
+  #filter(!H2O2 %in% c("2 mM", "60 mM")) %>% 
+  ggplot(aes(x = tBOOH, y = r)) + #p.survival[-3] +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_dodge(0.7)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.7),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ tBOOH, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(labels = scales::percent) +
+  xlab("tBOOH") + ylab("% survival") +
+  theme_bw(base_size = 14, base_line_size = 1) +
+  panel_border(color = "black", size = 1) +
+  theme(strip.text = element_text(size = rel(1), face = 3),
+        strip.background = element_blank())
+```
+
+> From the plot, it is clear that phosphate starvation does NOT provide ASR for tBOOH
+> below we will focus on the 2 mM dataset, as the basal survival rate is ~5%
+
+### Statistical test for ASR
+```{r}
+tmp <- dat.s3a %>% 
+  filter(tBOOH == "2 mM") %>% 
+  pivot_wider(id_cols = Date, names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/`Mock`)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+```
+
+## S3b: Menadione
+_**Goal**_
+
+- Determine if phosphate starvation also provides ASR for other oxidants than H2O2
+
+_**Experiment**_
+
+- Hanxi tested tert-butyl hydroperoxide (tBOOH) and menadione sodium bisulfite (MSB), following the same procedure as Jinye did for H2O2
+
+_**Data**_
+
+**Main dataset**: 
+
+Species       Oxidant     Concentration           #Reps   Dates
+-----------   --------    --------------------    -----   ----------
+C. glabrata   tBOOH       0, 1, 1.5, 2 mM         6       8/23-8/31
+C. glabrata   MSB         0, 300, 350, 400 mM     6       9/3-9/8
+
+_**Analysis**_
+
+### Read and format data
+```{r}
+tmp <- read_tsv("../input/20230910-MSB-ASR-CFU-ht.tsv",
+                col_types = cols(), comment = "#") %>% 
+  mutate(
+    scaled = Count * Dilutions * 1e-2
+  )
+
+dat.s3b <- tmp %>% 
+  # remove the phosphate starvation experiments - they were included as positive
+  # controls, but because there is only one replicate and the secondary stress
+  # was applied for 3 instead of 2 hours, CFU is extremely low and not conclusive
+  filter(Len_2 != "3 hr") %>% 
+  # remove uninformative / nonvariable columns 
+  select(-Len_1, -Len_2, -Species, -Strain) %>% 
+  # group by experiment and [tBOOh] to calculate r (MO/MM) or r' (PO/PM)
+  separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
+  group_by(Date, Primary) %>% 
+  # calculate % survival
+  mutate(scaled_M = scaled[Secondary == "M"],
+         r = num(scaled / scaled[Secondary == "M"], digits = 3)) %>% 
+  # remove the secondary mock as the information are all used
+  filter(Secondary != "M") %>% 
+  mutate(
+    Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+    Menadione = factor(Concentration, levels = c("300 mM", "350 mM", "400 mM", "60mM H2O2"))
+  )
+dat.s3b
+```
+
+### Plot (all data)
+```{r}
+dat.s3b %>% 
+  # leave out the lowest concentration in each group
+  #filter(!H2O2 %in% c("2 mM", "60 mM")) %>% 
+  ggplot(aes(x = Menadione, y = r)) + #p.survival[-3] +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_dodge(0.7)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.7),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Menadione, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(labels = scales::percent) +
+  xlab("ROS") + ylab("% survival") +
+  theme_bw(base_size = 14, base_line_size = 1) +
+  panel_border(color = "black", size = 1) +
+  theme(strip.text = element_text(size = rel(1), face = 3),
+        strip.background = element_blank())
+```
+
+> at the highest, 400 mM concentration, there seems to be ASR
+> below we will focus on the 400 mM dataset, where the basal survival rate is ~1%
+
+### Statistical test for ASR
+```{r}
+tmp <- dat.s3b %>% 
+  filter(Menadione == "400 mM") %>% 
+  pivot_wider(id_cols = Date, names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/`Mock`)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+```
+In the same experiment, ASR for H2O2 was confirmed:
+
+```{r}
+tmp <- dat.s3b %>% 
+  filter(Menadione == "60mM H2O2") %>% 
+  pivot_wider(id_cols = Date, names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/`Mock`)
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+```
 ## Fig3: cta1∆
 _**Goal**_
 
@@ -579,7 +782,7 @@ dat.f3 %>%
   facet_wrap(~ Group + Genotype, nrow = 1, scales = "free_x") +
   scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
   scale_y_continuous(labels = scales::percent) +
-  xlab("Primary stress (45 min)") + ylab("% survival") +
+  xlab(bquote(H[2]*O[2]~(mM))) + ylab("% survival") +
   theme_bw(base_size = 14, base_line_size = 1) +
   panel_border(color = "black", size = 1) +
   theme(strip.text = element_text(size = rel(1), face = 3),
@@ -786,7 +989,7 @@ p <- ggplot(dat.f3b, aes(x = H2O2, y = r)) +
         legend.title = element_text(size = rel(0.9)))
 p
 
-ggsave("../output/20230301-s3b-asr-cta1.png", width = 3.5, height = 3.5)
+ggsave("../output/20230301-f3b-asr-cta1.png", width = 3.5, height = 3.5)
 ```
 
 _**Statistical tests**_
