@@ -2654,3 +2654,152 @@ dat.7bs %>%
 
 > In conclusion, we found significant ASR effect at 125 ng/mL rapamycin treatment in _C. glabrata_ using either a Wilcoxon signed-rank test (nonparametric) or a paired t test, both using a 0.05 rejection threhold. We couldn't reject the null hypothesis of no survival difference between rapamycin treated vs untreated samples for the 62.5 ng/mL concentration, and also not for the higher dose in _S. cerevisiae_
 
+
+## Response to reviewer: ASR in msn4∆ and skn7∆ vs wt
+_**Goal**_
+
+Determine if transcriptional factor (TF) msn4 and skn7 contribute to the ASR.
+
+_**Rationale**_
+
+Msn4 and Skn7 are stress responsive TFs regulating the Cta1-GFP induction during phosphate starvation. The reviewer is wondering if the loss of Msn4 or Skn7 affect the ASR for H2O2. To answer this quesion, Jinye performed the CFU assay for H2O2 ASR with a gradient of H2O2 concentrations for wt, msn4∆ and skn7∆.
+
+_**Data**_
+
+Species       Strain           Genotype     H2O2         
+--------      -------------    ----------   ------------
+C. glabrata   yH001, yH002     wildtype    60, 80, 100 mM 
+C. glabrata   yH396, yH397     _msn4∆_     20, 40, 60 mM 
+C. glabrata   yH422, yH423     _skn7∆_     10, 20, 30, 40 mM 
+
+Five replicates (at three [H2O2]) for wt and _msn4∆_, four replicates (at three [H2O2]) for _skn7∆_.
+
+### Read and Reformat Data
+Jinye has reformatted her raw data and saved the output as a tsv. We will skip the code below and go straight to the reformatted version.
+
+```
+tmp1 <- read_tsv("../input/msn4orskn7_ko_ASR_raw.tsv", col_types = cols(), comment = "#") %>% 
+  mutate(Date = gsub("(\\d\\d)(\\d\\d)(\\d\\d)", "\\1/\\2/\\3", Date)) %>% 
+  mutate(H2O2 = recode(H2O2, 'Mock' = '0mM')) %>% 
+  mutate(H2O2 = gsub("mM", " mM", H2O2)) %>% 
+  select(-`MO/MM_percent`, -`PO/PM_percent`)
+
+# data sanity check, quick view
+sapply(select(tmp1, Date, Species, Strain, Genotype, Len_1, Len_2, H2O2), unique)
+
+dat.sf <- tmp1 %>% 
+  pivot_longer(c(Count_MO_MM, Count_PO_PM), names_to = "Primary", values_to = "Count") %>% 
+  mutate(Primary = fct_recode(Primary, "Mock" = "Count_MO_MM", "-Pi" = "Count_PO_PM"),
+         scaled = Count * Dilutions * 1e-3) %>% 
+  group_by(Date, Strain, Genotype, Primary) %>%
+  mutate(scaled_M = scaled[H2O2 == "0 mM"],
+         r = scaled / scaled_M) %>%
+  ungroup() %>% 
+  select(Date, Species, Strain, Genotype, Primary, H2O2, Dilutions, 
+         Count, scaled, scaled_M, r) %>% 
+  arrange(Date, Genotype, Primary)
+```
+
+```
+write_tsv(dat.sf, file = "../input/20230913-sf-data-JY.tsv")
+```
+
+```{r}
+dat.sf <- read_tsv("../input/20230913-sf-data-JY.tsv")
+```
+
+### Plot (all data)
+filter out the skn7Δ 40mM treatment group, because the [H2O2] is too high according to the spotting assay result. 
+
+```{r}
+dat.sfp <- dat.sf %>% 
+  filter(H2O2 != "0 mM", !(H2O2 == "40 mM" & Genotype == "skn7Δ")) %>% 
+  mutate(
+    Genotype = factor(Genotype, levels = c("wt", "msn4Δ", "skn7Δ")),
+    group = paste(Genotype, gsub(" ", "", H2O2), sep = "_"),
+    Secondary = 
+      factor(group, 
+             levels = c("wt_100mM", "wt_80mM", "wt_60mM", "msn4Δ_60mM", 
+                        "msn4Δ_40mM", "msn4Δ_20mM",
+                        "skn7Δ_30mM", "skn7Δ_20mM", "skn7Δ_10mM"),
+             labels = c("High", "Medium", "low", "High", "Medium",
+                        "low", "Medium", "low", "bottom")),
+    Primary = factor(Primary, levels = c("Mock", "-Pi"))
+    
+  )
+with(dat.sfp, table(Date, group))
+```
+
+```{r}
+dat.sfp %>%
+  ggplot(aes(x = H2O2, y = r)) + #p.survival[-3] +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Secondary + Genotype, nrow = 2, scales = "free_x", 
+             labeller = labeller(.multi_line = F)) +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(labels = scales::percent) +
+  xlab(bquote(H[2]*O[2]~(mM))) + ylab("% survival") +
+  theme_bw(base_size = 14, base_line_size = 1) +
+  panel_border(color = "black", size = 1) +
+  theme(strip.text = element_text(size = rel(0.7), face = 3),
+        strip.background = element_blank())
+```
+Plot the Medium group to include in the response letter
+```{r}
+dat.sfp %>%
+  filter(Secondary == "Medium") %>% 
+  ggplot(aes(x = H2O2, y = r)) + #p.survival[-3] +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Genotype, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(labels = scales::percent) +
+  xlab(bquote(H[2]*O[2]~(mM))) + ylab("% survival") +
+  theme_bw(base_size = 14, base_line_size = 1) +
+  panel_border(color = "black", size = 1) +
+  theme(strip.text = element_text(size = rel(1), face = 3),
+        strip.background = element_blank())
+ggsave("../output/20230913-msn4-skn7-ASR.png", width = 5, height = 3)
+```
+
+### Basal survival rates
+
+Statistical test for differences in basal survival between genotypes. I first applied the Kruskal-Wallis test, which is an extension of the Mann-Whitney's U test for multiple groups and is equivalent to ANOVA but applied on ranks. I used this test to determine if there is evidence for differences in the basal survival rates among the four groups (2 genotypes x 2 [H2O2]).
+
+```{r}
+tmp <- dat.sfp %>% filter(Secondary == "Medium", Primary == "Mock")
+tmp %>% group_by(group) %>% 
+  summarize(
+    test = Hmisc::smean.cl.normal(r) %>% t() %>% as_tibble()
+  ) %>% 
+  unnest(test) %>% 
+  mutate(across(where(is.double), round, digits = 3))
+kruskal.test(r ~ group, data = tmp)
+```
+> There are no significance differences in the basal survival rate in the Medium group across genotypes
+
+### Statistical test for ASR
+Comparing the ASR effect in skn7Δ, msn4∆ and wild type using Kruskal-Wallis Rank Sum test.
+```{r}
+tmp <- dat.sfp %>% 
+  filter(Secondary == "Medium") %>% 
+  pivot_wider(id_cols = c(Date, Strain, Genotype), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/Mock) %>% 
+  arrange(Genotype)
+
+tmp %>% group_by(Genotype) %>% 
+  summarize(ASR_score = paste(round(as.numeric(ASR),1), collapse = ", "), 
+            mean = mean(ASR), sd = sd(ASR))
+
+kruskal.test(as.numeric(ASR) ~ Genotype, data = tmp)
+pairwise.wilcox.test(x = as.numeric(tmp$ASR), g = tmp$Genotype, paired = FALSE, p.adjust.method = "holm")
+```
+ 
+> There is no significant difference in ASR among the three genotypes
