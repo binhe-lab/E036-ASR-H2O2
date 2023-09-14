@@ -524,7 +524,7 @@ _**Goal**_
 
 _**Experiment**_
 
-- Hanxi tested tert-butyl hydroperoxide (tBOOH) and menadione sodium bisulfite (MSB), following the same procedure as Jinye did for H2O2
+- Hanxi tested tert-butyl hydroperoxide (tBOOH), menadione and menadione sodium bisulfite (MSB), following the same procedure as Jinye did for H2O2
 
 _**Data**_
 
@@ -533,6 +533,7 @@ _**Data**_
 Species       Oxidant     Concentration           #Reps   Dates
 -----------   --------    --------------------    -----   ----------
 C. glabrata   tBOOH       0, 1, 1.5, 2 mM         6       8/23-8/31
+C. glabrata   Menadione   0, 250, 300, 350 uM     6       7/17-7/26
 C. glabrata   MSB         0, 300, 350, 400 mM     6       9/3-9/8
 
 _**Analysis**_
@@ -617,20 +618,103 @@ _**Goal**_
 
 _**Experiment**_
 
-- Hanxi tested tert-butyl hydroperoxide (tBOOH) and menadione sodium bisulfite (MSB), following the same procedure as Jinye did for H2O2
-
-_**Data**_
-
-**Main dataset**: 
-
-Species       Oxidant     Concentration           #Reps   Dates
------------   --------    --------------------    -----   ----------
-C. glabrata   tBOOH       0, 1, 1.5, 2 mM         6       8/23-8/31
-C. glabrata   MSB         0, 300, 350, 400 mM     6       9/3-9/8
+- Hanxi tested tert-butyl hydroperoxide (tBOOH), menadione and menadione sodium bisulfite (MSB), following the same procedure as Jinye did for H2O2
 
 _**Analysis**_
 
 ### Read and format data
+```{r}
+tmp <- read_tsv("../input/20230801-menadione-ASR-CFU-ht.tsv",
+                col_types = cols(), comment = "#") %>% 
+  mutate(
+    scaled = Count * Dilutions * 1e-2
+  )
+
+dat.s3b <- tmp %>% 
+  # remove uninformative / nonvariable columns 
+  select(-Len_1, -Len_2, -Species, -Strain) %>% 
+  # group by experiment and [tBOOh] to calculate r (MO/MM) or r' (PO/PM)
+  separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
+  group_by(Date, Primary) %>% 
+  # calculate % survival
+  mutate(scaled_M = scaled[Secondary == "M"],
+         r = scaled / scaled[Secondary == "M"]) %>% 
+  # remove the secondary mock as the information are all used
+  filter(Secondary != "M") %>% 
+  mutate(
+    Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+    Concentration = factor(Concentration,
+                           levels = c("250 uM", "300 uM", "350 uM",
+                                      "400 uM", "450 uM")),
+    Flag = Count < 10
+  ) %>% 
+  rename(Menadione = Concentration)
+dat.s3b
+```
+
+### Plot (all data)
+```{r}
+dat.s3b %>% 
+  # leave out the lowest concentration in each group
+  #filter(!H2O2 %in% c("2 mM", "60 mM")) %>% 
+  ggplot(aes(x = Menadione, y = r)) + #p.survival[-3] +
+  geom_point(aes(shape = Primary, color = Flag), stroke = 1, size = 2, 
+             position = position_dodge(0.7)) +
+  stat_summary(aes(group = Primary),
+               position = position_dodge(0.7),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Menadione, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_color_manual("Count < 10", values = c("gray10", "green3")) +
+  scale_y_continuous(labels = scales::percent) +
+  xlab("Menadione") + ylab("% survival") +
+  theme_bw(base_size = 14, base_line_size = 1) +
+  panel_border(color = "black", size = 1) +
+  theme(axis.text.x = element_blank(),
+        strip.text = element_text(size = rel(1), face = 3),
+        strip.background = element_blank())
+```
+
+> the whole concentration series shows consistent trend of ASR. 400 uM would have
+> been a good concentration to focus on, but we don't have enough replicates at 
+> this concentration
+
+### Statistical test for ASR
+We focus on 350 uM set because it shows ASR and have 5 usable replicates.
+
+```{r}
+tmp <- dat.s3b %>% 
+  filter(Menadione == "350 uM", !Flag) %>% 
+  pivot_wider(id_cols = Date, names_from = Primary, values_from = r) %>% 
+  mutate(ASR = `-Pi`/`Mock`) %>% 
+  na.omit()
+
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(`-Pi`), as.numeric(Mock), paired = TRUE, alternative = "g"))
+
+with(tmp, wilcox.test(`-Pi`, Mock, paired = TRUE, alternative = "g"))
+```
+
+## S3b: Menadione sodium bisulfite
+_**Goal**_
+
+- Determine if phosphate starvation also provides ASR for other oxidants than H2O2
+
+_**Experiment**_
+
+- Hanxi tested tert-butyl hydroperoxide (tBOOH), menadione and menadione sodium bisulfite (MSB), following the same procedure as Jinye did for H2O2
+
+_**Analysis**_
+
+### Read and format data
+Note that we will overwrite dat.s3b.
 ```{r}
 tmp <- read_tsv("../input/20230910-MSB-ASR-CFU-ht.tsv",
                 col_types = cols(), comment = "#") %>% 
@@ -675,7 +759,7 @@ dat.s3b %>%
   facet_wrap(~ Menadione, nrow = 1, scales = "free_x") +
   scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
   scale_y_continuous(labels = scales::percent) +
-  xlab("ROS") + ylab("% survival") +
+  xlab("MSB") + ylab("% survival") +
   theme_bw(base_size = 14, base_line_size = 1) +
   panel_border(color = "black", size = 1) +
   theme(strip.text = element_text(size = rel(1), face = 3),
@@ -685,7 +769,38 @@ dat.s3b %>%
 > at the highest, 400 mM concentration, there seems to be ASR
 > below we will focus on the 400 mM dataset, where the basal survival rate is ~1%
 
+### Plot (combine with tBOOH)
+```{r}
+dat.s3ab <- bind_rows(
+  tBOOH = dat.s3a %>% filter(tBOOH == "2 mM") %>% rename(Concentration = tBOOH),
+  MSB = dat.s3b %>% filter(Concentration == "400 mM") %>% select(-Menadione),
+  H2O2 = dat.s3b %>% filter(Concentration == "60mM H2O2") %>% select(-Menadione),
+  .id = "ROS"
+) %>% 
+ mutate(Concentration = gsub("60mM H2O2", "60 mM", Concentration),
+        ROS = factor(ROS, levels = c("tBOOH", "MSB", "H2O2"),
+                     labels = c("tBOOH", "MSB", "H[2]*O[2]"))) 
+dat.s3ab %>% 
+  ggplot(aes(x = Concentration, y = r)) + #p.survival[-3] +
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_dodge(0.7)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.7),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ ROS, nrow = 1, scales = "free_x", labeller = label_parsed) +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(labels = scales::percent) +
+  xlab(NULL) + ylab("% survival") +
+  theme_bw(base_size = 14, base_line_size = 1) +
+  panel_border(color = "black", size = 1) +
+  theme(strip.text = element_text(size = rel(1), face = 3),
+        strip.background = element_blank())
+ggsave("../output/20230912-figs3-other-ros.png", width = 5, height = 3)
+```
+
 ### Statistical test for ASR
+We focus on 400 mM set because it shows the most clear ASR effect. Note that a test done for the 350 mM, which leads to a similar 5% basal survival rate as 2 mM tBOOH, showed a moderate ASR (mean = 1.55) effect, with a P-value approaching 0.05 (0.08). Jinye's spotting assay also showed clear ASR result at 350 mM.
+
 ```{r}
 tmp <- dat.s3b %>% 
   filter(Menadione == "400 mM") %>% 
