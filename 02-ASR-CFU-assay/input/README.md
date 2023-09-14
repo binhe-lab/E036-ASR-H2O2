@@ -6,3 +6,4 @@
 | MOPO-Sc-Cg-ASR-scatter-plot-d122422.csv | aggregated ASR CFU data | d072922 to d101922 | Sc, Cg | ASR CFU data with r and r' and ASR Score |
 | spotting_assay_density.csv | spotting assay processed ASR density data | d042022 | Sc, Cg | ASR spotting assay data measured based on the density of the spots |
 | Time_course_ASR.csv | processed ASR CFU assay with different primary stress time | NA | Sc, Cg | processed ASR data in ASR socre in 45min, 90min and 135min primary stress treatment |
+| msn4orskn7_ko_ASR_raw.csv | aggregated ASR CFU data for msn4 and skn7 single knockouts | d090423 to d090823 | Cg | ASR CFU data with r and r' and ASR Score |
