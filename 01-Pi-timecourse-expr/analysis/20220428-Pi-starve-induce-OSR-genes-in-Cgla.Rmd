@@ -92,7 +92,6 @@ cgla.eds <- calcNormFactors(cgla.eds, method = "TMM")
 lcpm <- cpm(cgla.eds, normalized.lib.sizes = TRUE, log = TRUE)
 ```
 
-
 Construct a SummarizedExperiment object
 ```{r}
 se0 <- SummarizedExperiment(
@@ -103,6 +102,17 @@ se0 <- SummarizedExperiment(
 # subset the experiment to include just the wt time course
 se <- se0[, se0$Genotype == "wt" & se0$Timepoint != "del80"]
 ```
+
+Export a subset of the read counts for uploading to GEO for Jinye's paper
+```{r}
+subset <- cgla.eds$counts[,c("S3", "S4", "S19", "S20", "S20prime")] %>% 
+  as_tibble(rownames = "GeneID")
+write_tsv(subset, file = "../input/Cgla-Pi-He2017-unpub/20230929-subset-raw-counts-for-geo.tsv")
+subset.se <- assay(se[, se$Timepoint %in% c("pre", "60m")]) %>% 
+  as_tibble(rownames = "GeneID")
+write_tsv(subset.se, file = "../input/Cgla-Pi-He2017-unpub/20230929-subset-normalized-log-counts-for-geo.tsv")
+```
+
 
 ### _S. cerevisiae_ -Pi 1hr gene expression
 Description and code below copied/adapted from `uncat-analyses/CTA1-induction-noPi`
