@@ -401,6 +401,28 @@ plot_grid(p.base, NULL, p.induce, nrow = 1, rel_widths = c(1.5, 0.1, 1.5), align
 ggsave("output/20221221-CTA1-trans-delete-base-vs-induce.png", width = 10, height = 5)
 ```
 
+Remove Yap1 and Msn2, plot generated for R35 grant
+```{r}
+genotype_order1 <- c("WT", "msn4-", "skn7-", "msn4- skn7-")
+genotype_color1 <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 1, 3, 5)] 
+# subtract 0 min mean from all time points for each genotype
+p.induce1 <- pi.dat %>% 
+  filter(!is.na(new_median), !Genotype %in% c("yap1-", "msn2-")) %>% 
+  mutate(Genotype = factor(Genotype, levels = genotype_order1)) %>% 
+  group_by(Genotype) %>% 
+  mutate(delta = new_median - mean(new_median[new_time == 0])) %>% 
+  ggplot(aes(x = new_time, y = delta, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= genotype_color1, limits = names(genotype_color1)) +
+  scale_x_continuous(breaks = seq(0, 240, by = 30), labels = c(0, '', 60, '', 120, '', 180, '', 240)) +
+  theme(
+    legend.text = element_text(size = rel(0.8)),
+    legend.title = element_text(size = rel(0.8))
+  )
+
+#ggsave("output/20221117-Pi-H2O2-timecourse.png", width = 4, height = 3.5)
+ggsave("output/20240325-CTA1-trans-delete-induce-no-yap1-msn2.png",
+       plot = p.induce1, width = 3.5, height = 3.2)
+```
 To test for the effect on induction, we can compare the levels at 120 min
 ```{r}
 pi.dat %>% 
