@@ -1,20 +1,49 @@
 ---
-title: "Bin_code_adpt"
+title: "bcy1 and gtr1 KO strain, Cta1 induction"
 author: "Jinye Liang"
-date: "August 6, 2021"
-output: html_document
+date: 2021-08-06, modified on `r Sys.Date()`
+output: 
+  html_notebook:
+    code_folding: hide
+    toc: true
+    toc_float: true
 ---
 
-```{r}
+```{r message=FALSE}
 library(tidyverse)
-library(ggplot2)
-library(dplyr)
-library(mgcv)
-library(broom)
+library(ggtext)
+library(cowplot)
 ```
 
+# Goal and dataset description
+To be filled in
 
+# Common plotting functions
+**Update 2022-11-08** 
+This list is used as a shared plotting set up.
+```{r}
+p.timecourse <- list(
+  stat_summary(fun = "mean", geom = "point", size = 3),
+  stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", width = 3),
+  stat_smooth(aes(linewidth = Genotype == "WT"), method = "loess", 
+              formula = 'y~x', se = FALSE),
+  scale_x_continuous(breaks = seq(0,240,30)),
+  scale_linewidth_manual(values = c(0.8, 1.5), guide = "none"),
+  labs(x = "Time (min)", y = "Cta1-GFP protein level (a.u.)"),
+  theme_cowplot(line_size = 0.7, font_size = 14),
+  theme(legend.position=c(0.05,0.85), 
+        #legend.box.background = element_rect(color = "black"),
+        #legend.box.margin = margin(3,3,3,3),
+        legend.text = element_text(face = 3), 
+        legend.title = element_text(),
+        axis.title = element_text(size = rel(1)), 
+        #axis.title.x = element_blank(),
+        axis.text.x = element_text(hjust=0.5), axis.text = element_text(size = rel(1)),
+  )
+)
+```
 
+# Data preparation
 ```{r, Import the Data into R}
 files <- dir("gz_merge", pattern = "merge-*") # get the file names of the merged
 files <- file.path("gz_merge", files)         # this appends the directory to the file names, check the arrange
@@ -25,21 +54,18 @@ names(files) <- c("Rep3-0Pi-Ctrl","Rep1-0Pi-Ctrl", "Rep2-0Pi-Ctrl") # correspond
 tp <- c("0min",  "30min", "60min", "90min", "120min", "150min",  "180min", "210min", "240min") # ordered time points
 
 # import and process the data to the format we want
-dat.ord <- files %>% 
-  map(~read_csv(., na = c("", "NA", "N/A"), col_types = cols())) %>% 
-  bind_rows(.id = "Replicate") %>% 
+dat.ord <- map_dfr(files, ~read_csv(., na = c("", "NA", "N/A"), col_types = cols()), .id = "Replicate") %>% 
   filter(`X Parameter` == "BL1-H", is.na(`Y Parameter`)) %>% 
   select(Replicate, Plate, Group, Sample, Count, median = `X Median`, peak = `X Peak`,
          sd = `X SD`, cv = `X %CV`, rCV = `X %rCV`) %>% 
   mutate(Group = ordered(Group, levels = tp)) %>% 
   arrange(Group)
 
-write_csv(dat.ord, file = "gz_merge/20211215-20220113-bcy1gtr1-KO-flow-data.csv")
+#write_csv(dat.ord, file = "gz_merge/20211215-20220113-bcy1gtr1-KO-flow-data.csv")
 ```
 
-
-```{r, Subset the dataset and merge with the genotype information:}
-# get genotype info
+get genotype info
+```{r}
 tr_files <- dir("treatment", pattern = "d0*")
 tr_files <- file.path("treatment", tr_files)
 names(tr_files) <- c("Rep3-0Pi-Ctrl","Rep1-0Pi-Ctrl", "Rep2-0Pi-Ctrl")
@@ -55,8 +81,10 @@ treat.fil <- tr_files %>%
 data <- left_join(dat.ord, treat.fil, by = c("Replicate", "Sample"))
 #sum(is.na(data$Group))
 
-write_csv(data, file = "gz_merge/20211215-20220113-bcy1gtr1-KO-flow-data.csv.gz")
+#write_csv(data, file = "gz_merge/20211215-20220113-bcy1gtr1-KO-flow-data.csv.gz")
+```
 
+```{r}
 # select out 0Pi & h2o2 data
 pi.dat <- data %>% 
   filter(treat == "0Pi") %>% 
@@ -68,6 +96,32 @@ ctrl.dat <- data %>%
   select(time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>% 
   arrange(time, genotype, replicate)
 
+# Bin, for grant plotting 2024-03-25
+pi.dat1 <- data %>% 
+  filter(treat == "0Pi", genotype %in% c("wt", "bcy1_ko", "msn4_ko")) %>%  
+  select(Time = Group, Sample, Plate, replicate = Replicate, genotype, median) %>%
+  mutate(
+    Genotype = fct_recode(genotype, WT = "wt", `msn4-` = "msn4_ko", `bcy1-` = "bcy1_ko"),
+    new_median =median/1000,
+    new_time = as.numeric(gsub("min","",Time))
+  ) %>% 
+  arrange(new_time, genotype, replicate)
+```
+
+```{r}
+genotype_color <- RColorBrewer::brewer.pal(8, "Dark2")[c(8, 1, 7)] 
+names(genotype_color) <- c("WT", "msn4-", "bcy1-")
+pi.dat1 %>% filter(!is.na(median)) %>% 
+  ggplot(aes(x = new_time, y = new_median, color = Genotype)) + p.timecourse +
+  scale_color_manual(values= genotype_color, limits = names(genotype_color)) +
+  scale_x_continuous(
+    breaks = seq(0, 240, by = 30),
+    labels = c(0, '', 60, '', 120, '', 180, '', 240)) +
+  theme(
+    legend.text = element_text(size = rel(0.8)),
+    legend.title = element_text(size = rel(0.8))
+  )
+ggsave("img/20240325-bcy1-vs-wt-Pi-timecourse.png", width = 3.5, height = 3.2)
 ```
 
 ```{r, visualize the data}
