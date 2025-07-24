@@ -19,6 +19,10 @@ suppressPackageStartupMessages(library(SummarizedExperiment))
 suppressPackageStartupMessages(require(broom))
 ```
 
+```{r}
+old <- theme_set(theme_bw(base_size = 14))
+```
+
 ## Goal
 Plot the induction of oxidative stress response genes in _C. glabrata_ during phosphate starvation. Genes known to be induced during hydrogen peroxide stress in _S. cerevisiae_ are the basis for selecting the candiate gene set.
 
@@ -40,7 +44,7 @@ Below is a simple chart to show the design:
 Count matrix
 ```{r}
 # raw data count
-tmp <- read_table("../input/Cgla-Pi-He2017-unpub/20171025_reads_per_transcript_filtered.txt",
+cts <- read_table("../input/Cgla-Pi-He2017-unpub/20171025_reads_per_transcript_filtered.txt",
                 col_types = cols()) %>% 
   column_to_rownames(var = "gene.names")
 # sample sheet
@@ -53,8 +57,12 @@ sample <-
                            "120m", "150m", "180m", "240m", "del80")),
     Group = paste(Genotype, Timepoint, sep = ".")
   )
+# does the sample data frame contain all the columns in the count matrix?
+if(length(setdiff(colnames(cts), sample$Sample)) == 0)
+  print("Sample sheet is complete.")
+
 # rearrange the columns in `raw` according to the samples order in `sample`
-tmp <- tmp[, match(sample$Sample, colnames(tmp))]
+cts <- cts[, match(sample$Sample, colnames(cts))]
 ```
 
 annotation
@@ -78,13 +86,13 @@ anno <- left_join(anno, cgToSc, by = c("GeneID" = "CglaID")) %>%
 Construct DGEList for normalization and calculating count per million
 ```{r}
 # organize gene annotations
-anno.select <- column_to_rownames(anno, "CglaID")[match(rownames(tmp), anno$CglaID),]
-all(rownames(anno.select) == rownames(tmp))
+anno.select <- column_to_rownames(anno, "CglaID")[match(rownames(cts), anno$CglaID),]
+all(rownames(anno.select) == rownames(cts))
 # sample sheet
-all(sample$Sample == names(tmp))
+all(sample$Sample == names(cts))
 # construct DGEList
 cgla.eds <- DGEList(
-  counts = tmp, 
+  counts = cts, 
   samples = column_to_rownames(sample, "Sample"), 
   genes = anno.select
 )
@@ -149,6 +157,16 @@ gse1 <- gse[, grepl("Comparison 1$", gse$title)]
 gse2 <- gse[, grepl("Wild type no vs high Pi conditions", gse$title)]
 ```
 
+Now load the _S. cerevisiae_ gene annotation, downloaded from [SGD](yeastgenome.org) on 2025-07-23. The one I used is the `SGD_features.tab` file, from which we just need the "GeneID" and "GeneName" columns
+```{r}
+anno_Sc <- read_tsv("../input/annotation/SGD_features.tab", 
+                    col_names = c("primary_ID", "feature_type", 
+                                  "feature_qualifier", 
+                                  "ScerID", "ScerName")) %>% 
+  filter(feature_type == "ORF") %>% 
+  select(ScerID, ScerName, feature_qualifier)
+```
+
 ### OSR gene list based on _S. cerevisiae_ literature
 Compile gene list known to be involved in the response to hydrogen perxoide. This list is mostly based on Lee _et al._ 1999 (PMID: 10347154) and Hasan _et al._ 2002 (PMID: 12100562)
 ```{r}
@@ -177,12 +195,19 @@ cgToSc.bh <- read_tsv("../input/annotation/C_glabrata_CBS138_S_cerevisiae_best_h
                            comment = "#", col_types = cols(), 
                            col_names = c("CglaID","CglaName","Cgla.id","ScerID","ScerName","Scer.id")) %>% 
   select(CglaID, CglaName, ScerID, ScerName)
+
 re.scToCg <- bind_rows(
   ortholog = cgToSc, 
   # only include the rows in the best hit table if the Scer gene is not already in the orthology mapping
   # for Scer genes with more than one Cgla genes mapped to it by blastp, randomly pick the first one
   `best hit` = cgToSc.bh %>% filter(!ScerID %in% cgToSc$ScerID) %>% group_by(ScerID) %>% filter(row_number() == 1),
   .id = "mapping")
+
+# include Scer genes with no apparent homologs in C. glabrata
+re.scToCg <- full_join(
+  filter(anno_Sc, feature_qualifier != "Dubious") %>% select(-feature_qualifier),
+  re.scToCg
+)
 ```
 
 Combine the orthology and best hits mapping
@@ -307,7 +332,7 @@ myCompare <- function(genes = "YML123C"){
     as_tibble(rownames = NULL) %>% 
     filter(ORF %in% genes) %>% 
     select(ScerID = ORF) %>% 
-    inner_join(re.scToCg, by = "ScerID")
+    left_join(re.scToCg, by = "ScerID")
   
   # extract Scer data
   probes <- rowData(gse1) %>% as_tibble() %>% filter(ORF %in% geneSet$ScerID) %>% select(ID, ORF)
@@ -405,11 +430,11 @@ row1 <- plot_grid(NULL, p.obj$antioxidant)
 row2 <- plot_grid(p.obj$`protein degradation`, p.obj$chaperon, p.obj$TF, nrow = 1, align = "hv",
                   rel_widths = c(7, 6, 5))
 plot_grid(row1, row2, nrow = 2)
-ggsave("../output/20221102-HBZ-compare-gene-exn-multipanel.png", width = 8, height = 6)
+ggsave("../output/20250723-HBZ-compare-gene-exn-multipanel.png", width = 8, height = 6)
 ```
 
 Jinye's addition, deprecated
-```{r plot_gene, eval=FALSE, include=FALSE, echo=FALSE}
+```
 for (i in seq_along(geneList)){
   print(group[i])
   if (i == 1) {p <- myCompare(geneList[[i]])}
@@ -491,4 +516,94 @@ dge.test1 <- dge.dat %>% group_by(species, ScerName) %>%
   select(species, ScerName, lfc = estimate, t.stat = statistic, p.value)
 dge.test1$p.adj <- p.adjust(dge.test1$p.value, method = "BH")
 dge.test1 %>% filter(p.adj < 0.05) %>% arrange(desc(lfc), p.value)
+```
+
+### Genome-wide DGE for _C. glabrata_
+Now that we have the count matrices prepared, let's perform a genome-wide differential gene expression analysis for _C. glabrata_ comparing the 20 minute post starvation sample to the pre-starvation one. 
+
+
+#### `DESeq2` analysis.
+
+Load the library and prepare the data object. Following the [DESeq2 vignette](https://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#count-matrix-input)
+```{r}
+require(DESeq2)
+samples_to_use <- sample %>% 
+  filter(Genotype == "wt", Timepoint %in% c("pre", "20m")) %>% 
+  column_to_rownames(var = "Sample")
+
+cts_sub <- cts[,rownames(samples_to_use)]
+dds <- DESeqDataSetFromMatrix(countData = cts_sub,
+                              colData = samples_to_use,
+                              design = ~ Timepoint)
+dds
+```
+
+Perform DGE
+```{r}
+dds <- DESeq(dds)
+res_deseq <- results(dds, lfcThreshold = 1, alpha = 0.1)
+summary(res_deseq)
+```
+
+MA plot on shrunken log2 fold changes
+```{r}
+resLFC <- lfcShrink(dds, coef = "Timepoint_20m_vs_pre", type = "apeglm")
+plotMA(resLFC)
+```
+
+#### `limma-voom` analysis
+Following [manual](https://www.bioconductor.org/packages/devel/bioc/vignettes/limma/inst/doc/usersguide.pdf#page=71.16)
+```{r}
+group <- samples_to_use[colnames(cts_sub), "Timepoint"] %>% droplevels()
+design <- model.matrix(~ group)
+dge <- DGEList(counts = cts_sub, group = group)
+keep <- filterByExpr(dge)
+dge <- dge[keep, , keep.lib.sizes=FALSE]
+dge <- calcNormFactors(dge)
+```
+
+voom transformation
+```{r}
+v <- voom(dge, design, plot=TRUE)
+```
+
+DGE
+```{r}
+fit <- lmFit(v, design)
+fit <- treat(fit, lfc = 1)
+res_limma <- topTreat(fit, coef="group20m", number = Inf, sort.by = "P")
+summary(res_limma)
+```
+
+Summary stats
+```{r}
+attach(res_limma)
+sprintf("lfc > 1: %i", sum(adj.P.Val < 0.05 & logFC > 1))
+sprintf("lfc < -1: %i", sum(adj.P.Val < 0.05 & logFC < -1))
+detach(res_limma)
+```
+
+#### Compare the two analyses
+Combine their results
+```{r}
+deseq.res <- data.frame(name = rownames(res_deseq), 
+                        logFC = res_deseq$log2FoldChange, 
+                        padj = res_deseq$padj)
+limma.res <- data.frame(name = rownames(res_limma), 
+                        logFC = res_limma$logFC, 
+                        padj = res_limma$adj.P.Val)
+combine_res <- full_join(deseq.res, limma.res, by = "name", 
+                         suffix = c("_D", "_L"))
+```
+
+Plot comparison results
+
+```{r}
+ggplot(combine_res, aes(x = logFC_D, y = logFC_L)) + 
+  geom_point() + geom_abline(intercept = 0, slope = 1, color = "red") +
+  xlab("log2FC by DESeq2") + ylab("log2FC by Limma")
+ggplot(combine_res, aes(x = -log10(padj_D), y = -log10(padj_L))) + 
+  geom_point() + geom_abline(intercept = 0, slope = 1, color = "red") +
+  xlab("-log10 P.adj by DESeq2") + ylab("-log10 P.adj by Limma")
+
 ```

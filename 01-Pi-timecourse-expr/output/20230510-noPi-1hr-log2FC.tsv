@@ -1,22 +1,34 @@
 category	species	ScerName	ID	log2FC
 antioxidant	S. cerevisiae	PRX1	YBL064C	0.511962264
 antioxidant	S. cerevisiae	PRX1	YBL064C	0.397435131
-antioxidant	S. cerevisiae	PRX1	YBL064C	1.0205610870000001
+antioxidant	S. cerevisiae	PRX1	YBL064C	1.020561087
+antioxidant	S. cerevisiae	TKL2	YBR117C	0.433529973
+antioxidant	S. cerevisiae	TKL2	YBR117C	0.493502482
+antioxidant	S. cerevisiae	TKL2	YBR117C	-0.135487615
+antioxidant	S. cerevisiae	GRX1	YCL035C	0.296799744
+antioxidant	S. cerevisiae	GRX1	YCL035C	0.22283016
+antioxidant	S. cerevisiae	GRX1	YCL035C	0.521357763
 antioxidant	S. cerevisiae	TRX3	YCR083W	0.00599655
 antioxidant	S. cerevisiae	TRX3	YCR083W	0.298481926
 antioxidant	S. cerevisiae	TRX3	YCR083W	0.185535168
-antioxidant	S. cerevisiae	CTA1	YDR256C	0.062409439000000004
-antioxidant	S. cerevisiae	CTA1	YDR256C	4.2734900000000004e-4
-antioxidant	S. cerevisiae	CTA1	YDR256C	0.22672881900000003
-antioxidant	S. cerevisiae	TRR1	YDR353W	-8.861580000000001e-4
+antioxidant	S. cerevisiae	CTA1	YDR256C	0.062409439
+antioxidant	S. cerevisiae	CTA1	YDR256C	4.27349e-4
+antioxidant	S. cerevisiae	CTA1	YDR256C	0.226728819
+antioxidant	S. cerevisiae	TRR1	YDR353W	-8.86158e-4
 antioxidant	S. cerevisiae	TRR1	YDR353W	0.044696812
-antioxidant	S. cerevisiae	TRR1	YDR353W	0.07440300400000001
+antioxidant	S. cerevisiae	TRR1	YDR353W	0.074403004
+antioxidant	S. cerevisiae	CTT1	YGR088W	-0.491373505
+antioxidant	S. cerevisiae	CTT1	YGR088W	-0.455309157
+antioxidant	S. cerevisiae	CTT1	YGR088W	-0.078472129
+antioxidant	S. cerevisiae	TRX2	YGR209C	0.429994762
+antioxidant	S. cerevisiae	TRX2	YGR209C	0.310334307
+antioxidant	S. cerevisiae	TRX2	YGR209C	0.747368297
 antioxidant	S. cerevisiae	SOD2	YHR008C	-0.177370773
-antioxidant	S. cerevisiae	SOD2	YHR008C	0.013211064000000002
+antioxidant	S. cerevisiae	SOD2	YHR008C	0.013211064
 antioxidant	S. cerevisiae	SOD2	YHR008C	-0.242614337
-antioxidant	S. cerevisiae	GSH1	YJL101C	0.5783826240000001
+antioxidant	S. cerevisiae	GSH1	YJL101C	0.578382624
 antioxidant	S. cerevisiae	GSH1	YJL101C	0.660514276
-antioxidant	S. cerevisiae	GSH1	YJL101C	0.49681502200000005
+antioxidant	S. cerevisiae	GSH1	YJL101C	0.496815022
 antioxidant	S. cerevisiae	SOD1	YJR104C	0.031276614
 antioxidant	S. cerevisiae	SOD1	YJR104C	-0.007655542
 antioxidant	S. cerevisiae	SOD1	YJR104C	0.123616636
@@ -24,17 +36,17 @@ antioxidant	S. cerevisiae	CCP1	YKR066C	-0.168837553
 antioxidant	S. cerevisiae	CCP1	YKR066C	-0.36052444
 antioxidant	S. cerevisiae	CCP1	YKR066C	-0.530374342
 antioxidant	S. cerevisiae	AHP1	YLR109W	1.184741041
-antioxidant	S. cerevisiae	AHP1	YLR109W	1.1120129680000002
-antioxidant	S. cerevisiae	AHP1	YLR109W	1.2452254340000002
-antioxidant	S. cerevisiae	TSA1	YML028W	0.08233353900000001
-antioxidant	S. cerevisiae	TSA1	YML028W	0.07343334900000001
+antioxidant	S. cerevisiae	AHP1	YLR109W	1.112012968
+antioxidant	S. cerevisiae	AHP1	YLR109W	1.245225434
+antioxidant	S. cerevisiae	TSA1	YML028W	0.082333539
+antioxidant	S. cerevisiae	TSA1	YML028W	0.073433349
 antioxidant	S. cerevisiae	TSA1	YML028W	0.472914237
 antioxidant	S. cerevisiae	GRE2	YOL151W	0.351298598
-antioxidant	S. cerevisiae	GRE2	YOL151W	0.27175291900000004
-antioxidant	S. cerevisiae	GRE2	YOL151W	0.40869922900000005
+antioxidant	S. cerevisiae	GRE2	YOL151W	0.271752919
+antioxidant	S. cerevisiae	GRE2	YOL151W	0.408699229
 antioxidant	S. cerevisiae	GLR1	YPL091W	0.320706133
 antioxidant	S. cerevisiae	GLR1	YPL091W	0.335784943
-antioxidant	S. cerevisiae	GLR1	YPL091W	0.23097916300000002
+antioxidant	S. cerevisiae	GLR1	YPL091W	0.230979163
 antioxidant	C. glabrata	TRR1	CAGL0A02530g	0.0644453103841105
 antioxidant	C. glabrata	TRR1	CAGL0A02530g	-0.09438014235784031
 antioxidant	C. glabrata	TRR1	CAGL0A02530g	0.08180010083370526
@@ -73,25 +85,25 @@ antioxidant	C. glabrata	AHP1	CAGL0M11704g	1.0523586377669023
 antioxidant	C. glabrata	AHP1	CAGL0M11704g	1.2558392264993259
 protein degradation	S. cerevisiae	RPN11	YFR004W	0.295848595
 protein degradation	S. cerevisiae	RPN11	YFR004W	0.285730985
-protein degradation	S. cerevisiae	RPN11	YFR004W	0.6249856420000001
-protein degradation	S. cerevisiae	PUP2	YGR253C	0.11852686500000001
-protein degradation	S. cerevisiae	PUP2	YGR253C	0.16542235800000002
+protein degradation	S. cerevisiae	RPN11	YFR004W	0.624985642
+protein degradation	S. cerevisiae	PUP2	YGR253C	0.118526865
+protein degradation	S. cerevisiae	PUP2	YGR253C	0.165422358
 protein degradation	S. cerevisiae	PUP2	YGR253C	0.759593308
 protein degradation	S. cerevisiae	RPT1	YKL145W	0.355473313
 protein degradation	S. cerevisiae	RPT1	YKL145W	0.197990767
 protein degradation	S. cerevisiae	RPT1	YKL145W	0.378194026
 protein degradation	S. cerevisiae	UBA1	YKL210W	0.301406883
 protein degradation	S. cerevisiae	UBA1	YKL210W	0.207636584
-protein degradation	S. cerevisiae	UBA1	YKL210W	0.16713671200000002
-protein degradation	S. cerevisiae	TFS1	YLR178C	0.6343333050000001
+protein degradation	S. cerevisiae	UBA1	YKL210W	0.167136712
+protein degradation	S. cerevisiae	TFS1	YLR178C	0.634333305
 protein degradation	S. cerevisiae	TFS1	YLR178C	0.394703018
 protein degradation	S. cerevisiae	TFS1	YLR178C	0.865274
 protein degradation	S. cerevisiae	PRE5	YMR314W	0.193174229
 protein degradation	S. cerevisiae	PRE5	YMR314W	0.300520603
 protein degradation	S. cerevisiae	PRE5	YMR314W	0.358886066
-protein degradation	S. cerevisiae	PEP4	YPL154C	0.37974956200000004
-protein degradation	S. cerevisiae	PEP4	YPL154C	0.45866979300000005
-protein degradation	S. cerevisiae	PEP4	YPL154C	0.39733563600000005
+protein degradation	S. cerevisiae	PEP4	YPL154C	0.379749562
+protein degradation	S. cerevisiae	PEP4	YPL154C	0.458669793
+protein degradation	S. cerevisiae	PEP4	YPL154C	0.397335636
 protein degradation	C. glabrata	TFS1	CAGL0B01100g	0.9487130238988017
 protein degradation	C. glabrata	TFS1	CAGL0B01100g	1.653326206510127
 protein degradation	C. glabrata	TFS1	CAGL0B01100g	1.7056602681629531
@@ -113,16 +125,19 @@ protein degradation	C. glabrata	PEP4	CAGL0M02211g	2.788379015458137
 protein degradation	C. glabrata	PRE5	CAGL0M14003g	0.6839038872708887
 protein degradation	C. glabrata	PRE5	CAGL0M14003g	0.5716558681651538
 protein degradation	C. glabrata	PRE5	CAGL0M14003g	0.6351825333649366
+chaperon	S. cerevisiae	SSA1	YAL005C	1.805356593
+chaperon	S. cerevisiae	SSA1	YAL005C	1.43289529
+chaperon	S. cerevisiae	SSA1	YAL005C	0.831561928
 chaperon	S. cerevisiae	HSP42	YDR171W	1.175424175
 chaperon	S. cerevisiae	HSP42	YDR171W	0.870466615
 chaperon	S. cerevisiae	HSP42	YDR171W	1.267160904
-chaperon	S. cerevisiae	HSP78	YDR258C	0.7867208950000001
+chaperon	S. cerevisiae	HSP78	YDR258C	0.786720895
 chaperon	S. cerevisiae	HSP78	YDR258C	0.50757215
-chaperon	S. cerevisiae	HSP78	YDR258C	0.8648491370000001
+chaperon	S. cerevisiae	HSP78	YDR258C	0.864849137
 chaperon	S. cerevisiae	HSP12	YFL014W	0.655418866
-chaperon	S. cerevisiae	HSP12	YFL014W	0.6582148999999999
-chaperon	S. cerevisiae	HSP12	YFL014W	0.6750391440000001
-chaperon	S. cerevisiae	SBA1	YKL117W	0.09459310400000001
+chaperon	S. cerevisiae	HSP12	YFL014W	0.6582149
+chaperon	S. cerevisiae	HSP12	YFL014W	0.675039144
+chaperon	S. cerevisiae	SBA1	YKL117W	0.094593104
 chaperon	S. cerevisiae	SBA1	YKL117W	-0.032185247
 chaperon	S. cerevisiae	SBA1	YKL117W	0.458017569
 chaperon	S. cerevisiae	HSP104	YLL026W	1.242212939
@@ -131,6 +146,9 @@ chaperon	S. cerevisiae	HSP104	YLL026W	1.253553879
 chaperon	S. cerevisiae	HSP60	YLR259C	-0.024431384
 chaperon	S. cerevisiae	HSP60	YLR259C	-0.179006207
 chaperon	S. cerevisiae	HSP60	YLR259C	-0.57437338
+chaperon	S. cerevisiae	HSP82	YPL240C	0.840207002
+chaperon	S. cerevisiae	HSP82	YPL240C	0.753159691
+chaperon	S. cerevisiae	HSP82	YPL240C	0.48401163
 chaperon	C. glabrata	HSP42	CAGL0E00803g	4.445366527492578
 chaperon	C. glabrata	HSP42	CAGL0E00803g	4.799054546355065
 chaperon	C. glabrata	HSP42	CAGL0E00803g	4.922192890874087
@@ -151,14 +169,14 @@ chaperon	C. glabrata	HSP78	CAGL0M08822g	3.2046395036584343
 chaperon	C. glabrata	HSP78	CAGL0M08822g	3.1959999039915896
 TF	S. cerevisiae	SKN7	YHR206W	0.074599448
 TF	S. cerevisiae	SKN7	YHR206W	-0.019139269
-TF	S. cerevisiae	SKN7	YHR206W	-0.49104058500000003
-TF	S. cerevisiae	MSN4	YKL062W	-0.25216304100000003
-TF	S. cerevisiae	MSN4	YKL062W	-0.11183905200000001
+TF	S. cerevisiae	SKN7	YHR206W	-0.491040585
+TF	S. cerevisiae	MSN4	YKL062W	-0.252163041
+TF	S. cerevisiae	MSN4	YKL062W	-0.111839052
 TF	S. cerevisiae	MSN4	YKL062W	0.206569096
 TF	S. cerevisiae	YAP1	YML007W	0.458088337
 TF	S. cerevisiae	YAP1	YML007W	0.448566426
 TF	S. cerevisiae	YAP1	YML007W	0.577454802
-TF	S. cerevisiae	MSN2	YMR037C	0.33487019300000004
+TF	S. cerevisiae	MSN2	YMR037C	0.334870193
 TF	S. cerevisiae	MSN2	YMR037C	0.209582454
 TF	S. cerevisiae	MSN2	YMR037C	0.106810682
 TF	C. glabrata	MSN2	CAGL0F05995g	0.282926353817059
